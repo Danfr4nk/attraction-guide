@@ -132,8 +132,9 @@ export function computeTelemetry(lm, w, h) {
   const gonL = angleAt(P.cheek_L, P.jaw_L, P.chin), gonR = angleAt(P.cheek_R, P.jaw_R, P.chin);
   const philtrum = dist(subnasale, P.lip_top), noseLen = dist(nasion, P.nose_tip);
 
-  // eyes
-  const tilt = (inner, outer) => -Math.atan2(outer.y - inner.y, outer.x - inner.x) * 180 / Math.PI;
+  // eyes — canthal tilt: signed elevation of the outer corner above the inner
+  // corner. Uses |dx| so both eyes share one convention (+ = outer higher).
+  const tilt = (inner, outer) => Math.atan2(-(outer.y - inner.y), Math.abs(outer.x - inner.x)) * 180 / Math.PI;
   const tiltL = tilt(P.eye_inner_L, P.eye_outer_L), tiltR = tilt(P.eye_inner_R, P.eye_outer_R);
 
   // brows
