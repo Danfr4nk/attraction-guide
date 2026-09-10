@@ -2,6 +2,10 @@
 // Uses the SAME detector + landmark indices as the game (js/measure.js),
 // but lives outside the game flow: upload → full telemetry vector → overlay.
 import { ensureLandmarker, detectLandmarks, LANDMARK_IDX } from './measure.js';
+import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING } from './telemetry2.js';
+
+METRIC_DEFS.push(...V2_METRIC_DEFS);
+GROUPS.push(...V2_GROUPS);
 
 const EXTRA = {
   brow_L: [70, 63, 105, 66, 107],   // outer → inner
@@ -260,10 +264,15 @@ async function analyzeFile(file) {
   const lm = detectLandmarks(img);
   if (!lm) { URL.revokeObjectURL(url); throw new Error('no face detected'); }
   const tel = computeTelemetry(lm, w, h);
+  const calibRaw = parseFloat(($('calibIpd') || {}).value);
+  const calib = Number.isFinite(calibRaw) && calibRaw > 0 ? calibRaw : null;
+  const v2 = computeV2(lm, w, h, calib);
+  const quality = analyzeQuality(img, lm);
   const item = {
     id: 't' + (++seq), name: file.name || ('upload ' + seq),
     url, thumb: makeThumb(img), img, w, h, lm,
-    metrics: tel.metrics, quality: tel.quality, anchors: tel.anchors,
+    metrics: { ...tel.metrics, ...v2 }, quality: tel.quality, anchors: tel.anchors,
+    qv: quality, scaleSource: v2.scale_source,
   };
   state.items.push(item);
   return item;
@@ -291,7 +300,7 @@ function renderHistory() {
   for (const it of state.items) {
     const d = document.createElement('div');
     d.className = 'hist-item' + (it.id === state.activeId ? ' active' : '');
-    d.innerHTML = `<img src="${it.thumb}" alt=""><span class="q ${it.quality}">${it.quality}</span><div class="nm">${it.name}</div>`;
+    d.innerHTML = `<img src="${it.thumb}" alt=""><span class="q ${it.qv.verdict}">${it.qv.verdict}</span><div class="nm">${it.name}</div>`;
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.className = 'cmp'; cb.title = 'select for a/b compare';
     cb.checked = state.compare.includes(it.id);
@@ -348,6 +357,16 @@ function renderViewer() {
     seg(X(lm[I.mouth_L]), X(lm[I.mouth_R]), '#fca5a5', 'mouth');
     seg(X(lm[I.nostril_L]), X(lm[I.nostril_R]), '#fcd34d', 'nose');
     seg(X(lm[I.lip_top]), X(lm[I.lip_bot]), '#fca5a5', 'lip');
+    // contour rings (visual check of ring indices)
+    octx.lineWidth = 1.5;
+    for (const [ring, color] of [[EYE_RING_L, '#7dd3fc'], [EYE_RING_R, '#7dd3fc'], [LIP_RING, '#fca5a5']]) {
+      octx.strokeStyle = color; octx.beginPath();
+      ring.forEach((idx, j) => {
+        const p = X(lm[idx]);
+        j ? octx.lineTo(p.x, p.y) : octx.moveTo(p.x, p.y);
+      });
+      octx.closePath(); octx.stroke();
+    }
   }
   if ($('layerThirds').checked) {
     const x0 = X(lm[I.cheek_L]).x, x1 = X(lm[I.cheek_R]).x;
@@ -367,7 +386,14 @@ function renderViewer() {
   }
 
   const q = $('qualityBox');
-  q.innerHTML = `frontality <b class="${it.quality}">${it.metrics.frontality.toFixed(0)} · ${it.quality}</b>` +
+  const qv = it.qv;
+  q.innerHTML = `image quality <b class="${qv.verdict}">${qv.verdict}</b>` +
+    ` &nbsp; sharp ${qv.sharpness.toFixed(0)} &nbsp; expos ${qv.exposure.toFixed(0)}` +
+    ` &nbsp; clip ${qv.clipping_pct.toFixed(1)}% &nbsp; iid ${qv.iid_px.toFixed(0)}px` +
+    ` &nbsp; light-bal ${qv.illum_balance.toFixed(2)}` +
+    (qv.notes.length ? `<br>notes: ${qv.notes.join(' · ')}` : '') +
+    `<br>scale: ${it.scaleSource}${it.metrics.mm_per_px ? ` (${it.metrics.mm_per_px.toFixed(4)} mm/px)` : ' — mm values unavailable'}` +
+    `<br>frontality <b class="${it.quality}">${it.metrics.frontality.toFixed(0)} · ${it.quality}</b>` +
     ` &nbsp; roll ${it.metrics.roll_deg.toFixed(1)}° &nbsp; yaw≈ ${it.metrics.yaw_proxy_deg.toFixed(1)}°` +
     ` &nbsp; asym(9) ${it.metrics.asymmetry_9.toFixed(3)}` +
     (it.quality === 'low' ? ` &nbsp; <b class="low">⚠ pose may distort ratios</b>` : '');
@@ -491,6 +517,32 @@ function renderMethod() {
     <table>${gameIdx}</table>
     <h3>lab-only landmark indices</h3>
     <table>${extraIdx}</table>
+    <h3>v2 — image quality (refusal gates)</h3>
+    <p>sharpness = Laplacian variance on a 256px-wide grayscale copy (fail &lt; 60, warn &lt; 120).
+    exposure = mean luma inside the landmark bbox (warn outside 50–205);
+    clipping = % of bbox pixels near black/white (fail &gt; 25%, warn &gt; 10%).
+    face size = interpupillary px (fail &lt; 40, warn &lt; 90).
+    illumination balance = |left-half − right-half| ÷ mean (warn &gt; 0.25, harsh side light).
+    verdict <b>fail</b> means the instrument will not stand behind the numbers.</p>
+    <h3>v2 — physical scale</h3>
+    <p>iris diameter = mean of horizontal/vertical axes across both irises
+    (landmarks 469↔471, 470↔472, 474↔476, 475↔477; centers 468/473).
+    mm/px = 11.7 ÷ iris px. Human iris ≈ 11.7mm ±5% biological variation, so mm
+    values are estimates. Entering a known IPD overrides the anchor (scale source
+    shows iris | calibrated | none). If the detector returns only 468 points, mm
+    values are unavailable.</p>
+    <h3>v2 — contour areas</h3>
+    <p>shoelace area of full landmark rings: eye fissure 16-pt rings
+    (L: 33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246;
+    R: 362,382,381,380,374,373,390,249,263,466,388,387,386,385,384,398),
+    lip vermilion 20-pt ring
+    (61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185).
+    Rings are drawn on the overlay — verify them visually.</p>
+    <h3>browser vs offline</h3>
+    <p>This page implements everything above. True 3D head pose (solvePnP,
+    yaw/pitch/roll + reprojection error) needs OpenCV and lives in the offline
+    pipeline (<span style="color:var(--txt)">facial-preference-runs/telemetry_v2.py</span>);
+    the page keeps the 2D roll/yaw proxies and the frontality score instead.</p>
     <h3>every metric</h3>
     <table>${formulas}</table>
     <p>◆ = also computed inside the game with the identical definition. canon deviations are

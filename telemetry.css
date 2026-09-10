@@ -33,6 +33,12 @@
 .hist-item .cmp { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; accent-color: var(--acc); }
 .hist-item .q { position: absolute; top: 6px; right: 6px; font-size: 10px; font-family: var(--mono); padding: 2px 5px; border-radius: 4px; background: rgba(0,0,0,.65); }
 .q.high { color: var(--good); } .q.medium { color: #fcd34d; } .q.low { color: var(--warn); }
+.q.pass { color: var(--good); } .q.warn { color: #fcd34d; } .q.fail { color: var(--warn); }
+.calib { margin-top: 10px; }
+.calib-input {
+  width: 90px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  color: var(--txt); font-family: var(--mono); font-size: 13px; padding: 5px 8px; margin-left: 6px;
+}
 
 .viewer-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .layers { display: flex; gap: 14px; font-size: 13px; color: var(--dim); font-family: var(--mono); }
