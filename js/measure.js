@@ -51,20 +51,28 @@ export async function ensureLandmarker(onStatus) {
 
 export function measurementReady() { return ready; }
 
+export const LANDMARK_IDX = IDX;
+
+// Raw 468-landmark detection — the same detector the game uses.
+// The telemetry lab builds its extended metric set on top of this.
+export function detectLandmarks(img) {
+  if (!landmarker) return null;
+  try {
+    const res = landmarker.detect(img);
+    if (!res.faceLandmarks || !res.faceLandmarks.length) return null;
+    return res.faceLandmarks[0];
+  } catch (e) {
+    return null;
+  }
+}
+
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 
 // img: HTMLImageElement (must be loaded). Returns ratios or null.
 export function measureImage(img) {
-  if (!landmarker) return null;
-  let res;
-  try {
-    res = landmarker.detect(img);
-  } catch (e) {
-    return null;
-  }
-  if (!res.faceLandmarks || !res.faceLandmarks.length) return null;
-  const lm = res.faceLandmarks[0];
+  const lm = detectLandmarks(img);
+  if (!lm) return null;
   const P = {};
   for (const [k, i] of Object.entries(IDX)) P[k] = lm[i];
 

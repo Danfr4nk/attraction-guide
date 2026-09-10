@@ -1,0 +1,73 @@
+/* telemetry lab — sits on the same theme vars as the game */
+.topbar { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.backlink { color: var(--dim); text-decoration: none; font-size: 13px; }
+.backlink:hover { color: var(--txt); }
+.brand-name { font-weight: 700; letter-spacing: .5px; font-size: 18px; }
+.topbar-sub { color: var(--dim); font-size: 12px; font-family: var(--mono); }
+.model-status { margin-left: auto; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.model-status.ready { color: var(--good); }
+
+.lab { max-width: 1200px; }
+.lab h2 { font-size: 15px; margin: 0 0 10px; text-transform: lowercase; }
+
+.dropzone {
+  border: 2px dashed var(--line); border-radius: 10px; padding: 28px 20px;
+  text-align: center; color: var(--dim); transition: border-color .15s, background .15s;
+}
+.dropzone.dragover { border-color: var(--acc); background: rgba(216,180,254,.06); }
+.dropzone p { margin: 6px 0; }
+.filebtn {
+  display: inline-block; padding: 8px 18px; border-radius: 8px; cursor: pointer;
+  background: var(--acc); color: #141414; font-weight: 600; font-size: 14px;
+}
+.hint { font-size: 12px; color: var(--dim); }
+
+.history { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.hist-item {
+  position: relative; border: 1px solid var(--line); border-radius: 8px; overflow: hidden;
+  cursor: pointer; background: var(--bg); width: 108px;
+}
+.hist-item img { width: 108px; height: 108px; object-fit: cover; display: block; }
+.hist-item .nm { font-size: 10px; font-family: var(--mono); color: var(--dim); padding: 4px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hist-item.active { border-color: var(--acc); box-shadow: 0 0 0 1px var(--acc); }
+.hist-item .cmp { position: absolute; top: 6px; left: 6px; width: 18px; height: 18px; accent-color: var(--acc); }
+.hist-item .q { position: absolute; top: 6px; right: 6px; font-size: 10px; font-family: var(--mono); padding: 2px 5px; border-radius: 4px; background: rgba(0,0,0,.65); }
+.q.high { color: var(--good); } .q.medium { color: #fcd34d; } .q.low { color: var(--warn); }
+
+.viewer-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.layers { display: flex; gap: 14px; font-size: 13px; color: var(--dim); font-family: var(--mono); }
+.layers input { accent-color: var(--acc); }
+.viewer-body { margin-top: 10px; }
+.canvas-wrap { background: #000; border-radius: 8px; overflow: hidden; }
+.canvas-wrap canvas { display: block; width: 100%; height: auto; }
+.quality { margin-top: 10px; font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.quality b.high { color: var(--good); } .quality b.medium { color: #fcd34d; } .quality b.low { color: var(--warn); }
+
+.metric-group { margin-bottom: 6px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.metric-group > summary { cursor: pointer; padding: 10px 14px; font-weight: 600; font-size: 13px; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+.metric-group > summary::-webkit-details-marker { display: none; }
+.metric-group > summary .cnt { color: var(--dim); font-weight: 400; font-family: var(--mono); font-size: 11px; }
+.metric-group table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+.metric-group td { padding: 5px 14px; border-top: 1px solid var(--line); }
+.metric-group td.k { color: var(--dim); width: 46%; }
+.metric-group td.v { text-align: right; width: 24%; }
+.metric-group td.n { text-align: right; color: var(--dim); font-size: 11px; width: 30%; }
+.gametag { color: var(--acc); font-size: 10px; border: 1px solid var(--acc); border-radius: 3px; padding: 0 4px; margin-left: 6px; }
+.vec-count { color: var(--dim); font-weight: 400; font-size: 12px; font-family: var(--mono); }
+
+.table-wrap { overflow-x: auto; }
+#deltaTable { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
+#deltaTable th, #deltaTable td { padding: 6px 10px; border-bottom: 1px solid var(--line); text-align: right; }
+#deltaTable th:first-child, #deltaTable td:first-child { text-align: left; color: var(--dim); }
+#deltaTable tr.hot td { color: var(--acc); }
+#deltaTable tr.hot td.dv { font-weight: 700; }
+
+.method-body { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+.method-body h3 { color: var(--txt); font-size: 13px; margin: 14px 0 6px; }
+.method-body table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+.method-body td { padding: 4px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.method-body td:first-child { color: var(--acc); white-space: nowrap; }
+.method-card summary { cursor: pointer; }
+.method-card summary h2 { display: inline; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { font-size: 14px; padding: 8px 16px; border-radius: 8px; cursor: pointer; border: 1px solid var(--line); background: var(--panel); color: var(--txt); }

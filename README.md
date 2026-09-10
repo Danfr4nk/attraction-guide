@@ -43,3 +43,15 @@ New phase-2 axes are picked up automatically (add labels in `js/app.js` `PAIR_AX
 - On-demand face generation per round (generation backend) instead of a fixed bank
 - Cross-run synthesis: diff preference vectors across runs
 - More micro-variables: philtrum, forehead height, chin projection, cheekbone height
+
+## v1.1 — telemetry lab (`telemetry.html`)
+
+Standalone precision measurement instrument, outside the game flow. Same MediaPipe
+FaceLandmarker detector and landmark indices as the game (`js/measure.js` exports
+`detectLandmarks` + `LANDMARK_IDX`); the lab builds an extended ~40-metric telemetry
+vector on top: gonial angles, facial thirds, fWHR proxy, canthal tilt, brow arch,
+philtrum/nose, upper/lower lip, 9-pair asymmetry, roll/yaw pose proxies, a 0–100
+frontality quality score, and deviations from five neoclassical canons. Features:
+drag-and-drop multi-upload, telestrator overlay (mesh / metric lines / thirds dividers),
+session history with pose-quality badges, two-image A/B delta table, JSON/CSV export,
+copyable summary, and a method section documenting every formula and landmark index.
