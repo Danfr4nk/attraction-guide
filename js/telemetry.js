@@ -3,9 +3,8 @@
 // but lives outside the game flow: upload → full telemetry vector → overlay.
 import { ensureLandmarker, detectLandmarks, LANDMARK_IDX } from './measure.js';
 import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING } from './telemetry2.js';
-
-METRIC_DEFS.push(...V2_METRIC_DEFS);
-GROUPS.push(...V2_GROUPS);
+// NOTE: V2 defs are appended AFTER the METRIC_DEFS / GROUPS declarations below
+// (const arrays are in the temporal dead zone until their declaration executes).
 
 const EXTRA = {
   brow_L: [70, 63, 105, 66, 107],   // outer → inner
@@ -104,6 +103,10 @@ export const METRIC_DEFS = [
   { key: 'canon_mouth', group: 'canons', label: 'mouth = 1.5× nose', fmt: pct1, hint: '|ratio−1.5| ÷ 1.5' },
   { key: 'canon_spacing', group: 'canons', label: 'IPD = 1 eye width', fmt: pct1, hint: '|ratio−1| × 100' },
 ];
+
+// v2 additions ship in telemetry2.js — merged here after both arrays exist
+METRIC_DEFS.push(...V2_METRIC_DEFS);
+GROUPS.push(...V2_GROUPS);
 
 export const DEF_BY_KEY = Object.fromEntries(METRIC_DEFS.map(d => [d.key, d]));
 
