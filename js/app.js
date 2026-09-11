@@ -40,6 +40,7 @@ const P1_ROUNDS_BEFORE_ADVANCE = 3;
 // feature picks: per-metric A/B choice on phase-2 pairs (|z| vs bank stats)
 const FEATURE_Z_MIN = 0.5, FEATURE_MAX_ROWS = 6;
 let currentFeaturePicks = {};
+let currentFeatureRows = [];
 let featuresFor = null;
 
 let BANK = [];
@@ -192,8 +193,105 @@ function inferPhase1(winnerArch, shownArchs) {
   if (lead[0] !== winnerArch && lead[1] >= 2) s += ` Note: ${ARCHETYPE_LABELS[lead[0]]} led at ${lead[1]}W — lead change, treat as contested.`;
   return { text: s, cls };
 }
-function consistentCount(axis) {
-  return state.axisTrials[axis].filter((t) => t.consistent).length;
+// ---------- unified evidence ----------
+// Every phase-2 trial yields evidence per axis. A direct feature pick overrides
+// the holistic read for its metric; a confounded holistic read with no direct
+// backup is dropped. Cross-axis picks count: judging B's jaw during a lips
+// trial is jaw evidence. Evidence points drive retirement and the queue.
+function axisEvidence(axis) {
+  const target = AXIS_TARGET[axis];
+  const dir = STATS ? STATS.axis_dir[axis] : 0;
+  const ref = { v: dir !== 0 ? dir : null }; // dir=0 axes: first observation sets the reference
+  const pts = [];
+  for (const r of state.rounds) {
+    if (r.phase !== 2) continue;
+    const fps = (r.featurePicks || []).filter((p) => p.k === target && p.dz != null && isFinite(p.dz) && Math.abs(p.dz) > 0.05);
+    if (fps.length) {
+      const dz = fps[0].dz;
+      if (ref.v === null) ref.v = Math.sign(dz);
+      pts.push({ n: r.n, source: 'direct', consistent: Math.sign(dz) === ref.v });
+      continue;
+    }
+    if (r.axis === axis && r.trial && r.trial.targetZ != null && isFinite(r.trial.targetZ) && Math.abs(r.trial.targetZ) > 0.05) {
+      if (r.trial.confound) continue; // confounded holistic, no direct backup: dropped
+      const tz = r.trial.targetZ;
+      if (ref.v === null) ref.v = Math.sign(tz);
+      pts.push({ n: r.n, source: 'holistic', consistent: Math.sign(tz) === ref.v });
+    }
+  }
+  return pts;
+}
+function axisScore(axis) {
+  const pts = axisEvidence(axis);
+  return {
+    c: pts.filter((p) => p.consistent).length,
+    n: pts.length,
+    direct: pts.filter((p) => p.source === 'direct').length,
+  };
+}
+// Wilson score interval for small-n proportions — error bars instead of raw counts.
+function wilson(x, n) {
+  const z = 1.96;
+  if (!n) return { lo: 0, hi: 1, center: 0.5 };
+  const p = x / n, d = 1 + z * z / n;
+  const center = (p + z * z / (2 * n)) / d;
+  const h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
+  return { lo: Math.max(0, center - h), hi: Math.min(1, center + h), center };
+}
+const pct = (v) => Math.round(v * 100) + '%';
+const ciStr = (w) => `${pct(w.center)} [${pct(w.lo)}–${pct(w.hi)}]`;
+
+// Per-metric marginal preference analysis from feature picks.
+function metricAnalysis() {
+  const per = {};
+  for (const r of state.rounds) {
+    if (r.phase !== 2) continue;
+    for (const p of (r.featurePicks || [])) {
+      const a = (per[p.k] = per[p.k] || { picks: [], noCalls: [] });
+      if (p.winner) a.picks.push(p);
+      else if (p.zAbs != null) a.noCalls.push(p.zAbs);
+    }
+  }
+  const out = {};
+  for (const [k, a] of Object.entries(per)) {
+    const higher = a.picks.filter((p) => p.dz > 0.05);
+    const lower = a.picks.filter((p) => p.dz < -0.05);
+    const n = higher.length + lower.length;
+    const meanAbsZ = a.picks.length ? a.picks.reduce((s, p) => s + Math.abs(p.dz), 0) / a.picks.length : null;
+    const firstCall = a.picks.length ? Math.min(...a.picks.map((p) => Math.abs(p.dz))) : null;
+    const maxNoCall = a.noCalls.length ? Math.max(...a.noCalls) : null;
+    // shape: all-one-direction = monotonic; mixed with higher-picks-below-lower-picks = peaked
+    let shape = '—';
+    if (n >= 1 && lower.length === 0) shape = 'monotonic ↑';
+    else if (n >= 1 && higher.length === 0) shape = 'monotonic ↓';
+    else if (n >= 4) {
+      const mean = (arr) => arr.reduce((s, v) => s + v, 0) / arr.length;
+      const wzH = higher.map((p) => p.wz).filter((v) => v != null);
+      const wzL = lower.map((p) => p.wz).filter((v) => v != null);
+      shape = wzH.length && wzL.length && mean(wzH) < mean(wzL) ? 'peaked' : 'mixed';
+    } else if (n >= 2) shape = 'mixed';
+    const wzs = a.picks.map((p) => p.wz).filter((v) => v != null);
+    const ideal = wzs.length ? wzs.reduce((s, v) => s + v, 0) / wzs.length : null;
+    out[k] = { n, higher: higher.length, lower: lower.length, w: wilson(higher.length, n), meanAbsZ, firstCall, maxNoCall, shape, ideal };
+  }
+  return out;
+}
+// Configurality: does the holistic winner match the feature-majority winner?
+// Low agreement = the whole beats its parts; marginal sums can't be trusted.
+function configurality() {
+  let agree = 0, total = 0, ties = 0;
+  for (const r of state.rounds) {
+    if (r.phase !== 2) continue;
+    const picks = (r.featurePicks || []).filter((p) => p.winner);
+    if (!picks.length) continue;
+    const tally = {};
+    for (const p of picks) tally[p.winner] = (tally[p.winner] || 0) + 1;
+    const top = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+    if (top.length > 1 && top[0][1] === top[1][1]) { ties++; continue; }
+    total++;
+    if (top[0][0] === r.ranking[0]) agree++;
+  }
+  return { agree, total, ties, rate: total ? agree / total : null };
 }
 function inferPhase2(axis, winner, loser) {
   const mw = measureCache.get(winner.id), ml = measureCache.get(loser.id);
@@ -202,7 +300,7 @@ function inferPhase2(axis, winner, loser) {
   const trial = {
     n: state.p2Round, anchor: winner.anchor, shown: [winner.id, loser.id],
     winner: winner.id, loser: loser.id, targetMetric: target,
-    targetDelta: null, targetZ: null, consistent: null, confound: false,
+    targetDelta: null, targetZ: null, confound: false,
     confoundMetric: null, topDeltas: [], unmeasured: false,
   };
   let inf;
@@ -212,9 +310,6 @@ function inferPhase2(axis, winner, loser) {
     const tz = dz(target);
     trial.targetDelta = +(mw[target] - ml[target]).toFixed(3);
     trial.targetZ = +tz.toFixed(2);
-    trial.consistent = dir === 0
-      ? winner.variant === PAIR_AXES[axis][0]
-      : Math.sign(tz) === dir && Math.abs(tz) > 0.05;
     const ranked = STRUCT.filter((k) => isFinite(dz(k))).map((k) => ({ k, z: dz(k) }))
       .sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
     trial.topDeltas = ranked.slice(0, 3).map((o) => ({ k: o.k, z: +o.z.toFixed(2) }));
@@ -223,31 +318,26 @@ function inferPhase2(axis, winner, loser) {
       trial.confound = true;
       trial.confoundMetric = topConf.k;
     }
-    const c = consistentCount(axis) + (trial.consistent ? 1 : 0);
-    const [cls, label] = confidence(c);
     const dLabel = dir === 0
-      ? (trial.consistent ? `${winner.variant} (label)` : `${loser.variant} (label)`)
+      ? `${winner.variant} (label)`
       : `${target} ${tz >= 0 ? '+' : ''}${tz.toFixed(2)}σ`;
     inf = {
-      text: `${axis} · ${winner.variant} > ${loser.variant} — ${dLabel}, target-consistent ${c}W — ${label}.` +
+      text: `${axis} · ${winner.variant} > ${loser.variant} — ${dLabel}` +
         (trial.confound ? ` ⚠ confound: ${METRIC_LABELS[trial.confoundMetric]} moved harder (${topConf.z.toFixed(2)}σ vs ${tz.toFixed(2)}σ).` : ''),
-      cls: trial.confound ? 'weak' : cls,
+      cls: trial.confound ? 'weak' : 'leaning', // provisional; lockRanking refines from unified evidence
     };
   } else {
-    // measurement or stats unavailable: label fallback, flagged
+    // measurement or stats unavailable: holistic only, flagged
     trial.unmeasured = true;
-    const c = consistentCount(axis);
-    const [cls, label] = confidence(c);
-    inf = { text: `${axis} · ${winner.variant} > ${loser.variant} — unmeasured fallback (${label}).`, cls: 'weak' };
+    inf = { text: `${axis} · ${winner.variant} > ${loser.variant} — unmeasured, holistic only.`, cls: 'weak' };
   }
   state.axisTrials[axis].push(trial);
-  updateAxisStatus(axis);
   return { text: inf.text, cls: inf.cls, trial };
 }
 function updateAxisStatus(axis) {
-  const t = state.axisTrials[axis];
-  if (consistentCount(axis) >= CONFIRM_WINS) state.axisStatus[axis] = 'confirmed';
-  else if (t.length >= MAX_TRIALS) state.axisStatus[axis] = 'unresolved';
+  const sc = axisScore(axis);
+  if (sc.c >= CONFIRM_WINS) state.axisStatus[axis] = 'confirmed';
+  else if (sc.n >= MAX_TRIALS) state.axisStatus[axis] = 'unresolved';
 }
 
 // ---------- adaptive queue ----------
@@ -268,11 +358,10 @@ function pairPool(axis) {
 function pickAxis() {
   const open = Object.keys(PAIR_AXES).filter((a) => state.axisStatus[a] === 'open' && pairPool(a).length > 0);
   if (!open.length) return null;
-  const fresh = open.filter((a) => state.axisTrials[a].length === 0);
-  if (fresh.length) return fresh[0]; // initial sweep, fixed axis order
-  // adaptive: fewest target-consistent trials, then fewest trials total
+  // uncertainty-driven: fewest evidence points first, then highest uncertainty (rate nearest 0.5)
+  const unc = (a) => { const s = axisScore(a); return s.n ? 1 - Math.abs(2 * (s.c / s.n) - 1) : 1; };
   return open.slice().sort((a, b) =>
-    consistentCount(a) - consistentCount(b) || state.axisTrials[a].length - state.axisTrials[b].length)[0];
+    axisScore(a).n - axisScore(b).n || unc(b) - unc(a))[0];
 }
 function pickPair(axis) {
   const pool = pairPool(axis).sort((a, b) => b.targetZ - a.targetZ);
@@ -381,6 +470,7 @@ function renderFeatureRows() {
     .filter((o) => o.k === target || Math.abs(o.z) >= FEATURE_Z_MIN)
     .sort((a, b) => Math.abs(b.z) - Math.abs(a.z))
     .slice(0, FEATURE_MAX_ROWS);
+  currentFeatureRows = rows; // presented-but-uncalled rows feed threshold analysis
   host.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'fp-head';
@@ -460,29 +550,46 @@ function lockRanking() {
     const res = inferPhase2(r.axis, winner, loser);
     inf = res; trialRec = res.trial;
   }
-  // feature picks (phase 2): per-metric direct preferences, winner stored as face id,
-  // dz signed winner-minus-loser so the profile can aggregate without the measure cache
+  // feature picks (phase 2): per-metric direct preferences. Winner stored as face id;
+  // dz signed winner-minus-loser, wz the winner's bank z-score (revealed ideal point).
+  // Uncalled presented rows are recorded too (winner null, zAbs set) for threshold analysis.
   let fp = [];
   if (r.phase === 2) {
     const [fidA, fidB] = r.faces;
     const mA = measureCache.get(fidA), mB = measureCache.get(fidB);
     const sd = STATS ? STATS.metrics : null;
-    for (const [k, side] of Object.entries(currentFeaturePicks)) {
-      if (!side) continue;
-      const wfid = side === 'A' ? fidA : fidB;
-      let dz = null;
-      if (mA && mB && sd && sd[k] && isFinite(mA[k]) && isFinite(mB[k]))
-        dz = +(((side === 'A' ? mA[k] - mB[k] : mB[k] - mA[k]) / sd[k].std).toFixed(2));
-      fp.push({ k, winner: wfid, dz });
-    }
-    if (fp.length) {
-      const agree = fp.filter((p) => p.winner === ranking[0]).length;
-      inf.text += ` Features: ${agree}/${fp.length} with holistic pick.`;
+    for (const { k, z } of currentFeatureRows) {
+      const side = currentFeaturePicks[k];
+      if (side) {
+        const wfid = side === 'A' ? fidA : fidB;
+        let dz = null, wz = null;
+        if (mA && mB && sd && sd[k] && isFinite(mA[k]) && isFinite(mB[k])) {
+          const wv = side === 'A' ? mA[k] : mB[k], lv = side === 'A' ? mB[k] : mA[k];
+          dz = +((wv - lv) / sd[k].std).toFixed(2);
+          wz = +((wv - sd[k].mean) / sd[k].std).toFixed(2);
+        }
+        fp.push({ k, winner: wfid, dz, wz });
+      } else {
+        fp.push({ k, winner: null, dz: null, wz: null, zAbs: +Math.abs(z).toFixed(2) });
+      }
     }
   }
-  const rec = { n: r.n, phase: r.phase, axis: r.axis || null, anchor: r.anchor || null, shown: r.faces, ranking, inference: inf.text, featurePicks: fp };
+  const rec = { n: r.n, phase: r.phase, axis: r.axis || null, anchor: r.anchor || null, shown: r.faces, ranking, inference: '', featurePicks: fp };
   if (trialRec) { trialRec.featurePicks = fp; rec.trial = trialRec; }
   state.rounds.push(rec);
+  if (r.phase === 2) {
+    updateAxisStatus(r.axis);
+    const sc = axisScore(r.axis);
+    const [fcls, flabel] = confidence(sc.c);
+    inf.text += ` — ${sc.c}/${sc.n} consistent${sc.direct ? ` (${sc.direct} direct)` : ''}, ${flabel}.`;
+    inf.cls = fcls;
+    const answered = fp.filter((p) => p.winner);
+    if (answered.length) {
+      const agree = answered.filter((p) => p.winner === ranking[0]).length;
+      inf.text += ` Features: ${agree}/${answered.length} with holistic pick.`;
+    }
+  }
+  rec.inference = inf.text;
   save();
   $('#inference').textContent = inf.text;
   renderRoundStats(ranking);
@@ -514,48 +621,50 @@ function renderRoundStats(ranking) {
 const AXIS_STATUS_LABEL = { open: 'open', confirmed: 'confirmed', unresolved: 'unresolved', 'no-pairs': 'no valid pairs' };
 function renderProfile() {
   if (!state) return;
-  let html = '<table class="axes"><tr><th>axis</th><th>evidence</th><th>trials</th><th>confounds</th><th>status</th></tr>';
+  let html = '<table class="axes"><tr><th>axis</th><th>evidence</th><th>consistency 95% CI</th><th>status</th></tr>';
   for (const a of ARCHETYPES) {
     const w = state.archWins[a];
     const [cls, label] = confidence(w);
-    html += `<tr><td>archetype</td><td>${ARCHETYPE_LABELS[a]}</td><td class="mono">${w}W</td><td class="mono">—</td><td><span class="conf ${cls}">${label}</span></td></tr>`;
+    html += `<tr><td>archetype</td><td class="mono">${ARCHETYPE_LABELS[a]}</td><td class="mono">—</td><td><span class="conf ${cls}">${label}</span></td></tr>`;
   }
   for (const axis of Object.keys(PAIR_AXES)) {
-    const trials = state.axisTrials[axis];
-    const c = consistentCount(axis);
-    const conf = trials.filter((t) => t.confound).length;
-    const unm = trials.filter((t) => t.unmeasured).length;
-    const [cls, label] = confidence(c);
+    const sc = axisScore(axis);
+    const w = wilson(sc.c, sc.n);
+    const [cls, label] = confidence(sc.c);
     const st = state.axisStatus[axis];
     const pool = pairPool(axis).length;
     const statusLabel = st === 'open' && pool === 0 ? 'no valid pairs' : (AXIS_STATUS_LABEL[st] || st);
-    const ev = `${AXIS_TARGET[axis]} ${c}W-consistent${unm ? ` (+${unm} unmeasured)` : ''}`;
-    html += `<tr><td>${axis}</td><td class="mono">${ev}</td><td class="mono">${trials.length}</td>` +
-      `<td class="mono">${conf ? `⚠${conf}` : '—'}</td>` +
+    const ev = `${sc.c}/${sc.n}` + (sc.direct ? ` <span class="hint">${sc.direct} direct</span>` : '');
+    html += `<tr><td>${axis}</td><td class="mono">${ev}</td><td class="mono">${ciStr(w)}</td>` +
       `<td><span class="conf ${st === 'confirmed' ? 'confirmed' : st === 'unresolved' ? 'weak' : 'leaning'}">${statusLabel}</span> <span class="hint">${label}</span></td></tr>`;
   }
   $('#profile-axes').innerHTML = html + '</table>';
 
-  // feature picks: direct per-metric preferences, aggregated as prefer-higher vs prefer-lower
-  const featAgg = {};
-  for (const r of state.rounds) for (const p of (r.featurePicks || [])) {
-    if (p.dz == null || !isFinite(p.dz)) continue;
-    const a = featAgg[p.k] = featAgg[p.k] || { higher: 0, lower: 0, even: 0 };
-    if (p.dz > 0.05) a.higher++;
-    else if (p.dz < -0.05) a.lower++;
-    else a.even++;
+  // configurality: does the holistic winner match the feature-majority winner?
+  const cf = configurality();
+  let cfHtml;
+  if (cf.total) {
+    const verdict = cf.rate >= 0.8 ? 'marginals compose cleanly'
+      : cf.rate >= 0.5 ? 'partially configural — some wholes beat their parts'
+      : 'highly configural — do not trust marginal sums';
+    cfHtml = `<p>configurality: holistic pick matched feature-majority <b class="mono">${cf.agree}/${cf.total}</b> (${pct(cf.rate)}) — ${verdict}</p>`;
+  } else {
+    cfHtml = `<p class="hint">${cf.ties ? 'feature picks so far are all split decisions' : 'no feature picks yet — they appear on phase-2 pairs'}</p>`;
   }
-  const featRows = Object.entries(featAgg)
-    .map(([k, a]) => ({ k, a, tot: a.higher + a.lower + a.even }))
-    .filter((o) => o.tot > 0)
-    .sort((x, y) => y.tot - x.tot);
-  $('#profile-features').innerHTML = featRows.length
-    ? '<table><tr><th>metric</th><th>prefer higher</th><th>prefer lower</th><th>even</th><th>lean</th></tr>' +
-      featRows.map((o) => {
-        const lean = o.a.higher > o.a.lower ? 'higher' : o.a.lower > o.a.higher ? 'lower' : '—';
-        return `<tr><td>${METRIC_LABELS[o.k] || o.k}</td><td class="mono">${o.a.higher}×</td><td class="mono">${o.a.lower}×</td><td class="mono">${o.a.even ? o.a.even + '×' : '—'}</td><td><span class="conf ${o.tot >= 3 ? 'confirmed' : o.tot >= 2 ? 'leaning' : 'weak'}">${lean}</span></td></tr>`;
+  // marginal preferences: direct per-metric evidence with error bars, ideals, thresholds, shape
+  const maRows = Object.entries(metricAnalysis()).filter(([, v]) => v.n > 0).sort((a, b) => b[1].n - a[1].n);
+  $('#profile-features').innerHTML = cfHtml + (maRows.length
+    ? '<table><tr><th>metric</th><th>prefer higher</th><th>mean |z|</th><th>discrimination</th><th>shape</th><th>ideal z</th></tr>' +
+      maRows.map(([k, v]) => {
+        const disc = v.firstCall != null
+          ? `calls from ${v.firstCall.toFixed(2)}σ${v.maxNoCall != null ? ` · silence to ${v.maxNoCall.toFixed(2)}σ` : ''}`
+          : '—';
+        const ideal = v.ideal != null ? `${v.ideal >= 0 ? '+' : ''}${v.ideal.toFixed(2)}σ` : '—';
+        return `<tr><td>${METRIC_LABELS[k] || k}</td><td class="mono">${v.higher}/${v.n} · ${ciStr(v.w)}</td>` +
+          `<td class="mono">${v.meanAbsZ != null ? v.meanAbsZ.toFixed(2) + 'σ' : '—'}</td>` +
+          `<td class="mono">${disc}</td><td>${v.shape}</td><td class="mono">${ideal}</td></tr>`;
       }).join('') + '</table>'
-    : '<p class="hint">no feature picks yet — they appear on phase-2 pairs</p>';
+    : '<p class="hint">no feature picks yet — they appear on phase-2 pairs</p>');
 
   const winners = state.rounds.map((r) => r.ranking[0]).filter((id) => measureCache.has(id));
   if (!winners.length) { $('#profile-means').innerHTML = '<p class="hint">no measured winners yet</p>'; return; }
@@ -570,11 +679,13 @@ function summaryText() {
   if (state.refVector) lines.push('round 0 (reference): ' + JSON.stringify(state.refVector));
   for (const a of ARCHETYPES) lines.push(`archetype ${ARCHETYPE_LABELS[a]}: ${state.archWins[a]}W [${confidence(state.archWins[a])[1]}]`);
   for (const axis of Object.keys(PAIR_AXES)) {
-    const t = state.axisTrials[axis];
-    const c = consistentCount(axis);
-    const conf = t.filter((x) => x.confound).length;
-    lines.push(`${axis} [${state.axisStatus[axis]}]: ${c} target-consistent / ${t.length} trials, ${conf} confounded, target=${AXIS_TARGET[axis]}`);
+    const sc = axisScore(axis);
+    lines.push(`${axis} [${state.axisStatus[axis]}]: ${sc.c}/${sc.n} consistent (${sc.direct} direct), 95% CI ${ciStr(wilson(sc.c, sc.n))}, target=${AXIS_TARGET[axis]}`);
   }
+  const cf = configurality();
+  if (cf.total) lines.push(`configurality: ${cf.agree}/${cf.total} holistic=feature-majority`);
+  for (const [k, v] of Object.entries(metricAnalysis()).filter(([, x]) => x.n > 0).sort((a, b) => b[1].n - a[1].n).slice(0, 8))
+    lines.push(`feature ${k}: ${v.higher}/${v.n} higher (${ciStr(v.w)}), ideal ${v.ideal != null ? (v.ideal >= 0 ? '+' : '') + v.ideal.toFixed(2) + 'σ' : '—'}, ${v.shape}`);
   return lines.join('\n');
 }
 
@@ -587,7 +698,11 @@ function renderLog() {
     const deltas = r.trial && r.trial.topDeltas.length
       ? r.trial.topDeltas.map((d) => `${d.k} ${d.z >= 0 ? '+' : ''}${d.z}σ`).join(', ') + (r.trial.confound ? ' ⚠' : '')
       : '—';
-    const feats = (r.featurePicks || []).map((p) => `${METRIC_LABELS[p.k] || p.k}:${p.winner === r.shown[0] ? 'A' : 'B'}`).join(', ') || '—';
+    const feats = (r.featurePicks || []).map((p) => {
+      const side = p.winner == null ? '—' : p.winner === r.shown[0] ? 'A' : 'B';
+      const dz = p.dz != null ? `(${p.dz > 0 ? '+' : ''}${p.dz})` : '';
+      return `${METRIC_LABELS[p.k] || p.k}:${side}${dz}`;
+    }).join(', ') || '—';
     html += `<tr><td>${r.n}</td><td>${r.phase}${r.axis ? ' · ' + r.axis : ''}</td><td class="mono">${r.shown.join(', ')}</td><td class="mono">${r.ranking.join(' > ')}</td><td class="mono">${deltas}</td><td class="mono">${feats}</td><td>${r.inference}</td></tr>`;
   }
   $('#log-table').innerHTML = html + '</table>';

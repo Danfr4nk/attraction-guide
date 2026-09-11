@@ -38,7 +38,7 @@
       <ul>
         <li><b>Eye color is pinned.</b> Every face in the bank is brown-eyed. It is never the deciding variable.</li>
         <li><b>Phase 1</b> — pick/rank 1 of 4 structural archetypes: wide-angular, long-narrow, heart, round.</li>
-        <li><b>Phase 2 (adaptive)</b> — the engine drills the highest-uncertainty micro-variable next: jaw, lips, eye spacing, brows, nose. Every pick is scored on <i>measured</i> metric deltas, z-scored against the bank — evidence accrues per metric direction, not per label. Axes retire at 3 consistent or 6 inconclusive trials.</li>
+        <li><b>Phase 2 (adaptive)</b> — the engine drills the highest-uncertainty micro-variable next: jaw, lips, eye spacing, brows, nose. Every pick is scored on <i>measured</i> metric deltas, z-scored against the bank. Optional per-feature A/B calls are <i>direct</i> evidence: they override the holistic read for their metric, count toward any axis whose target they touch, and confounded holistic reads with no direct backup are dropped. Axes retire at 3 consistent or 6 inconclusive evidence points.</li>
         <li><b>Rank mode:</b> click faces in order of preference, then lock the ranking. Richer than single-pick.</li>
         <li><b>Feature picks (phase 2):</b> for each measured difference between the pair, optionally pick which face's version you prefer — "A's jaw, B's eyes" becomes data, not just one holistic vote. Tap again to clear.</li>
         <li>Confidence: 1 pick = weak · 2 consistent = leaning · 3+ = confirmed.</li>
@@ -110,6 +110,6 @@
   <span>attraction-guide · synthetic faces only · measurements: MediaPipe FaceMesh ratios, computed locally</span>
 </footer>
 
-<script type="module" src="js/app.js?v=20260911d"></script>
+<script type="module" src="js/app.js?v=20260911e"></script>
 </body>
 </html>
