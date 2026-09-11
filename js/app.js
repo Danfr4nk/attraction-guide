@@ -37,6 +37,10 @@ const DISPLAY_KEYS = ['lip_fullness', 'gonial_angle_mean', 'eye_spacing_widths',
   'nose_w_to_intercanthal', 'brow_arch_mean', 'jaw_to_cheek', 'mean_asymmetry'];
 const CONFIRM_WINS = 3, MAX_TRIALS = 6;
 const P1_ROUNDS_BEFORE_ADVANCE = 3;
+// feature picks: per-metric A/B choice on phase-2 pairs (|z| vs bank stats)
+const FEATURE_Z_MIN = 0.5, FEATURE_MAX_ROWS = 6;
+let currentFeaturePicks = {};
+let featuresFor = null;
 
 let BANK = [];
 let STATS = null;   // { metrics: {k:{mean,std}}, axis_dir: {axis: -1|0|+1} }
@@ -169,6 +173,7 @@ function flushMeasures() {
     if (m) { measureCache.set(faceId, m); statsEl.textContent = fmtShort(m); }
     else statsEl.textContent = 'no face detected';
   }
+  renderFeatureRows();
 }
 
 // ---------- inference ----------
@@ -320,6 +325,9 @@ function renderRound() {
   stage.innerHTML = '';
   $('#inference').textContent = '';
   $('#round-stats').innerHTML = '';
+  $('#feature-picks').innerHTML = '';
+  featuresFor = null;
+  currentFeaturePicks = {};
   $('#lock-btn').disabled = true;
   $('#lock-btn').textContent = 'Lock ranking';
   $('#next-btn')?.remove();
@@ -347,6 +355,71 @@ function renderRound() {
     stage.appendChild(card);
   });
   updateRankUI();
+  renderFeatureRows(); // no-op until both faces measured; flushMeasures re-triggers
+}
+// ---------- feature picks ----------
+// Phase-2 pairs only: one row per metric where the pair actually differs
+// (|z| >= FEATURE_Z_MIN vs bank stats, target metric always included).
+// Optional — tap A/B per row, tap again to clear. Recorded on lock.
+function renderFeatureRows() {
+  const host = $('#feature-picks');
+  const r = currentRound;
+  if (!r || r.phase !== 2) { if (host) host.innerHTML = ''; return; }
+  const key = r.phase + ':' + r.n + ':' + r.faces.join(',');
+  if (featuresFor === key) return;
+  const [fidA, fidB] = r.faces;
+  const mA = measureCache.get(fidA), mB = measureCache.get(fidB);
+  if (!mA || !mB || !STATS) return;
+  featuresFor = key;
+  currentFeaturePicks = {};
+  const sd = STATS.metrics;
+  const target = AXIS_TARGET[r.axis];
+  const dz = (k) => (mA[k] - mB[k]) / sd[k].std;
+  const rows = Object.keys(METRIC_LABELS)
+    .filter((k) => sd[k] && isFinite(mA[k]) && isFinite(mB[k]) && isFinite(dz(k)))
+    .map((k) => ({ k, z: dz(k) }))
+    .filter((o) => o.k === target || Math.abs(o.z) >= FEATURE_Z_MIN)
+    .sort((a, b) => Math.abs(b.z) - Math.abs(a.z))
+    .slice(0, FEATURE_MAX_ROWS);
+  host.innerHTML = '';
+  const head = document.createElement('div');
+  head.className = 'fp-head';
+  head.innerHTML = `<b>feature picks</b> <span class="hint">optional · tap again to clear · <span id="fp-count">0</span> called</span>`;
+  host.appendChild(head);
+  const sub = document.createElement('div');
+  sub.className = 'hint';
+  sub.style.marginBottom = '8px';
+  sub.textContent = 'For each measured difference: which face\u2019s version do you prefer? A = left, B = right.';
+  host.appendChild(sub);
+  for (const { k, z } of rows) {
+    const row = document.createElement('div');
+    row.className = 'fp-row';
+    const hiTag = z >= 0 ? 'A▲' : 'B▲';
+    row.innerHTML =
+      `<span class="fp-k">${METRIC_LABELS[k]}${k === target ? ' <span class="target-tag">target</span>' : ''}</span>` +
+      `<span class="fp-v">A ${mA[k].toFixed(3)} · B ${mB[k].toFixed(3)} <span class="hint">${z >= 0 ? '+' : ''}${z.toFixed(1)}σ · ${hiTag} higher</span></span>`;
+    for (const side of ['A', 'B']) {
+      const b = document.createElement('button');
+      b.textContent = side;
+      b.dataset.side = side;
+      b.onclick = () => {
+        currentFeaturePicks[k] = currentFeaturePicks[k] === side ? null : side;
+        paintFpRow(row, k);
+        updateFpCount();
+      };
+      row.appendChild(b);
+    }
+    host.appendChild(row);
+  }
+  updateFpCount();
+}
+function paintFpRow(row, k) {
+  row.querySelectorAll('button[data-side]').forEach((b) =>
+    b.classList.toggle('on', currentFeaturePicks[k] === b.dataset.side));
+}
+function updateFpCount() {
+  const el = document.getElementById('fp-count');
+  if (el) el.textContent = Object.values(currentFeaturePicks).filter(Boolean).length;
 }
 function renderComplete() {
   $('#round-head').textContent = 'phase 2 complete — all axes resolved';
@@ -387,8 +460,28 @@ function lockRanking() {
     const res = inferPhase2(r.axis, winner, loser);
     inf = res; trialRec = res.trial;
   }
-  const rec = { n: r.n, phase: r.phase, axis: r.axis || null, anchor: r.anchor || null, shown: r.faces, ranking, inference: inf.text };
-  if (trialRec) rec.trial = trialRec;
+  // feature picks (phase 2): per-metric direct preferences, winner stored as face id,
+  // dz signed winner-minus-loser so the profile can aggregate without the measure cache
+  let fp = [];
+  if (r.phase === 2) {
+    const [fidA, fidB] = r.faces;
+    const mA = measureCache.get(fidA), mB = measureCache.get(fidB);
+    const sd = STATS ? STATS.metrics : null;
+    for (const [k, side] of Object.entries(currentFeaturePicks)) {
+      if (!side) continue;
+      const wfid = side === 'A' ? fidA : fidB;
+      let dz = null;
+      if (mA && mB && sd && sd[k] && isFinite(mA[k]) && isFinite(mB[k]))
+        dz = +(((side === 'A' ? mA[k] - mB[k] : mB[k] - mA[k]) / sd[k].std).toFixed(2));
+      fp.push({ k, winner: wfid, dz });
+    }
+    if (fp.length) {
+      const agree = fp.filter((p) => p.winner === ranking[0]).length;
+      inf.text += ` Features: ${agree}/${fp.length} with holistic pick.`;
+    }
+  }
+  const rec = { n: r.n, phase: r.phase, axis: r.axis || null, anchor: r.anchor || null, shown: r.faces, ranking, inference: inf.text, featurePicks: fp };
+  if (trialRec) { trialRec.featurePicks = fp; rec.trial = trialRec; }
   state.rounds.push(rec);
   save();
   $('#inference').textContent = inf.text;
@@ -443,6 +536,27 @@ function renderProfile() {
   }
   $('#profile-axes').innerHTML = html + '</table>';
 
+  // feature picks: direct per-metric preferences, aggregated as prefer-higher vs prefer-lower
+  const featAgg = {};
+  for (const r of state.rounds) for (const p of (r.featurePicks || [])) {
+    if (p.dz == null || !isFinite(p.dz)) continue;
+    const a = featAgg[p.k] = featAgg[p.k] || { higher: 0, lower: 0, even: 0 };
+    if (p.dz > 0.05) a.higher++;
+    else if (p.dz < -0.05) a.lower++;
+    else a.even++;
+  }
+  const featRows = Object.entries(featAgg)
+    .map(([k, a]) => ({ k, a, tot: a.higher + a.lower + a.even }))
+    .filter((o) => o.tot > 0)
+    .sort((x, y) => y.tot - x.tot);
+  $('#profile-features').innerHTML = featRows.length
+    ? '<table><tr><th>metric</th><th>prefer higher</th><th>prefer lower</th><th>even</th><th>lean</th></tr>' +
+      featRows.map((o) => {
+        const lean = o.a.higher > o.a.lower ? 'higher' : o.a.lower > o.a.higher ? 'lower' : '—';
+        return `<tr><td>${METRIC_LABELS[o.k] || o.k}</td><td class="mono">${o.a.higher}×</td><td class="mono">${o.a.lower}×</td><td class="mono">${o.a.even ? o.a.even + '×' : '—'}</td><td><span class="conf ${o.tot >= 3 ? 'confirmed' : o.tot >= 2 ? 'leaning' : 'weak'}">${lean}</span></td></tr>`;
+      }).join('') + '</table>'
+    : '<p class="hint">no feature picks yet — they appear on phase-2 pairs</p>';
+
   const winners = state.rounds.map((r) => r.ranking[0]).filter((id) => measureCache.has(id));
   if (!winners.length) { $('#profile-means').innerHTML = '<p class="hint">no measured winners yet</p>'; return; }
   const means = {};
@@ -467,13 +581,14 @@ function summaryText() {
 // ---------- log ----------
 function renderLog() {
   if (!state) return;
-  let html = '<table><tr><th>#</th><th>phase</th><th>shown</th><th>ranking</th><th>measured deltas</th><th>inference</th></tr>';
-  if (state.refVector) html += `<tr><td>0</td><td>ref</td><td>—</td><td>—</td><td>—</td><td class="mono">${JSON.stringify(state.refVector)}</td></tr>`;
+  let html = '<table><tr><th>#</th><th>phase</th><th>shown</th><th>ranking</th><th>measured deltas</th><th>feature picks</th><th>inference</th></tr>';
+  if (state.refVector) html += `<tr><td>0</td><td>ref</td><td>—</td><td>—</td><td>—</td><td>—</td><td class="mono">${JSON.stringify(state.refVector)}</td></tr>`;
   for (const r of state.rounds) {
     const deltas = r.trial && r.trial.topDeltas.length
       ? r.trial.topDeltas.map((d) => `${d.k} ${d.z >= 0 ? '+' : ''}${d.z}σ`).join(', ') + (r.trial.confound ? ' ⚠' : '')
       : '—';
-    html += `<tr><td>${r.n}</td><td>${r.phase}${r.axis ? ' · ' + r.axis : ''}</td><td class="mono">${r.shown.join(', ')}</td><td class="mono">${r.ranking.join(' > ')}</td><td class="mono">${deltas}</td><td>${r.inference}</td></tr>`;
+    const feats = (r.featurePicks || []).map((p) => `${METRIC_LABELS[p.k] || p.k}:${p.winner === r.shown[0] ? 'A' : 'B'}`).join(', ') || '—';
+    html += `<tr><td>${r.n}</td><td>${r.phase}${r.axis ? ' · ' + r.axis : ''}</td><td class="mono">${r.shown.join(', ')}</td><td class="mono">${r.ranking.join(' > ')}</td><td class="mono">${deltas}</td><td class="mono">${feats}</td><td>${r.inference}</td></tr>`;
   }
   $('#log-table').innerHTML = html + '</table>';
 }
