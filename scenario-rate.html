@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scenario ratings v1 — rate the inventory</title>
+<title>scenario ratings v2 — one knob at a time</title>
 <style>
   :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; --vio:#c678dd; }
   * { box-sizing:border-box; }
@@ -41,6 +41,7 @@
   th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--dim); font-weight:600; }
   .bar { display:inline-block; height:8px; border-radius:4px; background:var(--pick); vertical-align:middle; }
+  .bar.neg { background:var(--veto); }
   .verdict { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--vio); border-radius:10px; padding:16px 18px; margin:18px 0; }
   .verdict h3 { margin:0 0 8px; }
   .ok { color:var(--acc); } .bad { color:var(--veto); } .mid { color:var(--dim); } .soft { color:var(--gold); }
@@ -48,16 +49,15 @@
 </head>
 <body>
 <header>
-  <span class="brand">scenario ratings <span style="color:var(--dim)">v1</span></span>
+  <span class="brand">scenario ratings <span style="color:var(--dim)">v2</span></span>
   <span class="sub">all scenarios presume consenting adults</span>
   <a href="scenario.html">← scenario telemetry</a>
 </header>
 <main>
   <div id="rateView">
-    <div class="note" id="introNote">
-      <b>Rate each situation 1–10</b> — how willing you would be, gut answer, no overthinking.
-      <b>1</b> = not a chance, <b>10</b> = absolutely. <b>✕</b> = hard veto, worse than 1.
-      Each base situation is followed by its modifier variants — score each on its own.
+    <div class="note">
+      <b>Rate each situation 1–10</b> — gut answer. <b>1</b> = not a chance, <b>10</b> = absolutely, <b>✕</b> = hard veto.
+      Each modifier changes <b>exactly one thing</b> about the situation above it — score what that one change does.
     </div>
     <div id="prog"><div></div></div>
     <div id="progText">0 / 0 rated</div>
@@ -71,10 +71,10 @@
 
   <div id="doneView" class="hidden">
     <div class="verdict" id="verdictBox"></div>
+    <h3 class="sec">knob effects <span class="conf">— mean rating change when this one thing changes, base held fixed</span></h3>
+    <div id="deltaBox"></div>
     <h3 class="sec">groups <span class="conf">— mean rating per base situation</span></h3>
     <div id="groupBox"></div>
-    <h3 class="sec">metric baseline <span class="conf">— mean rating by metric level</span></h3>
-    <div id="metricBox"></div>
     <h3 class="sec">extremes</h3>
     <div id="extremeBox"></div>
     <div class="btnrow">
@@ -86,191 +86,157 @@
 </main>
 <script>
 "use strict";
-/* 24-metric psychosexual telemetry — same metric set as scenario.html.
-   Every rateable item carries a vec so ratings regress against metrics. */
+/* v2: single-knob perturbations. Every modifier changes exactly one metric
+   vs its base, so rating deltas isolate the causal effect of that metric. */
 const METRICS = [
-  { k:"S_sub",  name:"arousal substrate",  lv:["no woman","woman peripheral","woman central"], base:2 },
-  { k:"F_attr", name:"her attractiveness",  lv:["neutral","somewhat","highly"], base:2 },
-  { k:"P_pur",  name:"pursuit direction",   lv:["he experiments","mild interest","he pursues you"], base:0 },
-  { k:"N_x",    name:"taboo charge",        lv:["routine","you cross alone","mutual crossing"], base:2 },
-  { k:"A_auth", name:"authorship",          lv:["spontaneous","she directs","you direct"], base:2 },
-  { k:"film",   name:"recorded",            lv:["not recorded","ambiguous","filmed"], base:2 },
-  { k:"E_env",  name:"contact envelope",    lv:["touch only","includes oral","open-ended"], base:1 },
-  { k:"novel",  name:"novelty",             lv:["routine","familiar","first-time"], base:2 },
-  { k:"priv",   name:"privacy",             lv:["private","semi-private","exposure risk"], base:0 },
-  { k:"recip",  name:"reciprocity",         lv:["you give","mutual","you receive"], base:1 },
-  { k:"M_fam",  name:"his familiarity",     lv:["stranger","acquaintance","friend"], base:0 },
-  { k:"intim",  name:"emotional tone",      lv:["detached","playful","intimate"], base:1 },
-  { k:"F_init", name:"who proposed",        lv:["you did","mutual","she did"], base:1 },
-  { k:"after",  name:"aftermath",           lv:["never spoken of","friendly","ongoing dynamic"], base:2 },
-  { k:"turf",   name:"turf",                lv:["yours","neutral","hers"], base:0 },
-  { k:"party",  name:"party context",       lv:["sober","drinking","full party"], base:0 },
-  { k:"M_age",  name:"his age vs you",      lv:["younger","similar","older"], base:1 },
-  { k:"inten",  name:"physical intensity",  lv:["gentle","moderate","intense"], base:1 },
-  { k:"expl",   name:"explicitness",        lv:["unspoken","negotiated","explicit talk"], base:1 },
-  { k:"dur",    name:"duration",            lv:["brief scene","an evening","ongoing"], base:1 },
-  { k:"atten",  name:"your spotlight",      lv:["you're the focus","shared","you're peripheral"], base:1 },
-  { k:"visib",  name:"visibility",          lv:["fully private","circle knows","could get out"], base:0 },
-  { k:"F_part", name:"her participation",   lv:["watches","partial","full"], base:2 },
-  { k:"M_enth", name:"his enthusiasm",      lv:["reluctant","willing","eager"], base:1 }
+  { k:"S_sub",  name:"arousal substrate",  lv:["no woman","woman peripheral","woman central"] },
+  { k:"F_attr", name:"her attractiveness",  lv:["neutral","somewhat","highly"] },
+  { k:"P_pur",  name:"pursuit direction",   lv:["he experiments","mild interest","he pursues you"] },
+  { k:"N_x",    name:"taboo charge",        lv:["routine","you cross alone","mutual crossing"] },
+  { k:"A_auth", name:"authorship",          lv:["spontaneous","she directs","you direct"] },
+  { k:"film",   name:"recorded",            lv:["not recorded","ambiguous","filmed"] },
+  { k:"E_env",  name:"contact envelope",    lv:["touch only","includes oral","open-ended"] },
+  { k:"novel",  name:"novelty",             lv:["routine","familiar","first-time"] },
+  { k:"priv",   name:"privacy",             lv:["private","semi-private","exposure risk"] },
+  { k:"recip",  name:"reciprocity",         lv:["you give","mutual","you receive"] },
+  { k:"M_fam",  name:"his familiarity",     lv:["stranger","acquaintance","friend"] },
+  { k:"intim",  name:"emotional tone",      lv:["detached","playful","intimate"] },
+  { k:"F_init", name:"who proposed",        lv:["you did","mutual","she did"] },
+  { k:"after",  name:"aftermath",           lv:["never spoken of","friendly","ongoing dynamic"] },
+  { k:"turf",   name:"turf",                lv:["yours","neutral","hers"] },
+  { k:"party",  name:"party context",       lv:["sober","drinking","full party"] },
+  { k:"M_age",  name:"his age vs you",      lv:["younger","similar","older"] },
+  { k:"inten",  name:"physical intensity",  lv:["gentle","moderate","intense"] },
+  { k:"expl",   name:"explicitness",        lv:["unspoken","negotiated","explicit talk"] },
+  { k:"dur",    name:"duration",            lv:["brief scene","an evening","ongoing"] },
+  { k:"atten",  name:"your spotlight",      lv:["you're the focus","shared","you're peripheral"] },
+  { k:"visib",  name:"visibility",          lv:["fully private","circle knows","could get out"] },
+  { k:"F_part", name:"her participation",   lv:["watches","partial","full"] },
+  { k:"M_enth", name:"his enthusiasm",      lv:["reluctant","willing","eager"] }
 ];
 const MKEYS = METRICS.map(m => m.k);
 const MNAME = Object.fromEntries(METRICS.map(m => [m.k, m.name]));
 const MLV = Object.fromEntries(METRICS.map(m => [m.k, m.lv]));
 
+/* one-knob perturbation phrases. hi = target level 2, lo = target level 0.
+   d1 = direction taken when the base sits at level 1. */
+const KNOB = {
+  S_sub:  { hi:"She's central to it", lo:"No woman involved at all", d1:2 },
+  F_attr: { hi:"She's exceptionally hot", lo:"She's average-looking, not your type", d1:0 },
+  P_pur:  { hi:"He's actively pursuing you", lo:"He's just experimenting", d1:2 },
+  N_x:    { hi:"You're both crossing a line together", lo:"Routine, no taboo charge", d1:2 },
+  A_auth: { hi:"You direct the whole thing", lo:"Spontaneous, nobody directs", d1:2 },
+  film:   { hi:"You film it", lo:"No filming, phones away", d1:2 },
+  E_env:  { hi:"Open-ended, anything goes", lo:"Touch only, nothing more", d1:2 },
+  novel:  { hi:"First time for any of this", lo:"You've done this exact thing before", d1:2 },
+  priv:   { hi:"Real exposure risk", lo:"Fully private, locked door", d1:2 },
+  recip:  { hi:"It's all about your pleasure", lo:"You're doing all the giving", d1:2 },
+  M_fam:  { hi:"He's a close friend", lo:"He's a total stranger", d1:2 },
+  intim:  { hi:"Intimate, emotionally charged", lo:"Detached, purely physical", d1:0 },
+  F_init: { hi:"She proposed it", lo:"You proposed it", d1:0 },
+  after:  { hi:"It becomes an ongoing thing", lo:"Never spoken of after", d1:2 },
+  turf:   { hi:"At her place", lo:"At your place", d1:0 },
+  party:  { hi:"Full party energy, drinking", lo:"Sober, just the people involved", d1:2 },
+  M_age:  { hi:"He's older, experienced", lo:"He's younger than you", d1:2 },
+  inten:  { hi:"Rough and intense", lo:"Slow and gentle", d1:2 },
+  expl:   { hi:"Everything talked through explicitly", lo:"Nobody says a word about it", d1:2 },
+  dur:    { hi:"It becomes a regular arrangement", lo:"One brief scene, then done", d1:2 },
+  atten:  { hi:"You're mostly watching from the sidelines", lo:"You're the focus of it", d1:0 },
+  visib:  { hi:"Word could get out", lo:"Nobody will ever know", d1:2 },
+  F_part: { hi:"She's fully involved", lo:"She only watches", d1:2 },
+  M_enth: { hi:"He's eager, really into it", lo:"He's reluctant, hesitant", d1:2 }
+};
+
 /* vec order: S_sub,F_attr,P_pur,N_x,A_auth,film,E_env,novel,priv,recip,M_fam,intim,F_init,after,turf,party,M_age,inten,expl,dur,atten,visib,F_part,M_enth */
 const BASES = [
-{ d:"watching your girlfriend fuck her ex", v:[2,2,0,2,1,0,1,2,0,1,0,2,1,0,1,0,1,1,1,0,2,0,2,1], m:[
-  ["You are just watching", {atten:2}],
-  ["You are involved: close watching cuckold", {atten:1,intim:1}],
-  ["You are involved: rub her clit while he is in her", {atten:1,inten:2}],
-  ["You are involved: shared blowjob with him", {recip:1,E_env:1}],
-  ["You are filming the encounter", {film:2,atten:2}] ] },
-{ d:"threesome with your girlfriend and a stranger she picked", v:[2,2,1,2,1,0,1,2,0,1,0,1,2,0,1,1,1,1,1,1,1,0,2,1], m:[
-  ["You picked him instead", {F_init:0,A_auth:2}],
-  ["He is only into her", {P_pur:0,atten:2}],
-  ["He is into both of you", {P_pur:2}],
-  ["She films it on her phone", {film:2}],
-  ["It becomes a regular thing", {after:2,dur:2,novel:1}] ] },
-{ d:"foursome with a male-male couple", v:[2,2,1,2,1,0,1,2,0,1,0,1,1,1,1,1,1,1,1,1,1,0,2,1], m:[
-  ["One of them is only into you", {P_pur:2,atten:0}],
-  ["Separate rooms, you can hear them", {atten:2,S_sub:1}],
-  ["You pair off: you with one, her with the other", {atten:1}],
-  ["Full party energy, everyone drinking", {party:2,inten:2,priv:1}],
-  ["You film your half", {film:2}] ] },
-{ d:"she watches you with another guy", v:[1,2,2,2,2,0,1,2,0,1,0,1,1,1,0,0,1,1,1,0,0,0,0,1], m:[
-  ["She directs the whole thing", {A_auth:1,F_init:2}],
-  ["She joins in halfway", {F_part:2,S_sub:2,atten:1}],
-  ["He is a friend of yours", {M_fam:2}],
-  ["She films it", {film:2}],
-  ["He is older and experienced", {M_age:2}] ] },
-{ d:"filmed MMF: her, you, and a stranger into you — the 2019 shape", v:[2,2,0,2,2,2,1,2,0,1,0,1,1,2,0,0,1,1,1,1,1,0,2,1], m:[
-  ["Not filmed this time", {film:0}],
-  ["He is pursuing you, not experimenting", {P_pur:2}],
-  ["She only watches", {F_part:0,S_sub:1,atten:0}],
-  ["One time, never spoken of after", {after:0}],
-  ["No talking, unspoken the whole time", {expl:0}] ] },
-{ d:"you watch her with a stranger while you stay dressed", v:[2,2,0,2,1,0,0,2,0,1,0,1,1,0,1,0,1,0,1,0,2,0,2,1], m:[
-  ["You are undressed too", {E_env:1,atten:1}],
-  ["She narrates it for you after", {after:1,expl:2}],
-  ["It is her ex, not a stranger", {M_fam:1,intim:2}],
-  ["You film from the corner", {film:2}] ] },
-{ d:"she watches you get a blowjob from another guy", v:[1,2,2,2,2,0,1,2,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,1], m:[
-  ["She holds the camera", {film:2,F_part:0}],
-  ["You return the favor on him", {recip:1,E_env:1}],
-  ["He is her ex", {M_fam:1}],
-  ["It happens again monthly", {after:2,dur:2,novel:1}] ] },
-{ d:"you and him focused on her, mutual effort", v:[2,2,1,2,2,0,1,2,0,1,0,1,1,1,0,1,1,1,1,1,1,0,2,1], m:[
-  ["The two of you also connect directly", {recip:1,P_pur:2}],
-  ["She is blindfolded, you two run it", {A_auth:2}],
-  ["Slow, no rush, an evening", {dur:1,inten:0}],
-  ["Someone might walk in", {priv:2,visib:1}] ] },
-{ d:"you hook up with a guy from a male couple while she watches", v:[1,2,2,2,2,0,1,2,0,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1], m:[
-  ["His boyfriend watches too", {S_sub:1}],
-  ["She joins the two of you", {F_part:2,S_sub:2}],
-  ["It is at their place", {turf:2}],
-  ["You film it for them", {film:2}] ] },
-{ d:"house party: you, her, and two guys, open room", v:[2,2,1,2,0,0,2,2,1,1,0,1,1,0,1,2,1,2,0,1,1,1,2,1], m:[
-  ["Just you, her, and one of them", {S_sub:2,E_env:1}],
-  ["People you know might see", {visib:2,priv:2}],
-  ["She picks both guys", {F_init:2,A_auth:1}],
-  ["You leave together right after, no talk", {after:0,dur:0}] ] },
-{ d:"her ex proposes a threesome with both of you", v:[2,2,1,2,1,0,1,2,0,1,1,2,2,0,1,0,1,1,1,0,1,0,2,1], m:[
-  ["You propose it instead", {F_init:0,A_auth:2}],
-  ["He is only into her", {P_pur:0,atten:2}],
-  ["He is into you too", {P_pur:2}],
-  ["At his place", {turf:2}] ] },
-{ d:"your friend asks to join you and her", v:[2,2,1,2,0,0,1,2,0,1,2,1,0,0,0,1,1,1,1,0,1,1,2,1], m:[
-  ["You ask him", {F_init:0}],
-  ["She asks him", {F_init:2}],
-  ["Word could get out in your circle", {visib:2}],
-  ["He is only into her", {P_pur:0,atten:2}] ] },
-{ d:"you with another guy, no woman involved", v:[0,0,2,2,2,0,1,2,0,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1], m:[
-  ["She watches", {S_sub:1,F_part:0,atten:0}],
-  ["She films it", {film:2,S_sub:1,F_part:0}],
-  ["He is a stranger", {M_fam:0}],
-  ["It is his idea", {F_init:2,A_auth:0}] ] },
-{ d:"she is with her ex while you listen on the phone", v:[2,2,0,2,1,0,0,2,0,1,0,2,1,0,2,0,1,0,1,0,2,0,2,1], m:[
-  ["You are in the next room", {turf:1,priv:0}],
-  ["She calls you right after", {after:1}],
-  ["You told her to do it", {F_init:0,A_auth:2}],
-  ["Video call instead", {film:1}] ] },
-{ d:"threesome where she is the focus and you are peripheral", v:[2,2,0,2,1,0,1,2,0,2,0,1,1,1,1,0,1,1,1,1,2,0,2,1], m:[
-  ["You are the focus instead", {atten:0,recip:0}],
-  ["All three equally involved", {atten:1,recip:1}],
-  ["He is her type, not yours", {F_attr:2,P_pur:0}] ] },
-{ d:"filmed scene: you and a guy, she directs from behind the camera", v:[1,2,2,2,1,2,1,2,0,1,0,1,2,1,0,0,1,1,1,0,0,0,0,1], m:[
-  ["You direct, she just films", {A_auth:2}],
-  ["No filming, she just watches", {film:0}],
-  ["She steps in halfway", {F_part:2,S_sub:2}] ] },
-{ d:"full swap with another couple", v:[2,2,1,2,1,0,2,2,0,1,0,1,1,0,1,1,1,1,1,0,1,0,2,1], m:[
-  ["Same room, side by side", {atten:1,priv:0}],
-  ["Soft swap only, no full sex", {E_env:1}],
-  ["The other guy is into you", {P_pur:2}],
-  ["You have met them before", {M_fam:1,novel:1}] ] },
-{ d:"you watch her get picked up at a bar and follow to a hotel", v:[2,2,0,2,1,0,1,2,1,1,0,0,2,0,2,2,1,1,0,0,2,1,2,1], m:[
-  ["You set it up in advance", {F_init:0,expl:2}],
-  ["You wait in the bar", {atten:2,turf:2}],
-  ["She texts you updates", {expl:2}] ] },
-{ d:"she sets you up with a guy as a gift", v:[1,2,2,2,1,0,1,2,0,1,0,1,2,1,0,0,1,1,1,0,0,0,0,1], m:[
-  ["You pick the guy", {F_init:0,A_auth:2}],
-  ["She stays and watches", {F_part:0}],
-  ["She leaves the house", {S_sub:0,priv:0}],
-  ["He is younger than you", {M_age:0}] ] },
-{ d:"MMF with her ex, and he is into you too", v:[2,2,2,2,1,0,1,2,0,1,0,2,1,0,1,0,1,1,1,1,1,0,2,1], m:[
-  ["He is only into her", {P_pur:0,atten:2}],
-  ["You film it", {film:2}],
-  ["At your place", {turf:0}],
-  ["Nobody talks about it after", {after:0}] ] },
-{ d:"semi-private booth at a party, exposure risk", v:[2,2,1,2,0,0,0,2,2,1,0,1,1,0,1,2,1,1,0,0,1,2,2,1], m:[
-  ["Fully private room instead", {priv:0,visib:0}],
-  ["Someone you know is at the party", {visib:2}],
-  ["Just touching, nothing more", {E_env:0}],
-  ["She pulls you in", {F_init:2}] ] },
-{ d:"a regular third you both like, ongoing dynamic", v:[2,2,1,2,2,0,1,1,0,1,2,1,1,2,0,1,1,1,1,2,1,0,2,1], m:[
-  ["He starts catching feelings", {intim:2}],
-  ["You film an anniversary session", {film:2,novel:0}],
-  ["It stays strictly physical", {intim:0,after:1}],
-  ["He is a stranger you rotate", {M_fam:0,novel:2}] ] },
-{ d:"she pegs you while another guy watches", v:[1,2,0,2,1,0,0,2,0,2,0,1,2,0,0,0,1,1,1,0,0,0,0,0], m:[
-  ["The guy joins in on you", {P_pur:2,recip:1}],
-  ["She films it", {film:2}],
-  ["Just you two, no watcher", {S_sub:2,F_part:2}],
-  ["You are in charge", {A_auth:2,F_init:0}] ] },
-{ d:"watching a male couple without participating", v:[0,0,0,1,0,0,0,2,1,1,0,0,1,0,1,1,1,0,0,0,2,1,0,0], m:[
-  ["They know you are watching", {expl:2,N_x:2}],
-  ["You film them, with permission", {film:2}],
-  ["One of them notices you and approaches", {P_pur:2,N_x:2}],
-  ["It is a live stream, not in person", {turf:2,priv:1}] ] }
+{ d:"watching your girlfriend fuck her ex", v:[2,2,0,2,1,0,1,2,0,1,0,2,1,0,1,0,1,1,1,0,2,0,2,1] },
+{ d:"threesome with your girlfriend and a stranger she picked", v:[2,2,1,2,1,0,1,2,0,1,0,1,2,0,1,1,1,1,1,1,1,0,2,1] },
+{ d:"foursome with a male-male couple", v:[2,2,1,2,1,0,1,2,0,1,0,1,1,1,1,1,1,1,1,1,1,0,2,1] },
+{ d:"she watches you with another guy", v:[1,2,2,2,2,0,1,2,0,1,0,1,1,1,0,0,1,1,1,0,0,0,0,1] },
+{ d:"filmed MMF: her, you, and a stranger into you — the 2019 shape", v:[2,2,0,2,2,2,1,2,0,1,0,1,1,2,0,0,1,1,1,1,1,0,2,1] },
+{ d:"you watch her with a stranger while you stay dressed", v:[2,2,0,2,1,0,0,2,0,1,0,1,1,0,1,0,1,0,1,0,2,0,2,1] },
+{ d:"she watches you get a blowjob from another guy", v:[1,2,2,2,2,0,1,2,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,1] },
+{ d:"you and him focused on her, mutual effort", v:[2,2,1,2,2,0,1,2,0,1,0,1,1,1,0,1,1,1,1,1,1,0,2,1] },
+{ d:"you hook up with a guy from a male couple while she watches", v:[1,2,2,2,2,0,1,2,0,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1] },
+{ d:"house party: you, her, and two guys, open room", v:[2,2,1,2,0,0,2,2,1,1,0,1,1,0,1,2,1,2,0,1,1,1,2,1] },
+{ d:"her ex proposes a threesome with both of you", v:[2,2,1,2,1,0,1,2,0,1,1,2,2,0,1,0,1,1,1,0,1,0,2,1] },
+{ d:"your friend asks to join you and her", v:[2,2,1,2,0,0,1,2,0,1,2,1,0,0,0,1,1,1,1,0,1,1,2,1] },
+{ d:"you with another guy, no woman involved", v:[0,0,2,2,2,0,1,2,0,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1] },
+{ d:"she is with her ex while you listen on the phone", v:[2,2,0,2,1,0,0,2,0,1,0,2,1,0,2,0,1,0,1,0,2,0,2,1] },
+{ d:"threesome where she is the focus and you are peripheral", v:[2,2,0,2,1,0,1,2,0,2,0,1,1,1,1,0,1,1,1,1,2,0,2,1] },
+{ d:"filmed scene: you and a guy, she directs from behind the camera", v:[1,2,2,2,1,2,1,2,0,1,0,1,2,1,0,0,1,1,1,0,0,0,0,1] },
+{ d:"full swap with another couple", v:[2,2,1,2,1,0,2,2,0,1,0,1,1,0,1,1,1,1,1,0,1,0,2,1] },
+{ d:"you watch her get picked up at a bar and follow to a hotel", v:[2,2,0,2,1,0,1,2,1,1,0,0,2,0,2,2,1,1,0,0,2,1,2,1] },
+{ d:"she sets you up with a guy as a gift", v:[1,2,2,2,1,0,1,2,0,1,0,1,2,1,0,0,1,1,1,0,0,0,0,1] },
+{ d:"MMF with her ex, and he is into you too", v:[2,2,2,2,1,0,1,2,0,1,0,2,1,0,1,0,1,1,1,1,1,0,2,1] },
+{ d:"semi-private booth at a party, exposure risk", v:[2,2,1,2,0,0,0,2,2,1,0,1,1,0,1,2,1,1,0,0,1,2,2,1] },
+{ d:"a regular third you both like, ongoing dynamic", v:[2,2,1,2,2,0,1,1,0,1,2,1,1,2,0,1,1,1,1,2,1,0,2,1] },
+{ d:"she pegs you while another guy watches", v:[1,2,0,2,1,0,0,2,0,2,0,1,2,0,0,0,1,1,1,0,0,0,0,0] },
+{ d:"watching a male couple without participating", v:[0,0,0,1,0,0,0,2,1,1,0,0,1,0,1,1,1,0,0,0,2,1,0,0] },
+{ d:"threesome with your girlfriend and a close friend, you're the focus", v:[2,2,2,2,2,0,1,1,0,0,2,1,0,1,0,1,1,1,1,1,0,1,2,1] },
+{ d:"stranger MMF where she's the focus and you're on the sidelines", v:[2,2,0,2,1,0,1,2,0,2,0,1,1,0,1,0,1,1,1,1,2,0,2,1] },
+{ d:"you meet her ex alone while she's away", v:[1,2,1,2,0,0,1,2,0,1,1,0,0,0,1,0,1,1,0,0,0,0,0,1] },
+{ d:"she watches you and her ex together", v:[2,2,1,2,1,0,1,2,0,1,1,1,1,0,0,0,1,1,1,0,1,0,0,1] }
 ];
+/* nonsensical combos: no-woman bases (12, 23) skip her-metrics */
+const EXCLUDE = { 12:["F_attr","F_part"], 23:["F_attr","F_part"] };
+
+/* deterministic rotation: 6 knobs per base, each metric perturbed ~7x across the bank */
+function assignKnobs() {
+  const counts = Object.fromEntries(MKEYS.map(k => [k, 0]));
+  const perBase = [];
+  for (let gi = 0; gi < BASES.length; gi++) {
+    const excl = new Set(EXCLUDE[gi] || []);
+    const picks = [];
+    for (let j = 0; j < MKEYS.length && picks.length < 6; j++) {
+      const k = MKEYS[(gi * 6 + j) % MKEYS.length];
+      if (!excl.has(k) && !picks.includes(k)) picks.push(k);
+    }
+    while (picks.length < 6) {
+      const c = MKEYS.filter(k => !excl.has(k) && !picks.includes(k)).sort((a, b) => counts[a] - counts[b])[0];
+      picks.push(c);
+    }
+    picks.forEach(k => counts[k]++);
+    perBase.push(picks);
+  }
+  return { perBase, counts };
+}
+function knobTarget(baseVec, k) {
+  const b = baseVec[k];
+  if (b === 0) return 2;
+  if (b === 2) return 0;
+  return KNOB[k].d1;
+}
 
 /* ---- item bank ---- */
 function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 let items = [];
 function buildItems() {
   items = [];
+  const { perBase } = assignKnobs();
   const order = shuffle(BASES.map((_, i) => i));
   for (const gi of order) {
     const b = BASES[gi];
     const baseVec = {};
     MKEYS.forEach((k, i) => baseVec[k] = b.v[i]);
-    /* stable ids from BASES indices — immune to shuffle, so ratings survive reloads */
-    items.push({ id: "g" + gi, group: gi, gdesc: b.d, kind: "base", desc: b.d, vec: baseVec });
-    for (const mi of shuffle(b.m.map((_, i) => i))) {
-      const [md, patch] = b.m[mi];
-      const vec = { ...baseVec };
-      for (const k in patch) vec[k] = patch[k];
-      items.push({ id: "g" + gi + "m" + mi, group: gi, gdesc: b.d, kind: "mod", desc: md, vec });
+    const baseId = "g" + gi;
+    items.push({ id: baseId, group: gi, gdesc: b.d, kind: "base", desc: b.d, vec: baseVec });
+    const knobIdx = shuffle(perBase[gi].map((_, i) => i));
+    for (const ki of knobIdx) {
+      const k = perBase[gi][ki];
+      const target = knobTarget(baseVec, k);
+      const vec = { ...baseVec, [k]: target };
+      const desc = target === 2 ? KNOB[k].hi : KNOB[k].lo;
+      items.push({ id: baseId + k, group: gi, gdesc: b.d, kind: "mod", knob: k, target,
+                   baseId, desc, vec, knobFrom: MLV[k][baseVec[k]], knobTo: MLV[k][target] });
     }
   }
 }
 
 /* ---- state ---- */
-const LS_KEY = "scen_rate_v1";
+const LS_KEY = "scen_rate_v2";
 let ratings = {};   // id -> 0 (veto) | 1..10
 try { ratings = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { ratings = {}; }
-/* v1 used positional ids (r1..rN) assigned post-shuffle — those scramble on reload, drop them */
-if (Object.keys(ratings).some(k => /^r\d+$/.test(k))) { ratings = {}; save(); }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(ratings)); } catch (e) {} }
 
 /* ---- ui ---- */
@@ -308,7 +274,7 @@ function render() {
       row.firstChild.appendChild(document.createTextNode(it.desc));
     } else {
       row.className = "mod";
-      row.innerHTML = `<span class="mtag">modifier</span><div class="mdesc"></div>`;
+      row.innerHTML = `<span class="mtag">one change: ${it.knobFrom} → ${it.knobTo}</span><div class="mdesc"></div>`;
       row.querySelector(".mdesc").textContent = it.desc;
     }
     const sc = document.createElement("div");
@@ -336,17 +302,48 @@ function mean(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : n
 function renderDone() {
   $("rateView").classList.add("hidden");
   $("doneView").classList.remove("hidden");
+  const byId = Object.fromEntries(items.map(it => [it.id, it]));
   const scored = items.filter(it => ratings[it.id] !== undefined);
   const vetos = scored.filter(it => ratings[it.id] === 0);
   const vals = scored.filter(it => ratings[it.id] > 0).map(it => ratings[it.id]);
   const m = mean(vals);
+
+  /* knob effects: normalized delta = rating(high) - rating(low), base held fixed.
+     pairs need 1..10 on both sides; vetoes and skips are excluded. */
+  const knobStats = MKEYS.map(k => {
+    const ds = [];
+    for (const it of items) {
+      if (it.kind !== "mod" || it.knob !== k) continue;
+      const rb = ratings[it.baseId], rm = ratings[it.id];
+      if (!rb || !rm) continue;
+      ds.push(it.target === 2 ? rm - rb : rb - rm);
+    }
+    const md = mean(ds);
+    const pos = ds.filter(d => d > 0).length;
+    return { k, n: ds.length, md, posRate: ds.length ? pos / ds.length : null };
+  }).filter(s => s.n > 0).sort((a, b) => Math.abs(b.md || 0) - Math.abs(a.md || 0));
+
+  let dh = `<table><tr><th>turning this up…</th><th>n</th><th>mean Δ</th><th></th></tr>`;
+  for (const s of knobStats) {
+    const w = Math.min(120, Math.abs(s.md || 0) * 24);
+    const cls = (s.md || 0) >= 0 ? "" : "neg";
+    const dir = (s.md || 0) >= 0 ? "raises" : "lowers";
+    dh += `<tr><td>toward <b>${MLV[s.k][2]}</b> <span class="conf">(${MNAME[s.k]})</span></td>` +
+      `<td class="conf">${s.n}</td>` +
+      `<td><span class="bar ${cls}" style="width:${Math.round(w)}px"></span> ${(s.md >= 0 ? "+" : "") + (s.md || 0).toFixed(1)}</td>` +
+      `<td class="conf">${dir} score</td></tr>`;
+  }
+  $("deltaBox").innerHTML = dh + "</table>" +
+    `<p class="conf">Δ = rating with the knob turned up minus rating with it down, same situation. ` +
+    `Pairs where either side was vetoed or skipped are excluded.</p>`;
+
   $("verdictBox").innerHTML =
     `<h3>readout</h3>` +
     `<p><b>${scored.length}</b> rated · <b class="${m >= 7 ? "ok" : m >= 4 ? "soft" : "bad"}">${m === null ? "—" : m.toFixed(1)}</b> mean score` +
     (vetos.length ? ` · <b class="bad">${vetos.length}</b> hard veto${vetos.length === 1 ? "" : "s"}` : "") + `.</p>` +
     (vetos.length ? `<p class="conf">vetoed: ${vetos.slice(0, 12).map(it => it.desc).join(" · ")}${vetos.length > 12 ? " …" : ""}</p>` : "") +
     (scored.length < items.length ? `<p class="conf">${items.length - scored.length} items unrated — excluded from all stats.</p>` : "");
-  // groups
+
   const gstats = BASES.map((b, gi) => {
     const its = items.filter(it => it.group === gi && ratings[it.id] !== undefined && ratings[it.id] > 0);
     return { d: b.d, n: its.length, m: mean(its.map(it => ratings[it.id])) };
@@ -356,24 +353,7 @@ function renderDone() {
     gh += `<tr><td>${g.d}</td><td class="conf">${g.n}</td><td><span class="bar" style="width:${Math.round((g.m || 0) * 14)}px"></span> ${(g.m || 0).toFixed(1)}</td><td class="conf">${g.m >= 7 ? "hot" : g.m >= 4 ? "warm" : "cold"}</td></tr>`;
   }
   $("groupBox").innerHTML = gh + "</table>";
-  // metric baseline
-  const mrows = [];
-  for (const mt of METRICS) {
-    const cells = [0, 1, 2].map(l => {
-      const rs = items.filter(it => ratings[it.id] !== undefined && ratings[it.id] > 0 && it.vec[mt.k] === l).map(it => ratings[it.id]);
-      return { l, n: rs.length, m: mean(rs) };
-    });
-    const spread = (cells.every(c => c.m !== null)) ? Math.max(...cells.map(c => c.m)) - Math.min(...cells.map(c => c.m)) : 0;
-    mrows.push({ mt, cells, spread });
-  }
-  mrows.sort((a, b) => b.spread - a.spread);
-  let mh = `<table><tr><th>metric</th><th>level → mean (n)</th><th>spread</th></tr>`;
-  for (const r of mrows) {
-    const cells = r.cells.map(c => `${r.mt.lv[c.l]}: ${c.m === null ? "—" : c.m.toFixed(1) + ` <span class="conf">(${c.n})</span>`}`).join(" · ");
-    mh += `<tr><td>${r.mt.name}</td><td class="conf">${cells}</td><td>${r.spread ? r.spread.toFixed(1) : "—"}</td></tr>`;
-  }
-  $("metricBox").innerHTML = mh + "</table>";
-  // extremes
+
   const ranked = scored.filter(it => ratings[it.id] > 0).sort((a, b) => ratings[b.id] - ratings[a.id]);
   const top = ranked.slice(0, 10), bot = ranked.slice(-10).reverse();
   const li = (it) => `<tr><td><b class="${ratings[it.id] >= 7 ? "ok" : ratings[it.id] <= 3 ? "bad" : "soft"}">${ratings[it.id]}</b></td><td>${it.kind === "mod" ? `<span class="conf">${it.gdesc} →</span> ` : ""}${it.desc}</td></tr>`;
@@ -384,11 +364,13 @@ function renderDone() {
 }
 function download() {
   const blob = new Blob([JSON.stringify({
-    ts: new Date().toISOString(), version: 1, metrics: METRICS,
-    items: items.map(it => ({ id: it.id, group: it.gdesc, kind: it.kind, desc: it.desc, vec: it.vec, rating: ratings[it.id] === undefined ? null : ratings[it.id] }))
+    ts: new Date().toISOString(), version: 2, metrics: METRICS,
+    items: items.map(it => ({ id: it.id, group: it.gdesc, kind: it.kind, desc: it.desc,
+      knob: it.knob || null, knobFrom: it.knobFrom || null, knobTo: it.knobTo || null,
+      vec: it.vec, rating: ratings[it.id] === undefined ? null : ratings[it.id] }))
   }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = "scenario-ratings-v1.json"; a.click(); URL.revokeObjectURL(u);
+  a.href = u; a.download = "scenario-ratings-v2.json"; a.click(); URL.revokeObjectURL(u);
 }
 $("finishBtn").onclick = renderDone;
 $("dlBtn").onclick = download;
