@@ -3,6 +3,7 @@
 // but lives outside the game flow: upload → full telemetry vector → overlay.
 import { ensureLandmarker, detectLandmarks, LANDMARK_IDX } from './measure.js';
 import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING } from './telemetry2.js';
+import { computeV3, V3_METRIC_DEFS, V3_GROUPS, bootstrapCI } from './telemetry3.js';
 // NOTE: V2 defs are appended AFTER the METRIC_DEFS / GROUPS declarations below
 // (const arrays are in the temporal dead zone until their declaration executes).
 
@@ -66,7 +67,7 @@ export const METRIC_DEFS = [
   // eyes
   { key: 'ipd_px', group: 'eyes', label: 'interpupillary dist', fmt: px0, hint: 'eye-center ↔ eye-center' },
   { key: 'ipd_to_cheek', group: 'eyes', label: 'IPD : cheek', fmt: f3, game: true },
-  { key: 'eye_spacing_widths', group: 'eyes', label: 'spacing (eye-widths)', fmt: f3, hint: 'IPD ÷ eye width · canon 1.0' },
+  { key: 'eye_spacing_widths', group: 'eyes', label: 'spacing (eye-widths)', fmt: f3, hint: 'IPD ÷ eye width · canon 2.0' },
   { key: 'eye_w_to_h', group: 'eyes', label: 'eye width : height', fmt: f3, game: true },
   { key: 'canthal_tilt_mean', group: 'eyes', label: 'canthal tilt', fmt: deg, hint: '+ = outer corner higher' },
   { key: 'canthal_tilt_L', group: 'eyes', label: 'canthal tilt L', fmt: deg },
@@ -101,12 +102,12 @@ export const METRIC_DEFS = [
   { key: 'canon_fifths', group: 'canons', label: 'fifths = 5', fmt: pct1, hint: '|fifths−5| ÷ 5' },
   { key: 'canon_nose', group: 'canons', label: 'nose = intercanthal', fmt: pct1, hint: '|ratio−1| × 100' },
   { key: 'canon_mouth', group: 'canons', label: 'mouth = 1.5× nose', fmt: pct1, hint: '|ratio−1.5| ÷ 1.5' },
-  { key: 'canon_spacing', group: 'canons', label: 'IPD = 1 eye width', fmt: pct1, hint: '|ratio−1| × 100' },
+  { key: 'canon_spacing', group: 'canons', label: 'IPD = 2 eye widths', fmt: pct1, hint: '|ratio−2| ÷ 2 · corrected 2026-09-11 (was 1.0)' },
 ];
 
 // v2 additions ship in telemetry2.js — merged here after both arrays exist
-METRIC_DEFS.push(...V2_METRIC_DEFS);
-GROUPS.push(...V2_GROUPS);
+METRIC_DEFS.push(...V2_METRIC_DEFS, ...V3_METRIC_DEFS);
+GROUPS.push(...V2_GROUPS, ...V3_GROUPS);
 
 export const DEF_BY_KEY = Object.fromEntries(METRIC_DEFS.map(d => [d.key, d]));
 
@@ -217,7 +218,7 @@ export function computeTelemetry(lm, w, h) {
     canon_fifths: r3(Math.abs(fifths - 5) / 5 * 100),
     canon_nose: r3(Math.abs(noseIC - 1) * 100),
     canon_mouth: r3(Math.abs(mouthNose - 1.5) / 1.5 * 100),
-    canon_spacing: r3(Math.abs(spacing - 1) * 100),
+    canon_spacing: r3(Math.abs(spacing - 2) / 2 * 100),
   };
   return {
     metrics: m,
@@ -239,6 +240,12 @@ const overlay = $('overlay'), octx = overlay.getContext('2d');
 function setStatus(t, ready) {
   statusEl.textContent = t;
   statusEl.classList.toggle('ready', !!ready);
+}
+
+// ---- full metric vector (v1 + v2 + v3) — the unit the bootstrap resamples ----
+function computeAllMetrics(lm, w, h, calib) {
+  const tel = computeTelemetry(lm, w, h);
+  return { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h) };
 }
 
 // ---- upload + analysis ----
@@ -266,16 +273,24 @@ async function analyzeFile(file) {
   const w = img.naturalWidth, h = img.naturalHeight;
   const lm = detectLandmarks(img);
   if (!lm) { URL.revokeObjectURL(url); throw new Error('no face detected'); }
-  const tel = computeTelemetry(lm, w, h);
   const calibRaw = parseFloat(($('calibIpd') || {}).value);
   const calib = Number.isFinite(calibRaw) && calibRaw > 0 ? calibRaw : null;
-  const v2 = computeV2(lm, w, h, calib);
+  const tel = computeTelemetry(lm, w, h);
+  const metrics = { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h) };
+  // bootstrap confidence: jitter landmarks, resample the full vector
+  const ci = bootstrapCI((jl, jw, jh) => computeAllMetrics(jl, jw, jh, calib), lm, w, h);
+  const v2src = metrics.scale_source;
   const quality = analyzeQuality(img, lm);
+  // composite measurement confidence: pose quality × image quality
+  const qScore = quality.verdict === 'pass' ? 100 : quality.verdict === 'warn' ? 65 : 25;
+  const confidence = Math.round(0.55 * metrics.frontality + 0.45 * qScore);
   const item = {
     id: 't' + (++seq), name: file.name || ('upload ' + seq),
     url, thumb: makeThumb(img), img, w, h, lm,
-    metrics: { ...tel.metrics, ...v2 }, quality: tel.quality, anchors: tel.anchors,
-    qv: quality, scaleSource: v2.scale_source,
+    metrics, ci, confidence,
+    quality: metrics.frontality >= 85 ? 'high' : metrics.frontality >= 60 ? 'medium' : 'low',
+    anchors: tel.anchors,
+    qv: quality, scaleSource: v2src,
   };
   state.items.push(item);
   return item;
@@ -323,7 +338,7 @@ function renderHistory() {
   for (const it of state.items) {
     const d = document.createElement('div');
     d.className = 'hist-item' + (it.id === state.activeId ? ' active' : '');
-    d.innerHTML = `<img src="${it.thumb}" alt=""><span class="q ${it.qv.verdict}">${it.qv.verdict}</span><div class="nm">${it.name}</div>`;
+    d.innerHTML = `<img src="${it.thumb}" alt=""><span class="q ${it.qv.verdict}" title="image quality: ${it.qv.verdict} · frontality ${it.metrics.frontality.toFixed(0)}">c${it.confidence}</span><div class="nm">${it.name}</div>`;
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.className = 'cmp'; cb.title = 'select for a/b compare';
     cb.checked = state.compare.includes(it.id);
@@ -419,6 +434,7 @@ function renderViewer() {
     `<br>frontality <b class="${it.quality}">${it.metrics.frontality.toFixed(0)} · ${it.quality}</b>` +
     ` &nbsp; roll ${it.metrics.roll_deg.toFixed(1)}° &nbsp; yaw≈ ${it.metrics.yaw_proxy_deg.toFixed(1)}°` +
     ` &nbsp; asym(9) ${it.metrics.asymmetry_9.toFixed(3)}` +
+    `<br>measurement confidence <b>${it.confidence}</b>/100 <span class="conf" style="font-size:12px;color:var(--dim)">(pose 55% · image quality 45% · CIs bootstrapped, n=32)</span>` +
     (it.quality === 'low' ? ` &nbsp; <b class="low">⚠ pose may distort ratios</b>` : '');
 }
 
@@ -439,10 +455,15 @@ function renderMetrics() {
     sum.innerHTML = `${gname} <span class="cnt">${defs.length}</span>`;
     det.appendChild(sum);
     const tbl = document.createElement('table');
+    const hr = document.createElement('tr');
+    hr.innerHTML = `<th>metric</th><th>value</th><th>±95%</th><th></th>`;
+    tbl.appendChild(hr);
     for (const d of defs) {
       const tr = document.createElement('tr');
+      const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
+      const ciTxt = d.noCI || sd == null ? '—' : '±' + d.fmt(1.96 * sd);
       tr.innerHTML = `<td class="k">${d.label}${d.game ? '<span class="gametag">game</span>' : ''}</td>` +
-        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="n">${d.hint || ''}</td>`;
+        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="ci">${ciTxt}</td><td class="n">${d.hint || ''}</td>`;
       tbl.appendChild(tr);
     }
     det.appendChild(tbl);
@@ -458,17 +479,26 @@ function renderCompare() {
   if (!(a && b)) return;
   $('colA').textContent = 'a · ' + a.name;
   $('colB').textContent = 'b · ' + b.name;
-  $('compareNames').textContent = `Δ = b − a. rows in violet move more than 5%.`;
+  $('compareNames').textContent = `Δ = b − a, with bootstrap 95% CI. violet rows are statistically significant (|Δ| exceeds combined CI).`;
   const tb = $('deltaTable').querySelector('tbody');
   tb.innerHTML = '';
   for (const d of METRIC_DEFS) {
     const va = a.metrics[d.key], vb = b.metrics[d.key];
-    const dv = vb - va, pct = va !== 0 ? dv / Math.abs(va) * 100 : 0;
-    const hot = Math.abs(pct) > 5;
     const tr = document.createElement('tr');
-    if (hot) tr.className = 'hot';
+    if (typeof va !== 'number' || typeof vb !== 'number' || !isFinite(va) || !isFinite(vb)) {
+      tr.innerHTML = `<td>${d.label}</td><td>${d.fmt(va)}</td><td>${d.fmt(vb)}</td><td class="dv">—</td><td class="dv">—</td>`;
+      tb.appendChild(tr);
+      continue;
+    }
+    const dv = vb - va, pct = va !== 0 ? dv / Math.abs(va) * 100 : 0;
+    const sdA = a.ci && a.ci[d.key] ? a.ci[d.key].sd : null;
+    const sdB = b.ci && b.ci[d.key] ? b.ci[d.key].sd : null;
+    const se = (sdA != null && sdB != null) ? Math.sqrt((1.96 * sdA) ** 2 + (1.96 * sdB) ** 2) : null;
+    const sig = se != null && Math.abs(dv) > se;
+    if (sig) tr.className = 'hot';
+    const dvTxt = `${dv >= 0 ? '+' : '-'}${d.fmt(Math.abs(dv))}${se != null ? ' ± ' + d.fmt(se) : ''}`;
     tr.innerHTML = `<td>${d.label}</td><td>${d.fmt(va)}</td><td>${d.fmt(vb)}</td>` +
-      `<td class="dv">${dv >= 0 ? '+' : ''}${d.fmt(dv).replace(/ ?(px|°|%| pp)$/, '')}</td>` +
+      `<td class="dv">${dvTxt}</td>` +
       `<td class="dv">${dv >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>`;
     tb.appendChild(tr);
   }
@@ -486,9 +516,11 @@ function download(name, text, type) {
 function exportPayload() {
   return {
     generated: new Date().toISOString(),
-    tool: 'telemetry lab v1.1 · MediaPipe FaceLandmarker (same detector as the game)',
+    tool: 'telemetry lab v3 · MediaPipe FaceLandmarker (same detector as the game) · bootstrap CI n=32',
     images: state.items.map(it => ({
-      name: it.name, quality: it.quality, metrics: it.metrics,
+      name: it.name, quality: it.quality, confidence: it.confidence,
+      metrics: it.metrics,
+      ci95: Object.fromEntries(Object.entries(it.ci || {}).map(([k, v]) => [k, v.sd == null ? null : Math.round(v.sd * 1.96 * 1e6) / 1e6])),
     })),
   };
 }
@@ -497,16 +529,19 @@ $('btnJson').addEventListener('click', () => {
   download('telemetry.json', JSON.stringify(exportPayload(), null, 2), 'application/json');
 });
 $('btnCsv').addEventListener('click', () => {
-  const rows = [['image', 'quality', 'metric', 'label', 'group', 'value']];
+  const rows = [['image', 'quality', 'confidence', 'metric', 'label', 'group', 'value', 'ci95_halfwidth']];
   for (const it of state.items)
-    for (const d of METRIC_DEFS)
-      rows.push([it.name, it.quality, d.key, d.label, d.group, String(it.metrics[d.key])]);
+    for (const d of METRIC_DEFS) {
+      const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
+      rows.push([it.name, it.quality, String(it.confidence), d.key, d.label, d.group,
+        String(it.metrics[d.key]), sd == null ? '' : String(Math.round(sd * 1.96 * 1e6) / 1e6)]);
+    }
   download('telemetry.csv', rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
 });
 $('btnCopy').addEventListener('click', async () => {
   const it = activeItem();
   if (!it) return;
-  const lines = [`telemetry · ${it.name} · frontality ${it.metrics.frontality.toFixed(0)} (${it.quality})`];
+  const lines = [`telemetry · ${it.name} · confidence ${it.confidence}/100 · frontality ${it.metrics.frontality.toFixed(0)} (${it.quality})`];
   for (const [gkey, gname] of GROUPS) {
     lines.push(`[${gname}]`);
     for (const d of METRIC_DEFS.filter(x => x.group === gkey))
@@ -561,6 +596,28 @@ function renderMethod() {
     lip vermilion 20-pt ring
     (61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185).
     Rings are drawn on the overlay — verify them visually.</p>
+    <h3>v3 — bootstrap confidence intervals</h3>
+    <p>Every metric ships with a 95% confidence interval. Procedure: all 468/478 landmarks
+    are jittered with Gaussian noise (σ = 0.0005 in normalized image coords ≈ subpixel
+    detector noise on a ~1000px face), the <b>entire</b> metric vector is recomputed, and
+    this is repeated 32 times. The reported ± is 1.96 × the bootstrap standard deviation
+    per metric. This captures <i>detector/landmark noise only</i> — not pose distortion,
+    expression, or lens effects. In the a/b table, a row is violet (significant) when
+    |Δ| exceeds the combined 95% CI, i.e. |Δ| &gt; √((1.96σ<sub>a</sub>)² + (1.96σ<sub>b</sub>)²) —
+    replacing the old &gt;5% heuristic.</p>
+    <h3>v3 — asymmetry decomposition &amp; fine detail</h3>
+    <p>asymmetry is now decomposed by facial region (upper: brows+eyes 5 pairs; mid: nostrils+cheeks;
+    lower: mouth+jaw) so a single number can't hide a lopsided jaw behind symmetric eyes.
+    New: per-side brow–eye distance, brow arc length (polyline ÷ eye width), scleral show
+    (iris-center height within the fissure, 0.5 = centered; needs 478-pt refined landmarks),
+    nose-tip deviation from midline, lip-corner vertical asymmetry.</p>
+    <h3>v3 — measurement confidence &amp; canon correction</h3>
+    <p>Each image gets a 0–100 measurement confidence = 0.55 × frontality + 0.45 × image-quality
+    score (pass 100 / warn 65 / fail 25), shown as the badge on each history thumbnail.
+    Correction 2026-09-11: <b>canon_spacing was wrong.</b> The classical canon is
+    intercanthal gap ≈ one eye width, which makes IPD ≈ <b>two</b> eye widths — the lab
+    had been scoring deviation from 1.0. It now scores |ratio−2| ÷ 2. Historical exports
+    using the old formula will read ~2× too deviant on this canon.</p>
     <h3>browser vs offline</h3>
     <p>This page implements everything above. True 3D head pose (solvePnP,
     yaw/pitch/roll + reprojection error) needs OpenCV and lives in the offline

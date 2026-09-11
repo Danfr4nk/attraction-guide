@@ -164,7 +164,7 @@ export const V2_GROUPS = [
 export const V2_METRIC_DEFS = [
   { key: 'iris_diam_px', group: 'physical', label: 'iris diameter', fmt: (v) => v == null ? '—' : Math.round(v) + ' px', hint: '4 axes, both eyes' },
   { key: 'mm_per_px', group: 'physical', label: 'mm per px', fmt: (v) => v == null ? '—' : v.toFixed(4), hint: '11.7mm iris anchor' },
-  { key: 'scale_source', group: 'physical', label: 'scale source', fmt: txt, hint: 'iris | calibrated | none' },
+  { key: 'scale_source', group: 'physical', label: 'scale source', fmt: txt, hint: 'iris | calibrated | none', noCI: true },
   { key: 'face_width_mm', group: 'physical', label: 'face width', fmt: mm1 },
   { key: 'face_height_mm', group: 'physical', label: 'face height', fmt: mm1 },
   { key: 'ipd_mm', group: 'physical', label: 'IPD', fmt: mm1 },
