@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scenario diagnostic — veto-boundary mapping</title>
+<title>scenario diagnostic v2 — veto-boundary mapping</title>
 <style>
-  :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; }
+  :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; }
   * { box-sizing:border-box; }
   body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.55 -apple-system,system-ui,sans-serif; }
   header { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; }
@@ -20,13 +20,15 @@
   .trial-meta { color:var(--dim); font-size:13px; margin-bottom:10px; display:flex; justify-content:space-between; }
   .cards { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
   @media (max-width:700px){ .cards{ grid-template-columns:1fr; } }
-  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; cursor:pointer; transition:border-color .15s, transform .1s; }
-  .card:hover { border-color:var(--pick); }
-  .card:active { transform:scale(.99); }
-  .card .tag { display:inline-block; font-size:11px; color:var(--dim); border:1px solid var(--line); border-radius:20px; padding:2px 10px; margin:0 6px 10px 0; }
+  .card { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:18px; transition:border-color .15s; position:relative; }
+  .card .tag { display:inline-block; font-size:11px; color:var(--dim); border:1px solid var(--line); border-radius:20px; padding:2px 10px; margin:0 6px 8px 0; }
+  .card .tag.hot { color:var(--gold); border-color:var(--gold); }
   .card p { margin:0 0 12px; }
   .card .pickbtn { display:block; width:100%; padding:10px; border-radius:8px; border:1px solid var(--pick); background:transparent; color:var(--pick); font-size:14px; cursor:pointer; }
   .card .pickbtn:hover { background:rgba(97,175,239,.12); }
+  .card .relbtn { display:block; width:100%; margin-top:8px; padding:6px; border:none; background:transparent; color:var(--dim); font-size:12px; cursor:pointer; text-decoration:underline; }
+  .card .relbtn:hover { color:var(--gold); }
+  .badge2019 { position:absolute; top:10px; right:12px; font-size:11px; color:var(--gold); border:1px solid var(--gold); border-radius:20px; padding:2px 10px; }
   .actions { display:flex; gap:10px; margin-top:14px; }
   .actions button { flex:1; padding:12px; border-radius:10px; font-size:14px; cursor:pointer; }
   #vetoBoth { background:transparent; border:1px solid var(--veto); color:var(--veto); }
@@ -36,7 +38,8 @@
   th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); }
   th { color:var(--dim); font-weight:600; }
   .bar { display:inline-block; height:8px; border-radius:4px; background:var(--veto); vertical-align:middle; }
-  .ok { color:var(--acc); } .bad { color:var(--veto); } .mid { color:var(--dim); }
+  .bar2 { display:inline-block; height:8px; border-radius:4px; background:var(--gold); vertical-align:middle; }
+  .ok { color:var(--acc); } .bad { color:var(--veto); } .mid { color:var(--dim); } .soft { color:var(--gold); }
   .verdict { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--acc); border-radius:10px; padding:16px 18px; margin:18px 0; }
   .verdict h3 { margin:0 0 8px; }
   .btnrow { display:flex; gap:10px; margin-top:16px; flex-wrap:wrap; }
@@ -44,30 +47,35 @@
   .btnrow button:hover { border-color:var(--pick); }
   .hidden { display:none; }
   .conf { font-size:12px; color:var(--dim); }
+  h4 { margin:22px 0 4px; color:var(--txt); }
+  h4 .axdef { color:var(--dim); font-weight:400; font-size:12.5px; }
 </style>
 </head>
 <body>
 <header>
-  <span class="brand">scenario diagnostic</span>
+  <span class="brand">scenario diagnostic <span style="color:var(--dim)">v2</span></span>
   <span class="sub">veto-boundary mapping · all scenarios presume consenting adults</span>
   <a href="index.html">← attraction game</a>
 </header>
 <main>
   <div class="note" id="introNote">
     <b>What this measures.</b> Your one documented data point (Oct 2019) suggests willingness here is
-    <b>scene architecture, not guy attributes</b> — four axes did the work: female arousal substrate,
-    pursuit direction, who authors the scene, and the contact envelope. This diagnostic varies those axes
-    across concrete scenario pairs and finds your veto boundaries: the axis-levels you hard-reject.
-    <b>Instructions:</b> for each pair, tap the scenario you'd be more willing to do — or <b>veto both</b>
-    if neither clears your bar. There are no right answers; vetoes are the signal.
+    <b>scene architecture, not guy attributes</b> — five axes did the work: female arousal substrate,
+    pursuit direction, who authors the scene, the taboo charge, and the contact envelope.
+    This diagnostic varies those axes across concrete scenario pairs and finds your veto boundaries.
+    <b>Instructions:</b> for each pair, tap the scenario you'd be more willing to do — or
+    <b>veto both</b> if neither clears your bar. If you'd do it but only reluctantly, tap the
+    <b>reluctant</b> link under your pick instead. Vetoes are the primary signal; reluctant picks
+    are the secondary one. Cards tagged <span style="color:var(--gold)">★ 2019 shape</span> match
+    your documented baseline exactly.
   </div>
 
   <div id="playView">
     <div class="trial-meta"><span id="trialLabel">trial 1</span><span id="phaseLabel">phase 1 · broad sampling</span></div>
     <div id="prog"><div></div></div>
     <div class="cards">
-      <div class="card" id="cardA"><div id="tagsA"></div><p id="textA"></p><button class="pickbtn" id="pickA">more willing → A</button></div>
-      <div class="card" id="cardB"><div id="tagsB"></div><p id="textB"></p><button class="pickbtn" id="pickB">more willing → B</button></div>
+      <div class="card" id="cardA"><div id="tagsA"></div><p id="textA"></p><button class="pickbtn" id="pickA">more willing → A</button><button class="relbtn" id="relA">reluctant pick → A</button></div>
+      <div class="card" id="cardB"><div id="tagsB"></div><p id="textB"></p><button class="pickbtn" id="pickB">more willing → B</button><button class="relbtn" id="relB">reluctant pick → B</button></div>
     </div>
     <div class="actions">
       <button id="vetoBoth">veto both — neither clears the bar</button>
@@ -79,9 +87,12 @@
     <div class="verdict" id="verdictBox"></div>
     <h3>axis veto map</h3>
     <div id="axisTables"></div>
+    <h3>deadliest combinations <span class="conf">(2-axis, ≥3 exposures)</span></h3>
+    <div id="comboBox"></div>
     <h3>session log</h3>
-    <div id="sessLog" class="conf"></div>
+    <div id="sessLog" class="conf" style="white-space:pre-wrap"></div>
     <div class="btnrow">
+      <button id="moreBtn">run 14 more isolation trials</button>
       <button id="dlBtn">download session JSON</button>
       <button id="restartBtn">restart</button>
     </div>
@@ -89,97 +100,117 @@
 </main>
 <script>
 "use strict";
-/* Axes from the Oct-2019 n=1 record:
-   S substrate · P pursuit direction · A authorship · E contact envelope */
+/* Axes from the Oct-2019 n=1 record + the wiki's orientation-violation mechanism:
+   S substrate · P pursuit direction · A authorship · N taboo charge · E contact envelope */
+const AXKEYS = ["S", "P", "A", "N", "E"];
 const AXES = {
-  S: { name: "arousal substrate", levels: { S1: "woman central", S2: "woman peripheral", S3: "no woman present" } },
-  P: { name: "pursuit direction", levels: { P1: "he is gay-identified, experimenting — not pursuing you", P2: "he is bisexual, mild interest in you", P3: "he is openly attracted to you, pursuing" } },
-  A: { name: "scene authorship", levels: { A1: "you orchestrate it", A2: "she orchestrates it", A3: "spontaneous / unplanned" } },
-  E: { name: "contact envelope", levels: { E1: "mutual touch only", E2: "includes oral (your 2019 act)", E3: "open-ended, no preset limits" } }
+  S: { name: "arousal substrate", def: "is a woman you find attractive structurally present?",
+       levels: { S1: "woman central", S2: "woman peripheral", S3: "no woman present" } },
+  P: { name: "pursuit direction", def: "is he into you, or are you the experimenter?",
+       levels: { P1: "he's experimenting, not pursuing you", P2: "he's bi, mild interest in you", P3: "he's openly pursuing you" } },
+  A: { name: "scene authorship", def: "who arranged and frames the scene?",
+       levels: { A1: "you direct", A2: "she directs", A3: "spontaneous" } },
+  N: { name: "taboo charge", def: "the wiki's orientation-violation mechanism: is a category being broken, and by whom?",
+       levels: { N1: "mutual crossing — both cross a boundary", N2: "you cross alone", N3: "routine — no charge left" } },
+  E: { name: "contact envelope", def: "how far does the contact go?",
+       levels: { E1: "touch only", E2: "includes oral (your 2019 act)", E3: "open-ended" } }
 };
-const BASELINE = { S: "S1", P: "P1", A: "A1", E: "E2" }; // Oct 20 2019 coordinates
+const BASELINE = { S: "S1", P: "P1", A: "A1", N: "N1", E: "E2" }; // Oct 20 2019 coordinates
 const SCEN = [
-  { id: "s01", ax: { S: "S1", P: "P1", A: "A1", E: "E1" }, t: "MMF scene. A female partner you find highly attractive is the central participant. The male participant identifies as gay; he is there to experiment, not pursuing you. You arranged and directed the scene. Contact stays at mutual touch." },
-  { id: "s02", ax: { S: "S1", P: "P1", A: "A1", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant identifies as gay, experimenting, not pursuing you. You arranged and directed it. Contact includes oral — the shape of your 2019 experience." },
-  { id: "s03", ax: { S: "S1", P: "P1", A: "A1", E: "E3" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged it. No preset limits on contact — the scene goes where it goes." },
-  { id: "s04", ax: { S: "S1", P: "P3", A: "A1", E: "E1" }, t: "MMF scene. Attractive female partner central. The male participant is openly attracted to you and pursuing. You arranged the scene. Contact stays at mutual touch." },
-  { id: "s05", ax: { S: "S1", P: "P2", A: "A1", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant is bisexual with mild interest in you. You arranged it. Contact includes oral." },
-  { id: "s06", ax: { S: "S3", P: "P1", A: "A1", E: "E1" }, t: "No woman present. Just you and a gay-identified male friend, experimenting together. You arranged it. Mutual touch only." },
-  { id: "s07", ax: { S: "S3", P: "P1", A: "A1", E: "E2" }, t: "No woman present. You and a gay-identified man, experimenting. You arranged it. Contact includes oral." },
-  { id: "s08", ax: { S: "S2", P: "P1", A: "A1", E: "E1" }, t: "A woman you find attractive is present but peripheral — watching, not participating. You, her, and a gay-identified male friend who is experimenting, not pursuing you. You arranged it. Mutual touch only." },
-  { id: "s09", ax: { S: "S1", P: "P1", A: "A2", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. She arranged the whole thing — you are a guest in her scene. Contact includes oral." },
-  { id: "s10", ax: { S: "S1", P: "P1", A: "A3", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting. Nobody planned it — it happens spontaneously. Contact includes oral." },
-  { id: "s11", ax: { S: "S3", P: "P3", A: "A1", E: "E1" }, t: "No woman present. A man who is openly attracted to you; you arranged to meet him. Mutual touch only." },
-  { id: "s12", ax: { S: "S1", P: "P2", A: "A3", E: "E1" }, t: "MMF scene. Attractive female partner central. Bisexual male participant with some interest in you. Unplanned — it just happens. Mutual touch only." },
-  { id: "s13", ax: { S: "S2", P: "P2", A: "A1", E: "E2" }, t: "A woman you find attractive is present but peripheral (filming, not participating). Male participant is bisexual, mild interest in you. You arranged it. Contact includes oral." },
-  { id: "s14", ax: { S: "S1", P: "P3", A: "A2", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant actively pursuing you. She arranged the scene. Contact includes oral." },
-  { id: "s15", ax: { S: "S3", P: "P1", A: "A3", E: "E1" }, t: "No woman present. A gay-identified man, experimenting. It happens spontaneously. Mutual touch only." },
-  { id: "s16", ax: { S: "S1", P: "P1", A: "A2", E: "E1" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. She arranged it. Mutual touch only." },
-  { id: "s17", ax: { S: "S2", P: "P1", A: "A3", E: "E2" }, t: "Woman present but peripheral. Gay-identified male participant, experimenting. Spontaneous. Contact includes oral." },
-  { id: "s18", ax: { S: "S1", P: "P2", A: "A1", E: "E1" }, t: "MMF scene. Attractive female partner central. Bisexual male participant, mild interest in you. You arranged it. Mutual touch only." },
-  { id: "s19", ax: { S: "S3", P: "P2", A: "A1", E: "E2" }, t: "No woman present. Bisexual male participant, mild interest in you. You arranged it. Contact includes oral." },
-  { id: "s20", ax: { S: "S1", P: "P3", A: "A3", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant actively pursuing you. Spontaneous. Contact includes oral." },
-  { id: "s21", ax: { S: "S2", P: "P3", A: "A1", E: "E1" }, t: "Woman present but peripheral. Male participant openly attracted to you, pursuing. You arranged it. Mutual touch only." },
-  { id: "s22", ax: { S: "S1", P: "P1", A: "A3", E: "E1" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. Spontaneous. Mutual touch only." },
-  { id: "s23", ax: { S: "S3", P: "P1", A: "A2", E: "E2" }, t: "No woman present. Gay-identified male participant, experimenting. A mutual friend arranged it. Contact includes oral." },
-  { id: "s24", ax: { S: "S1", P: "P2", A: "A2", E: "E3" }, t: "MMF scene. Attractive female partner central. Bisexual male participant, mild interest in you. She arranged it. Open-ended contact, no preset limits." },
-  { id: "s25", ax: { S: "S2", P: "P1", A: "A1", E: "E2" }, t: "A woman you find attractive is present, watching, not participating. Gay-identified male participant, experimenting, not pursuing you. You arranged it. Contact includes oral." },
-  { id: "s26", ax: { S: "S1", P: "P3", A: "A1", E: "E3" }, t: "MMF scene. Attractive female partner central. Male participant openly attracted to you, pursuing. You arranged it. Open-ended contact, no preset limits." },
-  { id: "s27", ax: { S: "S3", P: "P3", A: "A3", E: "E2" }, t: "No woman present. Male participant openly attracted to you, pursuing. Spontaneous. Contact includes oral." },
-  { id: "s28", ax: { S: "S1", P: "P1", A: "A1", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged and directed it — and it is being filmed, as in 2019. Contact includes oral." }
+  { id: "s01", ax: { S: "S1", P: "P1", A: "A1", N: "N1", E: "E1" }, t: "MMF scene. A female partner you find highly attractive is the central participant. The male participant identifies as gay; he is there to experiment, not pursuing you. You arranged and directed the scene. Contact stays at mutual touch." },
+  { id: "s02", ax: { S: "S1", P: "P1", A: "A1", N: "N1", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant identifies as gay, experimenting, not pursuing you. You arranged and directed it. Contact includes oral — the shape of your 2019 experience." },
+  { id: "s03", ax: { S: "S1", P: "P1", A: "A1", N: "N1", E: "E3" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged it. No preset limits on contact — the scene goes where it goes." },
+  { id: "s04", ax: { S: "S1", P: "P3", A: "A1", N: "N2", E: "E1" }, t: "MMF scene. Attractive female partner central. The male participant is openly attracted to you and pursuing. You arranged the scene. Contact stays at mutual touch." },
+  { id: "s05", ax: { S: "S1", P: "P2", A: "A1", N: "N2", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant is bisexual with mild interest in you. You arranged it. Contact includes oral." },
+  { id: "s06", ax: { S: "S3", P: "P1", A: "A1", N: "N2", E: "E1" }, t: "No woman present. Just you and a gay-identified male friend, experimenting together. You arranged it. Mutual touch only." },
+  { id: "s07", ax: { S: "S3", P: "P1", A: "A1", N: "N2", E: "E2" }, t: "No woman present. You and a gay-identified man, experimenting. You arranged it. Contact includes oral." },
+  { id: "s08", ax: { S: "S2", P: "P1", A: "A1", N: "N2", E: "E1" }, t: "A woman you find attractive is present but peripheral — watching, not participating. You, her, and a gay-identified male friend who is experimenting, not pursuing you. You arranged it. Mutual touch only." },
+  { id: "s09", ax: { S: "S1", P: "P1", A: "A2", N: "N1", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. She arranged the whole thing — you are a guest in her scene. Contact includes oral." },
+  { id: "s10", ax: { S: "S1", P: "P1", A: "A3", N: "N1", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting. Nobody planned it — it happens spontaneously. Contact includes oral." },
+  { id: "s11", ax: { S: "S3", P: "P3", A: "A1", N: "N2", E: "E1" }, t: "No woman present. A man who is openly attracted to you; you arranged to meet him. Mutual touch only." },
+  { id: "s12", ax: { S: "S1", P: "P2", A: "A3", N: "N2", E: "E1" }, t: "MMF scene. Attractive female partner central. Bisexual male participant with some interest in you. Unplanned — it just happens. Mutual touch only." },
+  { id: "s13", ax: { S: "S2", P: "P2", A: "A1", N: "N2", E: "E2" }, t: "A woman you find attractive is present but peripheral (filming, not participating). Male participant is bisexual, mild interest in you. You arranged it. Contact includes oral." },
+  { id: "s14", ax: { S: "S1", P: "P3", A: "A2", N: "N2", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant actively pursuing you. She arranged the scene. Contact includes oral." },
+  { id: "s15", ax: { S: "S3", P: "P1", A: "A3", N: "N2", E: "E1" }, t: "No woman present. A gay-identified man, experimenting. It happens spontaneously. Mutual touch only." },
+  { id: "s16", ax: { S: "S1", P: "P1", A: "A2", N: "N1", E: "E1" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. She arranged it. Mutual touch only." },
+  { id: "s17", ax: { S: "S2", P: "P1", A: "A3", N: "N2", E: "E2" }, t: "Woman present but peripheral. Gay-identified male participant, experimenting. Spontaneous. Contact includes oral." },
+  { id: "s18", ax: { S: "S1", P: "P2", A: "A1", N: "N2", E: "E1" }, t: "MMF scene. Attractive female partner central. Bisexual male participant, mild interest in you. You arranged it. Mutual touch only." },
+  { id: "s19", ax: { S: "S3", P: "P2", A: "A1", N: "N2", E: "E2" }, t: "No woman present. Bisexual male participant, mild interest in you. You arranged it. Contact includes oral." },
+  { id: "s20", ax: { S: "S1", P: "P3", A: "A3", N: "N2", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant actively pursuing you. Spontaneous. Contact includes oral." },
+  { id: "s21", ax: { S: "S2", P: "P3", A: "A1", N: "N2", E: "E1" }, t: "Woman present but peripheral. Male participant openly attracted to you, pursuing. You arranged it. Mutual touch only." },
+  { id: "s22", ax: { S: "S1", P: "P1", A: "A3", N: "N1", E: "E1" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. Spontaneous. Mutual touch only." },
+  { id: "s23", ax: { S: "S3", P: "P1", A: "A2", N: "N2", E: "E2" }, t: "No woman present. Gay-identified male participant, experimenting. A mutual friend arranged it. Contact includes oral." },
+  { id: "s24", ax: { S: "S1", P: "P2", A: "A2", N: "N2", E: "E3" }, t: "MMF scene. Attractive female partner central. Bisexual male participant, mild interest in you. She arranged it. Open-ended contact, no preset limits." },
+  { id: "s25", ax: { S: "S2", P: "P1", A: "A1", N: "N2", E: "E2" }, t: "A woman you find attractive is present, watching, not participating. Gay-identified male participant, experimenting, not pursuing you. You arranged it. Contact includes oral." },
+  { id: "s26", ax: { S: "S1", P: "P3", A: "A1", N: "N2", E: "E3" }, t: "MMF scene. Attractive female partner central. Male participant openly attracted to you, pursuing. You arranged it. Open-ended contact, no preset limits." },
+  { id: "s27", ax: { S: "S3", P: "P3", A: "A3", N: "N2", E: "E2" }, t: "No woman present. Male participant openly attracted to you, pursuing. Spontaneous. Contact includes oral." },
+  { id: "s28", ax: { S: "S1", P: "P1", A: "A1", N: "N1", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged and directed it — and it is being filmed, as in 2019. Contact includes oral." },
+  /* v2 additions: N-axis isolation — same S/P/A/E, different taboo charge */
+  { id: "n29", ax: { S: "S1", P: "P1", A: "A1", N: "N3", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged it. Contact includes oral. You have run this exact scene twice before — the novelty is gone, it is routine now." },
+  { id: "n30", ax: { S: "S1", P: "P1", A: "A1", N: "N3", E: "E1" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged it. Mutual touch only. Familiar setup by now — no charge of the new left in it." },
+  { id: "n31", ax: { S: "S3", P: "P1", A: "A1", N: "N3", E: "E2" }, t: "No woman present. You and a gay-identified man, experimenting. You arranged it. Contact includes oral. This happens inside a sex-positive friend circle where it is entirely unremarkable." },
+  { id: "n32", ax: { S: "S1", P: "P2", A: "A1", N: "N3", E: "E2" }, t: "MMF scene. Attractive female partner central. Bisexual male participant, mild interest in you. You arranged it. Contact includes oral. A standing arrangement — routine at this point, nothing transgressive about it." },
+  { id: "n33", ax: { S: "S2", P: "P1", A: "A1", N: "N3", E: "E2" }, t: "A woman you find attractive is present, watching, not participating. Gay-identified male participant, experimenting, not pursuing you. You arranged it. Contact includes oral. Third time running this scene — the ritual is familiar now." },
+  { id: "n34", ax: { S: "S3", P: "P1", A: "A1", N: "N3", E: "E1" }, t: "No woman present. You and a gay-identified male friend, experimenting. You arranged it. Mutual touch only. You have done this enough times that it feels ordinary." },
+  { id: "n35", ax: { S: "S1", P: "P1", A: "A2", N: "N3", E: "E2" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. She arranges this scene regularly — it is her routine, you are a recurring guest. Contact includes oral." },
+  { id: "n36", ax: { S: "S1", P: "P3", A: "A1", N: "N3", E: "E1" }, t: "MMF scene. Attractive female partner central. Male participant openly attracted to you, pursuing. You arranged it. Mutual touch only. He does this often; for him there is nothing new or charged about it." },
+  { id: "n37", ax: { S: "S1", P: "P3", A: "A2", N: "N3", E: "E2" }, t: "MMF scene. Attractive female partner central. Male participant actively pursuing you. She arranged it — this is an established pattern between the three of you. Contact includes oral." },
+  { id: "n38", ax: { S: "S2", P: "P3", A: "A1", N: "N3", E: "E1" }, t: "Woman present but peripheral. Male participant openly attracted to you, pursuing. You arranged it. Mutual touch only. A recurring low-stakes setup — no novelty, no tension." },
+  { id: "n39", ax: { S: "S1", P: "P1", A: "A1", N: "N3", E: "E3" }, t: "MMF scene. Attractive female partner central. Gay-identified male participant, experimenting, not pursuing you. You arranged it. Open-ended contact. You have done this variant enough that the transgression has worn off entirely." },
+  { id: "n40", ax: { S: "S3", P: "P2", A: "A1", N: "N3", E: "E2" }, t: "No woman present. Bisexual male participant, mild interest in you. You arranged it. Contact includes oral. An ongoing casual thing — comfortable, expected, uncharged." }
 ];
-const P1_N = 12, P2_N = 12, TOTAL = P1_N + P2_N;
-let trials = [], seenPairs = new Set(), phase = 1;
+const P1_N = 14, P2_N = 14;
+let TOTAL = P1_N + P2_N, trials = [], seenPairs = new Set(), phase = 1, extraRounds = 0;
 
-function hamming(a, b) { let d = 0; for (const k of ["S", "P", "A", "E"]) if (a.ax[k] !== b.ax[k]) d++; return d; }
+function hamming(a, b) { let d = 0; for (const k of AXKEYS) if (a.ax[k] !== b.ax[k]) d++; return d; }
 function pairKey(a, b) { return [a.id, b.id].sort().join("|"); }
+function is2019(s) { return AXKEYS.every(k => s.ax[k] === BASELINE[k]); }
 function randPair(minDist) {
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 300; i++) {
     const a = SCEN[Math.floor(Math.random() * SCEN.length)];
     const b = SCEN[Math.floor(Math.random() * SCEN.length)];
     if (a.id === b.id || seenPairs.has(pairKey(a, b))) continue;
     if (hamming(a, b) >= minDist) return [a, b];
   }
-  for (let i = 0; i < 200; i++) {
+  for (let i = 0; i < 300; i++) {
     const a = SCEN[Math.floor(Math.random() * SCEN.length)];
     const b = SCEN[Math.floor(Math.random() * SCEN.length)];
     if (a.id !== b.id && !seenPairs.has(pairKey(a, b))) return [a, b];
   }
   return null;
 }
-/* phase-2: pairs differing on exactly one axis, targeting the axis with
-   the most spread in veto rates (uncertainty-based queue) */
 function levelStats() {
   const st = {};
-  for (const k of ["S", "P", "A", "E"]) { st[k] = {}; for (const lv of Object.keys(AXES[k].levels)) st[k][lv] = { exp: 0, veto: 0, pick: 0 }; }
+  for (const k of AXKEYS) { st[k] = {}; for (const lv of Object.keys(AXES[k].levels)) st[k][lv] = { exp: 0, veto: 0, pick: 0, reluct: 0 }; }
   for (const t of trials) {
-    for (const s of [t.a, t.b]) for (const k of ["S", "P", "A", "E"]) {
+    for (const s of [t.a, t.b]) for (const k of AXKEYS) {
       const r = st[k][s.ax[k]]; r.exp++;
       if (t.resp === "V") r.veto++;
     }
     if (t.resp === "A" || t.resp === "B") {
-      const w = t.resp === "A" ? t.a : t.b, l = t.resp === "A" ? t.b : t.a;
-      for (const k of ["S", "P", "A", "E"]) { st[k][w.ax[k]].pick++; }
+      const w = t.resp === "A" ? t.a : t.b;
+      for (const k of AXKEYS) { const r = st[k][w.ax[k]]; r.pick++; if (t.rel) r.reluct++; }
     }
   }
   return st;
 }
 function targetAxis() {
-  const st = levelStats(); let best = null, bestVar = -1;
-  for (const k of ["S", "P", "A", "E"]) {
-    const rates = Object.values(st[k]).filter(r => r.exp >= 2).map(r => r.veto / r.exp);
-    if (rates.length < 2) continue;
+  const st = levelStats(); let best = null, bestScore = -1;
+  for (const k of AXKEYS) {
+    const cells = Object.values(st[k]).filter(r => r.exp >= 2);
+    if (cells.length < 2) continue;
+    const rates = cells.map(r => r.veto / r.exp);
     const mean = rates.reduce((x, y) => x + y, 0) / rates.length;
     const v = rates.reduce((x, y) => x + (y - mean) * (y - mean), 0) / rates.length;
-    const under = Object.values(st[k]).some(r => r.exp < 3);
+    const under = Object.values(st[k]).some(r => r.exp < 4);
     const score = v + (under ? 0.05 : 0);
-    if (score > bestVar) { bestVar = score; best = k; }
+    if (score > bestScore) { bestScore = score; best = k; }
   }
-  return best || ["S", "P", "A", "E"][Math.floor(Math.random() * 4)];
+  return best || AXKEYS[Math.floor(Math.random() * AXKEYS.length)];
 }
 function isoPair() {
-  const k = targetAxis(), others = ["S", "P", "A", "E"].filter(x => x !== k);
-  for (let i = 0; i < 300; i++) {
+  const k = targetAxis(), others = AXKEYS.filter(x => x !== k);
+  for (let i = 0; i < 400; i++) {
     const a = SCEN[Math.floor(Math.random() * SCEN.length)];
     const cands = SCEN.filter(s => s.id !== a.id && s.ax[k] !== a.ax[k] && others.every(o => s.ax[o] === a.ax[o]) && !seenPairs.has(pairKey(a, s)));
     if (cands.length) return [a, cands[Math.floor(Math.random() * cands.length)]];
@@ -189,10 +220,10 @@ function isoPair() {
 function nextPair() {
   const n = trials.length;
   phase = n < P1_N ? 1 : 2;
-  return phase === 1 ? randPair(2) : isoPair();
+  return phase === 1 ? randPair(3) : isoPair();
 }
 function tagsHTML(s) {
-  return ["S", "P", "A", "E"].map(k => `<span class="tag">${AXES[k].levels[s.ax[k]]}</span>`).join("");
+  return AXKEYS.map(k => `<span class="tag${k === "N" ? " hot" : ""}">${AXES[k].levels[s.ax[k]]}</span>`).join("");
 }
 let cur = null;
 function render() {
@@ -201,63 +232,100 @@ function render() {
   document.getElementById("doneView").classList.toggle("hidden", !done);
   document.getElementById("introNote").classList.toggle("hidden", done);
   if (done) { renderResults(); return; }
-  cur = nextPair();
-  if (!cur) { renderResults(); return; }
-  const [a, b] = cur, flip = Math.random() < 0.5;
-  const L = flip ? b : a, R = flip ? a : b;
+  const pr = nextPair();
+  if (!pr) { renderResults(); return; }
+  const flip = Math.random() < 0.5;
+  const L = flip ? pr[1] : pr[0], R = flip ? pr[0] : pr[1];
   cur = { a: L, b: R };
   seenPairs.add(pairKey(L, R));
-  document.getElementById("tagsA").innerHTML = tagsHTML(L);
-  document.getElementById("textA").textContent = L.t;
-  document.getElementById("tagsB").innerHTML = tagsHTML(R);
-  document.getElementById("textB").textContent = R.t;
+  for (const [side, s] of [["A", L], ["B", R]]) {
+    document.getElementById("tags" + side).innerHTML = tagsHTML(s);
+    document.getElementById("text" + side).textContent = s.t;
+    const card = document.getElementById("card" + side);
+    const old = card.querySelector(".badge2019"); if (old) old.remove();
+    if (is2019(s)) { const b = document.createElement("span"); b.className = "badge2019"; b.textContent = "★ 2019 shape"; card.appendChild(b); }
+  }
   document.getElementById("trialLabel").textContent = `trial ${trials.length + 1} / ${TOTAL}`;
   document.getElementById("phaseLabel").textContent = phase === 1 ? "phase 1 · broad sampling" : "phase 2 · single-variable isolation";
   document.querySelector("#prog > div").style.width = (trials.length / TOTAL * 100) + "%";
 }
-function respond(r) {
+function respond(r, rel) {
   if (!cur || trials.length >= TOTAL) return;
-  trials.push({ a: cur.a, b: cur.b, resp: r, phase });
-  try { localStorage.setItem("scen_diag_trials", JSON.stringify(trials.map(t => ({ a: t.a.id, b: t.b.id, resp: t.resp, phase: t.phase })))); } catch (e) {}
+  trials.push({ a: cur.a, b: cur.b, resp: r, rel: !!rel && (r === "A" || r === "B"), phase });
+  try { localStorage.setItem("scen_diag_trials_v2", JSON.stringify(trials.map(t => ({ a: t.a.id, b: t.b.id, resp: t.resp, rel: t.rel, phase: t.phase })))); } catch (e) {}
   render();
 }
-document.getElementById("pickA").onclick = () => respond("A");
-document.getElementById("pickB").onclick = () => respond("B");
-document.getElementById("vetoBoth").onclick = () => respond("V");
+document.getElementById("pickA").onclick = () => respond("A", false);
+document.getElementById("pickB").onclick = () => respond("B", false);
+document.getElementById("relA").onclick = () => respond("A", true);
+document.getElementById("relB").onclick = () => respond("B", true);
+document.getElementById("vetoBoth").onclick = () => respond("V", false);
 document.getElementById("skipBtn").onclick = () => { if (cur && trials.length < TOTAL) render(); };
-function conf(n) { return n >= 6 ? "confirmed" : n >= 3 ? "leaning" : n >= 1 ? "weak" : "—"; }
+function conf(n) { return n >= 8 ? "confirmed" : n >= 4 ? "leaning" : n >= 1 ? "weak" : "—"; }
 function renderResults() {
   document.querySelector("#prog > div").style.width = "100%";
   const st = levelStats();
   let html = "";
   const verdict = [];
-  for (const k of ["S", "P", "A", "E"]) {
-    html += `<h4>${AXES[k].name}</h4><table><tr><th>level</th><th>exposures</th><th>veto rate</th><th>pick rate</th><th>read</th></tr>`;
+  for (const k of AXKEYS) {
+    html += `<h4>${AXES[k].name} <span class="axdef">— ${AXES[k].def}</span></h4><table><tr><th>level</th><th>n</th><th>veto rate</th><th>pick rate</th><th>reluctant of picks</th><th>read</th><th></th></tr>`;
     for (const [lv, label] of Object.entries(AXES[k].levels)) {
-      const r = st[k][lv], vr = r.exp ? r.veto / r.exp : 0, pr = r.exp ? r.pick / r.exp : 0;
-      const cls = vr >= 0.6 ? "bad" : vr <= 0.25 ? "ok" : "mid";
-      const read = vr >= 0.6 ? "HARD VETO" : vr <= 0.25 ? "clears" : "mixed";
-      html += `<tr><td>${label}</td><td>${r.exp}</td><td><span class="bar" style="width:${Math.round(vr * 120)}px"></span> ${Math.round(vr * 100)}%</td><td>${Math.round(pr * 100)}%</td><td class="${cls}">${read}</td><td class="conf">${conf(r.exp)}</td></tr>`;
-      if (vr >= 0.6 && r.exp >= 3) verdict.push(`<b class="bad">${label}</b> (${AXES[k].name})`);
-      else if (vr <= 0.25 && r.exp >= 3) verdict.push(`<b class="ok">${label}</b> (${AXES[k].name})`);
+      const r = st[k][lv], vr = r.exp ? r.veto / r.exp : 0, pr = r.exp ? r.pick / r.exp : 0, rr = r.pick ? r.reluct / r.pick : 0;
+      let cls, read;
+      if (vr >= 0.6) { cls = "bad"; read = "HARD VETO"; }
+      else if (vr <= 0.25 && rr >= 0.5 && r.pick >= 2) { cls = "soft"; read = "clears, reluctantly"; }
+      else if (vr <= 0.25) { cls = "ok"; read = "clears"; }
+      else { cls = "mid"; read = "mixed"; }
+      html += `<tr><td>${label}</td><td>${r.exp}</td>` +
+        `<td><span class="bar" style="width:${Math.round(vr * 120)}px"></span> ${Math.round(vr * 100)}%</td>` +
+        `<td>${Math.round(pr * 100)}%</td>` +
+        `<td>${r.pick ? `<span class="bar2" style="width:${Math.round(rr * 80)}px"></span> ${Math.round(rr * 100)}%` : "—"}</td>` +
+        `<td class="${cls}">${read}</td><td class="conf">${conf(r.exp)}</td></tr>`;
+      if (r.exp >= 4) {
+        if (vr >= 0.6) verdict.push(`veto: <b class="bad">${label}</b> (${AXES[k].name})`);
+        else if (vr <= 0.25) verdict.push(`clear: <b class="${rr >= 0.5 && r.pick >= 2 ? "soft" : "ok"}">${label}</b> (${AXES[k].name})${rr >= 0.5 && r.pick >= 2 ? " — reluctantly" : ""}`);
+      }
     }
     html += "</table>";
   }
   document.getElementById("axisTables").innerHTML = html;
-  const base = ["S", "P", "A", "E"].map(k => AXES[k].levels[BASELINE[k]]).join(" · ");
+  /* deadliest 2-axis combos */
+  const combos = [];
+  for (let i = 0; i < AXKEYS.length; i++) for (let j = i + 1; j < AXKEYS.length; j++) {
+    const k1 = AXKEYS[i], k2 = AXKEYS[j], cells = {};
+    for (const t of trials) for (const s of [t.a, t.b]) {
+      const key = s.ax[k1] + "+" + s.ax[k2];
+      cells[key] = cells[key] || { exp: 0, veto: 0 };
+      cells[key].exp++; if (t.resp === "V") cells[key].veto++;
+    }
+    for (const [key, c] of Object.entries(cells)) {
+      if (c.exp >= 3) combos.push({ k1, k2, key, exp: c.exp, vr: c.veto / c.exp });
+    }
+  }
+  combos.sort((a, b) => b.vr - a.vr || b.exp - a.exp);
+  document.getElementById("comboBox").innerHTML = combos.length
+    ? `<table><tr><th>combination</th><th>n</th><th>veto rate</th></tr>` + combos.slice(0, 5).map(c => {
+        const [l1, l2] = c.key.split("+");
+        return `<tr><td>${AXES[c.k1].levels[l1]} + ${AXES[c.k2].levels[l2]}</td><td>${c.exp}</td><td><span class="bar" style="width:${Math.round(c.vr * 120)}px"></span> ${Math.round(c.vr * 100)}%</td></tr>`;
+      }).join("") + "</table>"
+    : `<p class="conf">not enough exposures yet — run more trials.</p>`;
+  const base = AXKEYS.map(k => AXES[k].levels[BASELINE[k]]).join(" · ");
+  const nVeto = (trials.filter(t => t.resp === "V").length);
   document.getElementById("verdictBox").innerHTML =
-    `<h3>your #2-eligible shape</h3><p>${verdict.length ? verdict.join("<br>") : "No axis-level crossed the veto threshold — run more trials or your bar is genuinely wide."}</p>` +
-    `<p class="conf">Your Oct 2019 baseline sat at: ${base}. Anything clearing the bar above is inside your historical envelope; anything vetoed is outside it. n=${trials.length} trials.</p>`;
+    `<h3>your #2-eligible shape</h3><p>${verdict.length ? verdict.join("<br>") : "No axis-level crossed a threshold — run more trials or your bar is genuinely wide."}</p>` +
+    `<p class="conf">n=${trials.length} trials · ${nVeto} double-vetoes · your Oct 2019 baseline sat at: ${base}.</p>`;
   document.getElementById("sessLog").textContent =
-    trials.map((t, i) => `${i + 1}. [${t.phase === 1 ? "broad" : "iso"}] ${t.a.id} vs ${t.b.id} → ${t.resp === "V" ? "VETO BOTH" : "picked " + t.resp}`).join("\n");
-  try { localStorage.setItem("scen_diag_done", "1"); } catch (e) {}
+    trials.map((t, i) => `${i + 1}. [${t.phase === 1 ? "broad" : "iso"}] ${t.a.id} vs ${t.b.id} → ${t.resp === "V" ? "VETO BOTH" : "picked " + t.resp + (t.rel ? " (reluctant)" : "")}`).join("\n");
+  try { localStorage.setItem("scen_diag_done_v2", "1"); } catch (e) {}
 }
+document.getElementById("moreBtn").onclick = () => { extraRounds++; TOTAL += 14; render(); };
 document.getElementById("dlBtn").onclick = () => {
-  const blob = new Blob([JSON.stringify({ ts: new Date().toISOString(), baseline: BASELINE, trials: trials.map(t => ({ a: t.a.id, b: t.b.id, ax_a: t.a.ax, ax_b: t.b.ax, resp: t.resp, phase: t.phase })) }, null, 1)], { type: "application/json" });
+  const blob = new Blob([JSON.stringify({ ts: new Date().toISOString(), version: 2, baseline: BASELINE,
+    trials: trials.map(t => ({ a: t.a.id, b: t.b.id, ax_a: t.a.ax, ax_b: t.b.ax, resp: t.resp, reluctant: t.rel, phase: t.phase })) }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = "scenario-diagnostic.json"; a.click(); URL.revokeObjectURL(u);
+  a.href = u; a.download = "scenario-diagnostic-v2.json"; a.click(); URL.revokeObjectURL(u);
 };
-document.getElementById("restartBtn").onclick = () => { trials = []; seenPairs = new Set(); try { localStorage.removeItem("scen_diag_trials"); } catch (e) {} render(); };
+document.getElementById("restartBtn").onclick = () => { trials = []; seenPairs = new Set(); TOTAL = P1_N + P2_N; extraRounds = 0; try { localStorage.removeItem("scen_diag_trials_v2"); } catch (e) {} render(); };
 render();
 </script>
 </body>
