@@ -141,11 +141,13 @@ let t1 = st.rounds[st.rounds.length - 1];
 ok('trial1: confound flagged (gonial moved harder than lip target)', t1.trial.confound === true, JSON.stringify(t1.trial.topDeltas));
 ok('trial1: inference names confound', $('#inference').textContent.includes('confound'));
 ok('trial1: evidence shows 0/0 (confounded holistic dropped)', $('#inference').textContent.includes('0/0 consistent'));
-ok('trial1: uncalled rows recorded with zAbs', t1.featurePicks.length === 2 && t1.featurePicks.every((p) => p.winner === null && p.zAbs > 0),
+ok('trial1: uncalled rows recorded with zAbs (skipped, not threshold evidence)', t1.featurePicks.length === 2 && t1.featurePicks.every((p) => p.winner === null && p.zAbs > 0 && !p.noTell),
   JSON.stringify(t1.featurePicks.map((p) => p.zAbs)));
 {
   const axes = $('#profile-axes').innerHTML;
-  ok('trial1: profile lips evidence 0/0', /<td>lips<\/td><td class="mono">0\/0</.test(axes), axes.slice(0, 200));
+  ok('trial1: profile lips card shows 0/0 evidence', /<b>lips<\/b>[\s\S]*?0\/0 evidence/.test(axes), axes.slice(0, 300));
+  ok('trial1: HUD chip for lips exists with no dots', $('#hud .hud-chip[data-axis="lips"]') && !$('#hud .hud-chip[data-axis="lips"] .dot'), $('#hud').innerHTML.slice(0, 300));
+  ok('trial1: queue rationale says fewest evidence', $('#hud .hud-why').textContent.includes('fewest'), $('#hud .hud-why').textContent);
 }
 
 // ---------- trial 2: direct picks override + cross-axis evidence ----------
@@ -182,9 +184,11 @@ ok('trial2: both picks on lipB', lipPick.winner === 'lipB' && gonPick.winner ===
 }
 {
   const axes = $('#profile-axes').innerHTML;
-  ok('trial2: lips 1/1 (1 direct)', /<td>lips<\/td><td class="mono">1\/1[^<]*<span class="hint">1 direct/.test(axes), axes.slice(0, 400));
-  ok('trial2: jaw 1/1 via cross-axis direct pick', /<td>jaw<\/td><td class="mono">1\/1[^<]*<span class="hint">1 direct/.test(axes), axes.slice(0, 400));
+  ok('trial2: lips card 1/1 evidence (1 direct)', /<b>lips<\/b>[\s\S]*?1\/1 evidence \(1 direct\)/.test(axes), axes.slice(0, 500));
+  ok('trial2: jaw card 1/1 via cross-axis direct pick', /<b>jaw<\/b>[\s\S]*?1\/1 evidence \(1 direct\)/.test(axes), axes.slice(0, 500));
   ok('trial2: Wilson CI rendered on axes', axes.includes('[21%–100%]'), axes.slice(0, 600));
+  ok('trial2: HUD lips chip has 1 filled dot', $('#hud .hud-chip[data-axis="lips"] .dot.c') !== null);
+  ok('trial2: HUD jaw chip has 1 ringed direct dot', $('#hud .hud-chip[data-axis="jaw"] .dot.c.d') !== null);
 }
 {
   const feat = $('#profile-features').innerHTML;
@@ -194,12 +198,71 @@ ok('trial2: both picks on lipB', lipPick.winner === 'lipB' && gonPick.winner ===
   ok('trial2: lip shape monotonic up', feat.includes('monotonic ↑'), feat.slice(0, 1200));
   ok('trial2: gonial shape monotonic down', feat.includes('monotonic ↓'), feat.slice(0, 1200));
   ok('trial2: lip ideal +2.50σ', feat.includes('+2.50σ'), feat.slice(0, 1200));
-  ok('trial2: discrimination threshold shown', feat.includes('calls from 2.50σ · silence to 2.50σ'), feat.slice(0, 1200));
+  ok('trial2: discrimination shows calls-from, no silence-as-evidence', feat.includes('calls from 2.50σ') && !feat.includes('silence to'), feat.slice(0, 1200));
+  ok('trial2: skipped rows noted', feat.includes('skipped'), feat.slice(0, 1200));
 }
 {
   const log = $('#log-table').innerHTML;
   ok('trial2: log feature cell shows signed dz', /lip full:[AB]\(/.test(log), log.slice(-400));
 }
+
+// ---------- trial 3: explicit can't-tell ----------
+$('#next-btn').click();
+await tick();
+attachLandmarks();
+await tick();
+rows = fpRows();
+function clickNt(row) {
+  [...row.querySelectorAll('button[data-side]')].find((b) => b.dataset.side === 'NT').click();
+}
+for (const r of rows) clickNt(r);
+ok('trial3: fp-notell 2 after Ø picks', $('#fp-notell').textContent === '2', $('#fp-notell').textContent);
+ok('trial3: fp-count still 0', $('#fp-count').textContent === '0');
+// toggle: Ø again -> cleared
+clickNt(rows[0]);
+ok('trial3: toggle clears Ø pick', $('#fp-notell').textContent === '1');
+clickNt(rows[0]);
+ok('trial3: Ø re-applied', $('#fp-notell').textContent === '2');
+clickCard('lipA'); clickCard('lipB');
+$('#lock-btn').click();
+await tick();
+st = getState();
+const t3 = st.rounds[st.rounds.length - 1];
+ok('trial3: both rows stored noTell', t3.featurePicks.length === 2 && t3.featurePicks.every((p) => p.noTell === true && p.winner === null), JSON.stringify(t3.featurePicks));
+ok('trial3: lips still 1/1 (no-tell adds no evidence)', $('#inference').textContent.includes('1/1 consistent'), $('#inference').textContent);
+{
+  const feat = $('#profile-features').innerHTML;
+  ok('trial3: discrimination shows can\'t-tell threshold', feat.includes("can't-tell up to 2.50σ"), feat.slice(0, 1200));
+  ok('trial3: log marks no-tell rows with Ø', $('#log-table').innerHTML.includes(':Ø'), $('#log-table').innerHTML.slice(-300));
+}
+
+// ---------- trials 4+5: cross-axis retirement via direct picks ----------
+async function trialDirect() {
+  $('#next-btn').click();
+  await tick();
+  attachLandmarks();
+  await tick();
+  for (const info of fpRows().map(rowInfo)) {
+    const wantHigher = info.key === 'lip_fullness';
+    clickFp(info.row, (wantHigher === (info.aVal > info.bVal)) ? 'A' : 'B');
+  }
+  clickCard('lipB'); clickCard('lipA');
+  $('#lock-btn').click();
+  await tick();
+  return getState();
+}
+await trialDirect(); // lips 2/2, jaw 2/2
+st = await trialDirect(); // lips 3/3 confirmed, jaw 3/3 confirmed (cross-axis)
+ok('trial5: lips status confirmed', st.axisStatus.lips === 'confirmed', JSON.stringify(st.axisStatus));
+ok('trial5: jaw confirmed WITHOUT ever being the trial axis (cross-axis retirement)', st.axisStatus.jaw === 'confirmed', JSON.stringify(st.axisStatus));
+{
+  const lipsPill = $('#hud .hud-chip[data-axis="lips"] .conf').textContent;
+  const jawPill = $('#hud .hud-chip[data-axis="jaw"] .conf').textContent;
+  ok('trial5: HUD lips chip confirmed', lipsPill.includes('confirmed'), lipsPill);
+  ok('trial5: HUD jaw chip confirmed', jawPill.includes('confirmed'), jawPill);
+  ok('trial5: retired section includes confirmed + no-pairs axes', $('#profile-axes').innerHTML.includes('retired axes (5)'), $('#profile-axes').innerHTML.slice(0, 400));
+}
+ok('trial5: next button goes to final profile', $('#next-btn').textContent.includes('final profile'), $('#next-btn').textContent);
 
 // ---------- report ----------
 const passed = results.filter((r) => r.pass).length;

@@ -242,14 +242,17 @@ const pct = (v) => Math.round(v * 100) + '%';
 const ciStr = (w) => `${pct(w.center)} [${pct(w.lo)}–${pct(w.hi)}]`;
 
 // Per-metric marginal preference analysis from feature picks.
+// Threshold semantics: an explicit "can't tell" is genuine discrimination
+// failure; an untouched row is just skipped — not counted either way.
 function metricAnalysis() {
   const per = {};
   for (const r of state.rounds) {
     if (r.phase !== 2) continue;
     for (const p of (r.featurePicks || [])) {
-      const a = (per[p.k] = per[p.k] || { picks: [], noCalls: [] });
+      const a = (per[p.k] = per[p.k] || { picks: [], noTells: [], skipped: 0 });
       if (p.winner) a.picks.push(p);
-      else if (p.zAbs != null) a.noCalls.push(p.zAbs);
+      else if (p.noTell && p.zAbs != null) a.noTells.push(p.zAbs);
+      else a.skipped++;
     }
   }
   const out = {};
@@ -259,7 +262,7 @@ function metricAnalysis() {
     const n = higher.length + lower.length;
     const meanAbsZ = a.picks.length ? a.picks.reduce((s, p) => s + Math.abs(p.dz), 0) / a.picks.length : null;
     const firstCall = a.picks.length ? Math.min(...a.picks.map((p) => Math.abs(p.dz))) : null;
-    const maxNoCall = a.noCalls.length ? Math.max(...a.noCalls) : null;
+    const maxNoTell = a.noTells.length ? Math.max(...a.noTells) : null;
     // shape: all-one-direction = monotonic; mixed with higher-picks-below-lower-picks = peaked
     let shape = '—';
     if (n >= 1 && lower.length === 0) shape = 'monotonic ↑';
@@ -272,7 +275,7 @@ function metricAnalysis() {
     } else if (n >= 2) shape = 'mixed';
     const wzs = a.picks.map((p) => p.wz).filter((v) => v != null);
     const ideal = wzs.length ? wzs.reduce((s, v) => s + v, 0) / wzs.length : null;
-    out[k] = { n, higher: higher.length, lower: lower.length, w: wilson(higher.length, n), meanAbsZ, firstCall, maxNoCall, shape, ideal };
+    out[k] = { n, higher: higher.length, lower: lower.length, w: wilson(higher.length, n), meanAbsZ, firstCall, maxNoTell, skipped: a.skipped, shape, ideal };
   }
   return out;
 }
@@ -370,6 +373,48 @@ function pickPair(axis) {
   state.recentAnchors[axis] = [...recent, pick.anchor].slice(-2);
   return pick;
 }
+// Human-readable rationale: why the adaptive queue picked this axis.
+function queueRationale(axis) {
+  const open = Object.keys(PAIR_AXES).filter((a) => state.axisStatus[a] === 'open' && pairPool(a).length > 0);
+  if (!open.length) return 'no open axes';
+  const ev = Object.fromEntries(open.map((a) => [a, axisScore(a).n]));
+  const unc = (a) => { const s = axisScore(a); return s.n ? 1 - Math.abs(2 * (s.c / s.n) - 1) : 1; };
+  const parts = [`${ev[axis]} evidence`];
+  if (ev[axis] === Math.min(...Object.values(ev))) parts.push('fewest');
+  parts.push(`uncertainty ${pct(unc(axis))}`);
+  if (unc(axis) === Math.max(...open.map(unc))) parts.push('max');
+  return parts.join(' · ');
+}
+// ---------- play HUD ----------
+// Live belief state: per-axis evidence dots (filled = consistent,
+// hollow = inconsistent, ringed = direct pick) + queue rationale.
+function evDots(axis) {
+  return axisEvidence(axis).map((p) =>
+    `<span class="dot${p.consistent ? ' c' : ' i'}${p.source === 'direct' ? ' d' : ''}" title="trial ${p.n}: ${p.source}, ${p.consistent ? 'consistent' : 'inconsistent'}"></span>`).join('');
+}
+function renderHUD() {
+  const el = $('#hud');
+  if (!el || !state) return;
+  let html = '<div class="hud-axes">';
+  for (const axis of Object.keys(PAIR_AXES)) {
+    const sc = axisScore(axis);
+    const st = state.axisStatus[axis];
+    const pill = st === 'confirmed' ? ['confirmed', 'confirmed']
+      : st === 'open' ? ['leaning', 'open'] : ['dropped', st === 'no-pairs' ? 'no pairs' : st];
+    const prog = st === 'confirmed' ? '✓ confirmed' : st === 'unresolved' ? '✕ unresolved'
+      : st === 'no-pairs' ? 'no valid pairs' : `${sc.c}/${CONFIRM_WINS}c · ${sc.n}/${MAX_TRIALS}t`;
+    html += `<button class="hud-chip" data-axis="${axis}" title="jump to profile">` +
+      `<span class="hud-name">${axis}</span>` +
+      `<span class="hud-dots">${evDots(axis) || '<span class="hint">no evidence</span>'}</span>` +
+      `<span class="conf ${pill[0]}">${pill[1] === 'open' ? prog : pill[1]}</span></button>`;
+  }
+  html += '</div>';
+  if (currentRound && currentRound.phase === 2) {
+    html += `<div class="hud-why">queue: ${queueRationale(currentRound.axis)} — pair ${currentRound.n} (isol +${currentRound.validity.toFixed(1)}σ · target ${currentRound.targetZ.toFixed(1)}σ)</div>`;
+  }
+  el.innerHTML = html;
+  el.querySelectorAll('.hud-chip').forEach((b) => b.onclick = () => showView('profile'));
+}
 
 // ---------- rounds ----------
 function p1Faces() {
@@ -444,12 +489,14 @@ function renderRound() {
     stage.appendChild(card);
   });
   updateRankUI();
+  renderHUD();
   renderFeatureRows(); // no-op until both faces measured; flushMeasures re-triggers
 }
 // ---------- feature picks ----------
 // Phase-2 pairs only: one row per metric where the pair actually differs
 // (|z| >= FEATURE_Z_MIN vs bank stats, target metric always included).
-// Optional — tap A/B per row, tap again to clear. Recorded on lock.
+// Optional — tap A/B per row for a direct pick, Ø for an explicit "can't
+// tell" (genuine discrimination failure), tap again to clear. Recorded on lock.
 function renderFeatureRows() {
   const host = $('#feature-picks');
   const r = currentRound;
@@ -474,12 +521,12 @@ function renderFeatureRows() {
   host.innerHTML = '';
   const head = document.createElement('div');
   head.className = 'fp-head';
-  head.innerHTML = `<b>feature picks</b> <span class="hint">optional · tap again to clear · <span id="fp-count">0</span> called</span>`;
+  head.innerHTML = `<b>feature picks</b> <span class="hint">optional · tap again to clear · <span id="fp-count">0</span> called · <span id="fp-notell">0</span> can't-tell</span>`;
   host.appendChild(head);
   const sub = document.createElement('div');
   sub.className = 'hint';
   sub.style.marginBottom = '8px';
-  sub.textContent = 'For each measured difference: which face\u2019s version do you prefer? A = left, B = right.';
+  sub.textContent = 'For each measured difference: which face\u2019s version do you prefer? A = left, B = right. Ø = you genuinely cannot tell them apart.';
   host.appendChild(sub);
   for (const { k, z } of rows) {
     const row = document.createElement('div');
@@ -499,6 +546,17 @@ function renderFeatureRows() {
       };
       row.appendChild(b);
     }
+    const nt = document.createElement('button');
+    nt.textContent = 'Ø';
+    nt.title = 'can\u2019t tell apart';
+    nt.dataset.side = 'NT';
+    nt.className = 'nt';
+    nt.onclick = () => {
+      currentFeaturePicks[k] = currentFeaturePicks[k] === 'NT' ? null : 'NT';
+      paintFpRow(row, k);
+      updateFpCount();
+    };
+    row.appendChild(nt);
     host.appendChild(row);
   }
   updateFpCount();
@@ -508,8 +566,11 @@ function paintFpRow(row, k) {
     b.classList.toggle('on', currentFeaturePicks[k] === b.dataset.side));
 }
 function updateFpCount() {
+  const vals = Object.values(currentFeaturePicks);
   const el = document.getElementById('fp-count');
-  if (el) el.textContent = Object.values(currentFeaturePicks).filter(Boolean).length;
+  if (el) el.textContent = vals.filter((v) => v === 'A' || v === 'B').length;
+  const nt = document.getElementById('fp-notell');
+  if (nt) nt.textContent = vals.filter((v) => v === 'NT').length;
 }
 function renderComplete() {
   $('#round-head').textContent = 'phase 2 complete — all axes resolved';
@@ -552,7 +613,9 @@ function lockRanking() {
   }
   // feature picks (phase 2): per-metric direct preferences. Winner stored as face id;
   // dz signed winner-minus-loser, wz the winner's bank z-score (revealed ideal point).
-  // Uncalled presented rows are recorded too (winner null, zAbs set) for threshold analysis.
+  // Explicit "can't tell" rows record noTell (genuine discrimination failure);
+  // untouched presented rows are recorded too (winner null, noTell unset) but
+  // count as skipped — missing, not evidence.
   let fp = [];
   if (r.phase === 2) {
     const [fidA, fidB] = r.faces;
@@ -560,7 +623,7 @@ function lockRanking() {
     const sd = STATS ? STATS.metrics : null;
     for (const { k, z } of currentFeatureRows) {
       const side = currentFeaturePicks[k];
-      if (side) {
+      if (side === 'A' || side === 'B') {
         const wfid = side === 'A' ? fidA : fidB;
         let dz = null, wz = null;
         if (mA && mB && sd && sd[k] && isFinite(mA[k]) && isFinite(mB[k])) {
@@ -569,6 +632,8 @@ function lockRanking() {
           wz = +((wv - sd[k].mean) / sd[k].std).toFixed(2);
         }
         fp.push({ k, winner: wfid, dz, wz });
+      } else if (side === 'NT') {
+        fp.push({ k, winner: null, dz: null, wz: null, zAbs: +Math.abs(z).toFixed(2), noTell: true });
       } else {
         fp.push({ k, winner: null, dz: null, wz: null, zAbs: +Math.abs(z).toFixed(2) });
       }
@@ -578,7 +643,7 @@ function lockRanking() {
   if (trialRec) { trialRec.featurePicks = fp; rec.trial = trialRec; }
   state.rounds.push(rec);
   if (r.phase === 2) {
-    updateAxisStatus(r.axis);
+    for (const a of Object.keys(PAIR_AXES)) updateAxisStatus(a); // cross-axis direct picks can retire other axes
     const sc = axisScore(r.axis);
     const [fcls, flabel] = confidence(sc.c);
     inf.text += ` — ${sc.c}/${sc.n} consistent${sc.direct ? ` (${sc.direct} direct)` : ''}, ${flabel}.`;
@@ -604,6 +669,7 @@ function lockRanking() {
   };
   $('.stage-actions').appendChild(nb);
   $('#lock-btn').disabled = true;
+  renderHUD();
   renderProfile(); renderLog();
 }
 function renderRoundStats(ranking) {
@@ -619,6 +685,39 @@ function renderRoundStats(ranking) {
 
 // ---------- profile ----------
 const AXIS_STATUS_LABEL = { open: 'open', confirmed: 'confirmed', unresolved: 'unresolved', 'no-pairs': 'no valid pairs' };
+// small visual components for the profile
+function ciBar(w) {
+  return `<span class="ci-bar"><span class="ci-fill" style="left:${(w.lo * 100).toFixed(1)}%;width:${((w.hi - w.lo) * 100).toFixed(1)}%"></span>` +
+    `<span class="ci-center" style="left:${(w.center * 100).toFixed(1)}%"></span></span>`;
+}
+function sigmaRail(ideal) {
+  if (ideal == null) return '<span class="hint">—</span>';
+  const x = Math.max(0, Math.min(100, (ideal + 3) / 6 * 100)).toFixed(1);
+  return `<span class="sig-rail"><span class="sig-zero"></span><span class="sig-marker" style="left:${x}%"></span></span>`;
+}
+function axisCard(axis) {
+  const sc = axisScore(axis);
+  const st = state.axisStatus[axis];
+  const w = wilson(sc.c, sc.n);
+  const pillCls = st === 'confirmed' ? 'confirmed' : st === 'open' ? 'leaning' : 'dropped';
+  const dots = evDots(axis);
+  const ev = `${sc.c}/${sc.n} evidence${sc.direct ? ` (${sc.direct} direct)` : ''}`;
+  const prog = st === 'confirmed' ? `retired · confirmed — ${ev}`
+    : st === 'unresolved' ? `retired · ${sc.n} trials, no consistent direction`
+    : st === 'no-pairs' ? `${ev} · no valid pairs in this selection`
+    : `${ev} — ${CONFIRM_WINS - sc.c} more consistent to confirm, or ${MAX_TRIALS - sc.n} trials to declare`;
+  return `<div class="ax-card"><div class="ax-top"><b>${axis}</b><span class="conf ${pillCls}">${AXIS_STATUS_LABEL[st] || st}</span></div>` +
+    `<div class="ax-dots">${dots || '<span class="hint">no evidence yet</span>'}</div>` +
+    `<div class="ax-ci"><span class="hint">consistency</span>${ciBar(w)}<span class="mono">${ciStr(w)}</span></div>` +
+    `<div class="ax-prog hint">${prog}</div></div>`;
+}
+function discText(v) {
+  if (v.firstCall == null) return '—';
+  let s = `calls from ${v.firstCall.toFixed(2)}σ`;
+  if (v.maxNoTell != null) s += ` · can't-tell up to ${v.maxNoTell.toFixed(2)}σ`;
+  if (v.skipped) s += ` <span class="hint">(${v.skipped} skipped)</span>`;
+  return s;
+}
 function renderProfile() {
   if (!state) return;
   let html = '<table class="axes"><tr><th>axis</th><th>evidence</th><th>consistency 95% CI</th><th>status</th></tr>';
@@ -627,43 +726,47 @@ function renderProfile() {
     const [cls, label] = confidence(w);
     html += `<tr><td>archetype</td><td class="mono">${ARCHETYPE_LABELS[a]}</td><td class="mono">—</td><td><span class="conf ${cls}">${label}</span></td></tr>`;
   }
-  for (const axis of Object.keys(PAIR_AXES)) {
-    const sc = axisScore(axis);
-    const w = wilson(sc.c, sc.n);
-    const [cls, label] = confidence(sc.c);
-    const st = state.axisStatus[axis];
-    const pool = pairPool(axis).length;
-    const statusLabel = st === 'open' && pool === 0 ? 'no valid pairs' : (AXIS_STATUS_LABEL[st] || st);
-    const ev = `${sc.c}/${sc.n}` + (sc.direct ? ` <span class="hint">${sc.direct} direct</span>` : '');
-    html += `<tr><td>${axis}</td><td class="mono">${ev}</td><td class="mono">${ciStr(w)}</td>` +
-      `<td><span class="conf ${st === 'confirmed' ? 'confirmed' : st === 'unresolved' ? 'weak' : 'leaning'}">${statusLabel}</span> <span class="hint">${label}</span></td></tr>`;
+  html += '</table><h2>Axes <span class="sub">evidence dots: ● consistent ○ inconsistent, ringed = direct pick</span></h2>';
+  const axes = Object.keys(PAIR_AXES);
+  const open = axes.filter((a) => state.axisStatus[a] === 'open');
+  const retired = axes.filter((a) => state.axisStatus[a] !== 'open');
+  html += open.length ? '<div class="ax-grid">' + open.map(axisCard).join('') + '</div>'
+    : '<p class="hint">no open axes</p>';
+  if (retired.length) {
+    html += `<details class="retired"><summary>retired axes (${retired.length})</summary><div class="ax-grid">` +
+      retired.map(axisCard).join('') + '</div></details>';
   }
-  $('#profile-axes').innerHTML = html + '</table>';
+  $('#profile-axes').innerHTML = html;
 
   // configurality: does the holistic winner match the feature-majority winner?
   const cf = configurality();
   let cfHtml;
   if (cf.total) {
-    const verdict = cf.rate >= 0.8 ? 'marginals compose cleanly'
+    const wcf = wilson(cf.agree, cf.total);
+    let verdict = cf.rate >= 0.8 ? 'marginals compose cleanly'
       : cf.rate >= 0.5 ? 'partially configural — some wholes beat their parts'
       : 'highly configural — do not trust marginal sums';
-    cfHtml = `<p>configurality: holistic pick matched feature-majority <b class="mono">${cf.agree}/${cf.total}</b> (${pct(cf.rate)}) — ${verdict}</p>`;
+    if (cf.total < 4) verdict += ' <span class="hint">(n&lt;4 — provisional)</span>';
+    cfHtml = `<div class="cf-card"><div class="cf-top"><b>configurality</b><span class="mono">${cf.agree}/${cf.total} · ${ciStr(wcf)}</span></div>` +
+      `${ciBar(wcf)}<div class="cf-verdict">${verdict}</div>` +
+      (cf.ties ? `<div class="hint">${cf.ties} split-decision round${cf.ties > 1 ? 's' : ''} excluded</div>` : '') + '</div>';
   } else {
     cfHtml = `<p class="hint">${cf.ties ? 'feature picks so far are all split decisions' : 'no feature picks yet — they appear on phase-2 pairs'}</p>`;
   }
   // marginal preferences: direct per-metric evidence with error bars, ideals, thresholds, shape
   const maRows = Object.entries(metricAnalysis()).filter(([, v]) => v.n > 0).sort((a, b) => b[1].n - a[1].n);
   $('#profile-features').innerHTML = cfHtml + (maRows.length
-    ? '<table><tr><th>metric</th><th>prefer higher</th><th>mean |z|</th><th>discrimination</th><th>shape</th><th>ideal z</th></tr>' +
-      maRows.map(([k, v]) => {
-        const disc = v.firstCall != null
-          ? `calls from ${v.firstCall.toFixed(2)}σ${v.maxNoCall != null ? ` · silence to ${v.maxNoCall.toFixed(2)}σ` : ''}`
-          : '—';
-        const ideal = v.ideal != null ? `${v.ideal >= 0 ? '+' : ''}${v.ideal.toFixed(2)}σ` : '—';
-        return `<tr><td>${METRIC_LABELS[k] || k}</td><td class="mono">${v.higher}/${v.n} · ${ciStr(v.w)}</td>` +
-          `<td class="mono">${v.meanAbsZ != null ? v.meanAbsZ.toFixed(2) + 'σ' : '—'}</td>` +
-          `<td class="mono">${disc}</td><td>${v.shape}</td><td class="mono">${ideal}</td></tr>`;
-      }).join('') + '</table>'
+    ? '<div class="fx-grid">' + maRows.map(([k, v]) => {
+      const shapeCls = v.shape.includes('↑') ? 'up' : v.shape.includes('↓') ? 'down' : v.shape === 'peaked' ? 'peak' : '';
+      // "revealed ideal" is only earned with bracketing evidence; otherwise it's just the chosen mean
+      const idealLabel = v.shape === 'peaked' ? 'revealed ideal' : 'chosen mean';
+      const ideal = v.ideal != null ? `${v.ideal >= 0 ? '+' : ''}${v.ideal.toFixed(2)}σ` : '—';
+      return `<div class="fx-card"><div class="fx-top"><b>${METRIC_LABELS[k] || k}</b><span class="shape ${shapeCls}">${v.shape}</span></div>` +
+        `<div class="fx-ci"><span class="hint">prefer higher</span>${ciBar(v.w)}<span class="mono">${v.higher}/${v.n} · ${ciStr(v.w)}</span></div>` +
+        `<div class="fx-row"><span class="hint">mean |z|</span><span class="mono">${v.meanAbsZ != null ? v.meanAbsZ.toFixed(2) + 'σ' : '—'}</span></div>` +
+        `<div class="fx-row"><span class="hint">discrimination</span><span class="mono">${discText(v)}</span></div>` +
+        `<div class="fx-row"><span class="hint">${idealLabel}</span>${sigmaRail(v.ideal)}<span class="mono">${ideal}</span></div></div>`;
+    }).join('') + '</div>'
     : '<p class="hint">no feature picks yet — they appear on phase-2 pairs</p>');
 
   const winners = state.rounds.map((r) => r.ranking[0]).filter((id) => measureCache.has(id));
@@ -683,9 +786,12 @@ function summaryText() {
     lines.push(`${axis} [${state.axisStatus[axis]}]: ${sc.c}/${sc.n} consistent (${sc.direct} direct), 95% CI ${ciStr(wilson(sc.c, sc.n))}, target=${AXIS_TARGET[axis]}`);
   }
   const cf = configurality();
-  if (cf.total) lines.push(`configurality: ${cf.agree}/${cf.total} holistic=feature-majority`);
-  for (const [k, v] of Object.entries(metricAnalysis()).filter(([, x]) => x.n > 0).sort((a, b) => b[1].n - a[1].n).slice(0, 8))
-    lines.push(`feature ${k}: ${v.higher}/${v.n} higher (${ciStr(v.w)}), ideal ${v.ideal != null ? (v.ideal >= 0 ? '+' : '') + v.ideal.toFixed(2) + 'σ' : '—'}, ${v.shape}`);
+  if (cf.total) lines.push(`configurality: ${cf.agree}/${cf.total} holistic=feature-majority (${ciStr(wilson(cf.agree, cf.total))})`);
+  for (const [k, v] of Object.entries(metricAnalysis()).filter(([, x]) => x.n > 0).sort((a, b) => b[1].n - a[1].n).slice(0, 8)) {
+    const nt = v.maxNoTell != null ? `, can't-tell ≤${v.maxNoTell.toFixed(2)}σ` : '';
+    const sk = v.skipped ? `, ${v.skipped} skipped` : '';
+    lines.push(`feature ${k}: ${v.higher}/${v.n} higher (${ciStr(v.w)}), chosen-mean ${v.ideal != null ? (v.ideal >= 0 ? '+' : '') + v.ideal.toFixed(2) + 'σ' : '—'}, ${v.shape}${nt}${sk}`);
+  }
   return lines.join('\n');
 }
 
@@ -699,7 +805,7 @@ function renderLog() {
       ? r.trial.topDeltas.map((d) => `${d.k} ${d.z >= 0 ? '+' : ''}${d.z}σ`).join(', ') + (r.trial.confound ? ' ⚠' : '')
       : '—';
     const feats = (r.featurePicks || []).map((p) => {
-      const side = p.winner == null ? '—' : p.winner === r.shown[0] ? 'A' : 'B';
+      const side = p.noTell ? 'Ø' : p.winner == null ? '—' : p.winner === r.shown[0] ? 'A' : 'B';
       const dz = p.dz != null ? `(${p.dz > 0 ? '+' : ''}${p.dz})` : '';
       return `${METRIC_LABELS[p.k] || p.k}:${side}${dz}`;
     }).join(', ') || '—';
@@ -870,6 +976,6 @@ async function boot() {
 
   initRefUpload();
   initMeasure().then(() => { window.__lmReady = true; flushMeasures(); });
-  renderProfile(); renderLog();
+  renderHUD(); renderProfile(); renderLog();
 }
 boot();

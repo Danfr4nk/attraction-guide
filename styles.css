@@ -157,3 +157,98 @@ footer {
 .gsubs { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0 2px 24px; }
 .gpick.sub { font-size: 12px; padding: 5px 10px; }
 .gpick.sub input { width: 13px; height: 13px; }
+
+/* ---------- UX refresh: HUD, CI bars, profile cards ---------- */
+
+/* play HUD */
+.hud { margin-bottom: 14px; }
+.hud-axes { display: flex; flex-wrap: wrap; gap: 8px; }
+.hud-chip {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 7px 12px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--panel); cursor: pointer; font-size: 13px;
+}
+.hud-chip:hover { border-color: var(--acc); }
+.hud-name { font-weight: 700; font-family: var(--mono); font-size: 12px; min-width: 34px; text-align: left; }
+.hud-dots { display: inline-flex; gap: 4px; align-items: center; min-width: 60px; min-height: 12px; }
+.dot {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+  border: 1px solid var(--dim); background: transparent;
+}
+.dot.c { background: var(--acc); border-color: var(--acc); }
+.dot.i { background: transparent; border-color: var(--warn); }
+.dot.d { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3px var(--acc); }
+.hud-why {
+  margin-top: 8px; font-family: var(--mono); font-size: 12px; color: var(--dim);
+  border-left: 3px solid var(--line); padding-left: 10px;
+}
+
+/* CI bar */
+.ci-bar {
+  position: relative; display: inline-block; width: 130px; height: 8px;
+  background: #232327; border-radius: 4px; vertical-align: middle; margin: 0 8px;
+}
+.ci-fill { position: absolute; top: 0; bottom: 0; background: var(--acc); opacity: .55; border-radius: 4px; }
+.ci-center { position: absolute; top: -3px; bottom: -3px; width: 2px; background: #fff; }
+
+/* sigma rail for chosen-mean / revealed ideal */
+.sig-rail {
+  position: relative; display: inline-block; width: 110px; height: 6px;
+  background: #232327; border-radius: 3px; vertical-align: middle; margin: 0 8px;
+}
+.sig-zero { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: var(--dim); }
+.sig-marker { position: absolute; top: -3px; width: 8px; height: 12px; margin-left: -4px; background: var(--acc); border-radius: 2px; }
+
+/* axis cards */
+.ax-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin: 10px 0; }
+.ax-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px;
+}
+.ax-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.ax-top b { font-family: var(--mono); font-size: 14px; }
+.ax-dots { display: flex; gap: 5px; align-items: center; margin-bottom: 8px; min-height: 14px; }
+.ax-ci { font-size: 12px; margin-bottom: 6px; }
+.ax-prog { font-size: 12px; }
+
+/* configurality */
+.cf-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px; margin: 14px 0; max-width: 640px;
+}
+.cf-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.cf-verdict { margin-top: 8px; font-size: 14px; color: var(--acc); }
+
+/* feature cards */
+.fx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 12px; margin: 10px 0; }
+.fx-card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+  padding: 12px 14px;
+}
+.fx-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.fx-top b { font-size: 14px; }
+.shape { font-family: var(--mono); font-size: 12px; padding: 2px 8px; border-radius: 4px; background: #232327; color: var(--dim); }
+.shape.up { background: #1a3a2a; color: var(--good); }
+.shape.down { background: #3a2a3a; color: var(--acc); }
+.shape.peak { background: #2a3a4a; color: #7dd3fc; }
+.fx-ci { font-size: 12px; margin-bottom: 8px; }
+.fx-row { display: flex; align-items: center; gap: 8px; font-size: 12px; margin-top: 5px; }
+.fx-row .hint { min-width: 108px; }
+
+/* retired axes */
+details.retired { margin-top: 14px; }
+details.retired summary { cursor: pointer; color: var(--dim); font-size: 14px; padding: 6px 0; }
+details.retired summary:hover { color: var(--txt); }
+details.retired .ax-card { opacity: .72; }
+
+/* can't-tell button */
+.fp-row button.nt { font-family: var(--mono); }
+.fp-row button.nt.on { background: transparent; border-color: var(--warn); color: var(--warn); font-weight: 700; }
+
+@media (max-width: 640px) {
+  .hud-axes { gap: 6px; }
+  .hud-chip { padding: 6px 9px; gap: 7px; }
+  .hud-dots { min-width: 0; }
+  .ci-bar { width: 90px; }
+  .sig-rail { width: 80px; }
+}
