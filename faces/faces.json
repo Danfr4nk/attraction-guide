@@ -1,1 +1,1514 @@
-{"faces":[{"archetype":"wide","file":"faces/p1-wide-1.webp","id":"p1-wide-1","label":"wide-angular","phase":1},{"archetype":"wide","file":"faces/p1-wide-2.webp","id":"p1-wide-2","label":"wide-angular","phase":1},{"archetype":"long","file":"faces/p1-long-1.webp","id":"p1-long-1","label":"long-narrow","phase":1},{"archetype":"long","file":"faces/p1-long-2.webp","id":"p1-long-2","label":"long-narrow","phase":1},{"archetype":"heart","file":"faces/p1-heart-1.webp","id":"p1-heart-1","label":"heart","phase":1},{"archetype":"heart","file":"faces/p1-heart-2.webp","id":"p1-heart-2","label":"heart","phase":1},{"archetype":"round","file":"faces/p1-round-1.webp","id":"p1-round-1","label":"round","phase":1},{"archetype":"round","file":"faces/p1-round-2.webp","id":"p1-round-2","label":"round","phase":1},{"axis":"jaw","file":"faces/p2-jaw-sharp.webp","id":"p2-jaw-sharp","phase":2,"variant":"sharp"},{"axis":"jaw","file":"faces/p2-jaw-soft.webp","id":"p2-jaw-soft","phase":2,"variant":"soft"},{"axis":"lips","file":"faces/p2-lips-full.webp","id":"p2-lips-full","phase":2,"variant":"full"},{"axis":"lips","file":"faces/p2-lips-thin.webp","id":"p2-lips-thin","phase":2,"variant":"thin"},{"axis":"eyes","file":"faces/p2-eyes-wide.webp","id":"p2-eyes-wide","phase":2,"variant":"wide"},{"axis":"eyes","file":"faces/p2-eyes-close.webp","id":"p2-eyes-close","phase":2,"variant":"close"},{"axis":"brow","file":"faces/p2-brow-thick.webp","id":"p2-brow-thick","phase":2,"variant":"thick"},{"axis":"brow","file":"faces/p2-brow-thin.webp","id":"p2-brow-thin","phase":2,"variant":"thin"},{"axis":"nose","file":"faces/p2-nose-narrow.webp","id":"p2-nose-narrow","phase":2,"variant":"narrow"},{"axis":"nose","file":"faces/p2-nose-wide.webp","id":"p2-nose-wide","phase":2,"variant":"wide"}]}
+{
+ "faces": [
+  {
+   "archetype": "wide",
+   "file": "faces/p1-wide-1.webp",
+   "id": "p1-wide-1",
+   "label": "wide-angular",
+   "phase": 1
+  },
+  {
+   "archetype": "wide",
+   "file": "faces/p1-wide-2.webp",
+   "id": "p1-wide-2",
+   "label": "wide-angular",
+   "phase": 1
+  },
+  {
+   "archetype": "long",
+   "file": "faces/p1-long-1.webp",
+   "id": "p1-long-1",
+   "label": "long-narrow",
+   "phase": 1
+  },
+  {
+   "archetype": "long",
+   "file": "faces/p1-long-2.webp",
+   "id": "p1-long-2",
+   "label": "long-narrow",
+   "phase": 1
+  },
+  {
+   "archetype": "heart",
+   "file": "faces/p1-heart-1.webp",
+   "id": "p1-heart-1",
+   "label": "heart",
+   "phase": 1
+  },
+  {
+   "archetype": "heart",
+   "file": "faces/p1-heart-2.webp",
+   "id": "p1-heart-2",
+   "label": "heart",
+   "phase": 1
+  },
+  {
+   "archetype": "round",
+   "file": "faces/p1-round-1.webp",
+   "id": "p1-round-1",
+   "label": "round",
+   "phase": 1
+  },
+  {
+   "archetype": "round",
+   "file": "faces/p1-round-2.webp",
+   "id": "p1-round-2",
+   "label": "round",
+   "phase": 1
+  },
+  {
+   "axis": "jaw",
+   "file": "faces/p2-jaw-sharp.webp",
+   "id": "p2-jaw-sharp",
+   "phase": 2,
+   "variant": "sharp",
+   "pair_validity": -0.74,
+   "pair_target_z": 1.59,
+   "pair_dir_z": 1.51
+  },
+  {
+   "axis": "jaw",
+   "file": "faces/p2-jaw-soft.webp",
+   "id": "p2-jaw-soft",
+   "phase": 2,
+   "variant": "soft",
+   "pair_validity": -0.74,
+   "pair_target_z": 1.59,
+   "pair_dir_z": 1.51
+  },
+  {
+   "axis": "lips",
+   "file": "faces/p2-lips-full.webp",
+   "id": "p2-lips-full",
+   "phase": 2,
+   "variant": "full",
+   "pair_validity": -0.07,
+   "pair_target_z": 3.24,
+   "pair_dir_z": 3.24
+  },
+  {
+   "axis": "lips",
+   "file": "faces/p2-lips-thin.webp",
+   "id": "p2-lips-thin",
+   "phase": 2,
+   "variant": "thin",
+   "pair_validity": -0.07,
+   "pair_target_z": 3.24,
+   "pair_dir_z": 3.24
+  },
+  {
+   "axis": "eyes",
+   "file": "faces/p2-eyes-wide.webp",
+   "id": "p2-eyes-wide",
+   "phase": 2,
+   "variant": "wide",
+   "pair_validity": -0.81,
+   "pair_target_z": 0.59,
+   "pair_dir_z": 0.08
+  },
+  {
+   "axis": "eyes",
+   "file": "faces/p2-eyes-close.webp",
+   "id": "p2-eyes-close",
+   "phase": 2,
+   "variant": "close",
+   "pair_validity": -0.81,
+   "pair_target_z": 0.59,
+   "pair_dir_z": 0.08
+  },
+  {
+   "axis": "brow",
+   "file": "faces/p2-brow-thick.webp",
+   "id": "p2-brow-thick",
+   "phase": 2,
+   "variant": "thick",
+   "pair_validity": -1.68,
+   "pair_target_z": 0.65,
+   "pair_dir_z": 0.65
+  },
+  {
+   "axis": "brow",
+   "file": "faces/p2-brow-thin.webp",
+   "id": "p2-brow-thin",
+   "phase": 2,
+   "variant": "thin",
+   "pair_validity": -1.68,
+   "pair_target_z": 0.65,
+   "pair_dir_z": 0.65
+  },
+  {
+   "axis": "nose",
+   "file": "faces/p2-nose-narrow.webp",
+   "id": "p2-nose-narrow",
+   "phase": 2,
+   "variant": "narrow",
+   "pair_validity": -0.55,
+   "pair_target_z": 1.93,
+   "pair_dir_z": -1.93
+  },
+  {
+   "axis": "nose",
+   "file": "faces/p2-nose-wide.webp",
+   "id": "p2-nose-wide",
+   "phase": 2,
+   "variant": "wide",
+   "pair_validity": -0.55,
+   "pair_target_z": 1.93,
+   "pair_dir_z": -1.93
+  },
+  {
+   "id": "p2a03",
+   "file": "faces/p2a03.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a03-jaw-soft",
+   "file": "faces/p2a03-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a03-lips-full",
+   "file": "faces/p2a03-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 1.05,
+   "pair_target_z": 3.37,
+   "pair_dir_z": 3.37
+  },
+  {
+   "id": "p2a03-lips-thin",
+   "file": "faces/p2a03-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 1.05,
+   "pair_target_z": 3.37,
+   "pair_dir_z": 3.37
+  },
+  {
+   "id": "p2a03-brow-thick",
+   "file": "faces/p2a03-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.41,
+   "pair_target_z": 1.18,
+   "pair_dir_z": 1.18
+  },
+  {
+   "id": "p2a03-brow-thin",
+   "file": "faces/p2a03-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.41,
+   "pair_target_z": 1.18,
+   "pair_dir_z": 1.18
+  },
+  {
+   "id": "p2a03-nose-narrow",
+   "file": "faces/p2a03-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": 0.46,
+   "pair_target_z": 1.93,
+   "pair_dir_z": -1.42
+  },
+  {
+   "id": "p2a03-nose-wide",
+   "file": "faces/p2a03-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a03",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": 0.46,
+   "pair_target_z": 1.93,
+   "pair_dir_z": -1.42
+  },
+  {
+   "id": "p2a04",
+   "file": "faces/p2a04.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a04-jaw-sharp",
+   "file": "faces/p2a04-jaw-sharp.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "jaw",
+   "variant": "sharp",
+   "pair_validity": -0.96,
+   "pair_target_z": 0.33,
+   "pair_dir_z": -0.11
+  },
+  {
+   "id": "p2a04-jaw-soft",
+   "file": "faces/p2a04-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "jaw",
+   "variant": "soft",
+   "pair_validity": -0.96,
+   "pair_target_z": 0.33,
+   "pair_dir_z": -0.11
+  },
+  {
+   "id": "p2a04-lips-full",
+   "file": "faces/p2a04-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.64,
+   "pair_target_z": 4.09,
+   "pair_dir_z": 4.09
+  },
+  {
+   "id": "p2a04-lips-thin",
+   "file": "faces/p2a04-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.64,
+   "pair_target_z": 4.09,
+   "pair_dir_z": 4.09
+  },
+  {
+   "id": "p2a04-brow-thick",
+   "file": "faces/p2a04-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.38,
+   "pair_target_z": 1.18,
+   "pair_dir_z": 1.18
+  },
+  {
+   "id": "p2a04-brow-thin",
+   "file": "faces/p2a04-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.38,
+   "pair_target_z": 1.18,
+   "pair_dir_z": 1.18
+  },
+  {
+   "id": "p2a04-nose-narrow",
+   "file": "faces/p2a04-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.81,
+   "pair_target_z": 1.06,
+   "pair_dir_z": -0.97
+  },
+  {
+   "id": "p2a04-nose-wide",
+   "file": "faces/p2a04-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a04",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.81,
+   "pair_target_z": 1.06,
+   "pair_dir_z": -0.97
+  },
+  {
+   "id": "p2a05",
+   "file": "faces/p2a05.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a05-jaw-sharp",
+   "file": "faces/p2a05-jaw-sharp.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "jaw",
+   "variant": "sharp",
+   "pair_validity": -0.51,
+   "pair_target_z": 0.25,
+   "pair_dir_z": -0.06
+  },
+  {
+   "id": "p2a05-jaw-soft",
+   "file": "faces/p2a05-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "jaw",
+   "variant": "soft",
+   "pair_validity": -0.51,
+   "pair_target_z": 0.25,
+   "pair_dir_z": -0.06
+  },
+  {
+   "id": "p2a05-lips-full",
+   "file": "faces/p2a05-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.38,
+   "pair_target_z": 3.06,
+   "pair_dir_z": 3.06
+  },
+  {
+   "id": "p2a05-lips-thin",
+   "file": "faces/p2a05-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.38,
+   "pair_target_z": 3.06,
+   "pair_dir_z": 3.06
+  },
+  {
+   "id": "p2a05-eyes-wide",
+   "file": "faces/p2a05-eyes-wide.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "eyes",
+   "variant": "wide",
+   "pair_validity": -1.14,
+   "pair_target_z": 0.12,
+   "pair_dir_z": 0.11
+  },
+  {
+   "id": "p2a05-eyes-close",
+   "file": "faces/p2a05-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "eyes",
+   "variant": "close",
+   "pair_validity": -1.14,
+   "pair_target_z": 0.12,
+   "pair_dir_z": 0.11
+  },
+  {
+   "id": "p2a05-nose-narrow",
+   "file": "faces/p2a05-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -1.16,
+   "pair_target_z": 0.14,
+   "pair_dir_z": -0.14
+  },
+  {
+   "id": "p2a05-nose-wide",
+   "file": "faces/p2a05-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -1.16,
+   "pair_target_z": 0.14,
+   "pair_dir_z": -0.14
+  },
+  {
+   "id": "p2a05-brow-thick",
+   "file": "faces/p2a05-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -1.28,
+   "pair_target_z": 0.11,
+   "pair_dir_z": 0.0
+  },
+  {
+   "id": "p2a05-brow-thin",
+   "file": "faces/p2a05-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a05",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -1.28,
+   "pair_target_z": 0.11,
+   "pair_dir_z": 0.0
+  },
+  {
+   "id": "p2a06",
+   "file": "faces/p2a06.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a06-jaw-soft",
+   "file": "faces/p2a06-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a06-lips-full",
+   "file": "faces/p2a06-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.59,
+   "pair_target_z": 3.04,
+   "pair_dir_z": 3.04
+  },
+  {
+   "id": "p2a06-lips-thin",
+   "file": "faces/p2a06-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.59,
+   "pair_target_z": 3.04,
+   "pair_dir_z": 3.04
+  },
+  {
+   "id": "p2a06-eyes-close",
+   "file": "faces/p2a06-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "eyes",
+   "variant": "close"
+  },
+  {
+   "id": "p2a06-nose-narrow",
+   "file": "faces/p2a06-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.1,
+   "pair_target_z": 2.02,
+   "pair_dir_z": -0.34
+  },
+  {
+   "id": "p2a06-nose-wide",
+   "file": "faces/p2a06-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.1,
+   "pair_target_z": 2.02,
+   "pair_dir_z": -0.34
+  },
+  {
+   "id": "p2a06-brow-thick",
+   "file": "faces/p2a06-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.57,
+   "pair_target_z": 0.72,
+   "pair_dir_z": 0.72
+  },
+  {
+   "id": "p2a06-brow-thin",
+   "file": "faces/p2a06-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a06",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.57,
+   "pair_target_z": 0.72,
+   "pair_dir_z": 0.72
+  },
+  {
+   "id": "p2a07",
+   "file": "faces/p2a07.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a07-jaw-sharp",
+   "file": "faces/p2a07-jaw-sharp.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "jaw",
+   "variant": "sharp",
+   "pair_validity": -3.95,
+   "pair_target_z": 1.95,
+   "pair_dir_z": -1.95
+  },
+  {
+   "id": "p2a07-jaw-soft",
+   "file": "faces/p2a07-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "jaw",
+   "variant": "soft",
+   "pair_validity": -3.95,
+   "pair_target_z": 1.95,
+   "pair_dir_z": -1.95
+  },
+  {
+   "id": "p2a07-lips-full",
+   "file": "faces/p2a07-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": -0.34,
+   "pair_target_z": 3.56,
+   "pair_dir_z": 3.49
+  },
+  {
+   "id": "p2a07-lips-thin",
+   "file": "faces/p2a07-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": -0.34,
+   "pair_target_z": 3.56,
+   "pair_dir_z": 3.49
+  },
+  {
+   "id": "p2a07-eyes-close",
+   "file": "faces/p2a07-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "eyes",
+   "variant": "close"
+  },
+  {
+   "id": "p2a07-brow-thick",
+   "file": "faces/p2a07-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.02,
+   "pair_target_z": 0.83,
+   "pair_dir_z": 0.72
+  },
+  {
+   "id": "p2a07-brow-thin",
+   "file": "faces/p2a07-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.02,
+   "pair_target_z": 0.83,
+   "pair_dir_z": 0.72
+  },
+  {
+   "id": "p2a07-nose-narrow",
+   "file": "faces/p2a07-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.03,
+   "pair_target_z": 2.6,
+   "pair_dir_z": -0.97
+  },
+  {
+   "id": "p2a07-nose-wide",
+   "file": "faces/p2a07-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a07",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.03,
+   "pair_target_z": 2.6,
+   "pair_dir_z": -0.97
+  },
+  {
+   "id": "p2a08",
+   "file": "faces/p2a08.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a08-jaw-soft",
+   "file": "faces/p2a08-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a08-lips-full",
+   "file": "faces/p2a08-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 1.04,
+   "pair_target_z": 3.69,
+   "pair_dir_z": 2.95
+  },
+  {
+   "id": "p2a08-lips-thin",
+   "file": "faces/p2a08-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 1.04,
+   "pair_target_z": 3.69,
+   "pair_dir_z": 2.95
+  },
+  {
+   "id": "p2a08-eyes-wide",
+   "file": "faces/p2a08-eyes-wide.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "eyes",
+   "variant": "wide",
+   "pair_validity": -1.8,
+   "pair_target_z": 1.01,
+   "pair_dir_z": 1.01
+  },
+  {
+   "id": "p2a08-eyes-close",
+   "file": "faces/p2a08-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "eyes",
+   "variant": "close",
+   "pair_validity": -1.8,
+   "pair_target_z": 1.01,
+   "pair_dir_z": 1.01
+  },
+  {
+   "id": "p2a08-brow-thick",
+   "file": "faces/p2a08-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": 0.17,
+   "pair_target_z": 1.18,
+   "pair_dir_z": 1.18
+  },
+  {
+   "id": "p2a08-brow-thin",
+   "file": "faces/p2a08-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": 0.17,
+   "pair_target_z": 1.18,
+   "pair_dir_z": 1.18
+  },
+  {
+   "id": "p2a08-nose-narrow",
+   "file": "faces/p2a08-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": 0.14,
+   "pair_target_z": 1.25,
+   "pair_dir_z": -1.14
+  },
+  {
+   "id": "p2a08-nose-wide",
+   "file": "faces/p2a08-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a08",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": 0.14,
+   "pair_target_z": 1.25,
+   "pair_dir_z": -1.14
+  },
+  {
+   "id": "p2a09",
+   "file": "faces/p2a09.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a09-jaw-sharp",
+   "file": "faces/p2a09-jaw-sharp.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "jaw",
+   "variant": "sharp",
+   "pair_validity": -0.53,
+   "pair_target_z": 0.5,
+   "pair_dir_z": -0.5
+  },
+  {
+   "id": "p2a09-jaw-soft",
+   "file": "faces/p2a09-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "jaw",
+   "variant": "soft",
+   "pair_validity": -0.53,
+   "pair_target_z": 0.5,
+   "pair_dir_z": -0.5
+  },
+  {
+   "id": "p2a09-lips-full",
+   "file": "faces/p2a09-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.25,
+   "pair_target_z": 2.61,
+   "pair_dir_z": 2.61
+  },
+  {
+   "id": "p2a09-lips-thin",
+   "file": "faces/p2a09-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.25,
+   "pair_target_z": 2.61,
+   "pair_dir_z": 2.61
+  },
+  {
+   "id": "p2a09-eyes-wide",
+   "file": "faces/p2a09-eyes-wide.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "eyes",
+   "variant": "wide",
+   "pair_validity": -1.5,
+   "pair_target_z": 0.59,
+   "pair_dir_z": 0.59
+  },
+  {
+   "id": "p2a09-eyes-close",
+   "file": "faces/p2a09-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "eyes",
+   "variant": "close",
+   "pair_validity": -1.5,
+   "pair_target_z": 0.59,
+   "pair_dir_z": 0.59
+  },
+  {
+   "id": "p2a09-brow-thick",
+   "file": "faces/p2a09-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.49,
+   "pair_target_z": 0.92,
+   "pair_dir_z": 0.92
+  },
+  {
+   "id": "p2a09-brow-thin",
+   "file": "faces/p2a09-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.49,
+   "pair_target_z": 0.92,
+   "pair_dir_z": 0.92
+  },
+  {
+   "id": "p2a09-nose-narrow",
+   "file": "faces/p2a09-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a09",
+   "axis": "nose",
+   "variant": "narrow"
+  },
+  {
+   "id": "p2a10",
+   "file": "faces/p2a10.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a10-jaw-soft",
+   "file": "faces/p2a10-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a10-lips-full",
+   "file": "faces/p2a10-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.74,
+   "pair_target_z": 3.49,
+   "pair_dir_z": 3.49
+  },
+  {
+   "id": "p2a10-lips-thin",
+   "file": "faces/p2a10-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.74,
+   "pair_target_z": 3.49,
+   "pair_dir_z": 3.49
+  },
+  {
+   "id": "p2a10-eyes-wide",
+   "file": "faces/p2a10-eyes-wide.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "eyes",
+   "variant": "wide",
+   "pair_validity": -0.6,
+   "pair_target_z": 0.47,
+   "pair_dir_z": 0.15
+  },
+  {
+   "id": "p2a10-eyes-close",
+   "file": "faces/p2a10-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "eyes",
+   "variant": "close",
+   "pair_validity": -0.6,
+   "pair_target_z": 0.47,
+   "pair_dir_z": 0.15
+  },
+  {
+   "id": "p2a10-brow-thick",
+   "file": "faces/p2a10-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.36,
+   "pair_target_z": 0.47,
+   "pair_dir_z": -0.07
+  },
+  {
+   "id": "p2a10-brow-thin",
+   "file": "faces/p2a10-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.36,
+   "pair_target_z": 0.47,
+   "pair_dir_z": -0.07
+  },
+  {
+   "id": "p2a10-nose-narrow",
+   "file": "faces/p2a10-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.06,
+   "pair_target_z": 1.06,
+   "pair_dir_z": -1.02
+  },
+  {
+   "id": "p2a10-nose-wide",
+   "file": "faces/p2a10-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a10",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.06,
+   "pair_target_z": 1.06,
+   "pair_dir_z": -1.02
+  },
+  {
+   "id": "p1-wide-3",
+   "file": "faces/p1-wide-3.webp",
+   "phase": 1,
+   "archetype": "wide",
+   "label": "wide-angular"
+  },
+  {
+   "id": "p1-wide-4",
+   "file": "faces/p1-wide-4.webp",
+   "phase": 1,
+   "archetype": "wide",
+   "label": "wide-angular"
+  },
+  {
+   "id": "p1-wide-5",
+   "file": "faces/p1-wide-5.webp",
+   "phase": 1,
+   "archetype": "wide",
+   "label": "wide-angular"
+  },
+  {
+   "id": "p1-wide-6",
+   "file": "faces/p1-wide-6.webp",
+   "phase": 1,
+   "archetype": "wide",
+   "label": "wide-angular"
+  },
+  {
+   "id": "p1-wide-7",
+   "file": "faces/p1-wide-7.webp",
+   "phase": 1,
+   "archetype": "wide",
+   "label": "wide-angular"
+  },
+  {
+   "id": "p1-wide-8",
+   "file": "faces/p1-wide-8.webp",
+   "phase": 1,
+   "archetype": "wide",
+   "label": "wide-angular"
+  },
+  {
+   "id": "p1-long-3",
+   "file": "faces/p1-long-3.webp",
+   "phase": 1,
+   "archetype": "long",
+   "label": "long-narrow"
+  },
+  {
+   "id": "p1-long-4",
+   "file": "faces/p1-long-4.webp",
+   "phase": 1,
+   "archetype": "long",
+   "label": "long-narrow"
+  },
+  {
+   "id": "p1-long-5",
+   "file": "faces/p1-long-5.webp",
+   "phase": 1,
+   "archetype": "long",
+   "label": "long-narrow"
+  },
+  {
+   "id": "p1-long-6",
+   "file": "faces/p1-long-6.webp",
+   "phase": 1,
+   "archetype": "long",
+   "label": "long-narrow"
+  },
+  {
+   "id": "p1-long-7",
+   "file": "faces/p1-long-7.webp",
+   "phase": 1,
+   "archetype": "long",
+   "label": "long-narrow"
+  },
+  {
+   "id": "p1-long-8",
+   "file": "faces/p1-long-8.webp",
+   "phase": 1,
+   "archetype": "long",
+   "label": "long-narrow"
+  },
+  {
+   "id": "p1-heart-3",
+   "file": "faces/p1-heart-3.webp",
+   "phase": 1,
+   "archetype": "heart",
+   "label": "heart"
+  },
+  {
+   "id": "p1-heart-4",
+   "file": "faces/p1-heart-4.webp",
+   "phase": 1,
+   "archetype": "heart",
+   "label": "heart"
+  },
+  {
+   "id": "p1-heart-5",
+   "file": "faces/p1-heart-5.webp",
+   "phase": 1,
+   "archetype": "heart",
+   "label": "heart"
+  },
+  {
+   "id": "p1-heart-6",
+   "file": "faces/p1-heart-6.webp",
+   "phase": 1,
+   "archetype": "heart",
+   "label": "heart"
+  },
+  {
+   "id": "p1-heart-7",
+   "file": "faces/p1-heart-7.webp",
+   "phase": 1,
+   "archetype": "heart",
+   "label": "heart"
+  },
+  {
+   "id": "p1-heart-8",
+   "file": "faces/p1-heart-8.webp",
+   "phase": 1,
+   "archetype": "heart",
+   "label": "heart"
+  },
+  {
+   "id": "p1-round-3",
+   "file": "faces/p1-round-3.webp",
+   "phase": 1,
+   "archetype": "round",
+   "label": "round"
+  },
+  {
+   "id": "p1-round-4",
+   "file": "faces/p1-round-4.webp",
+   "phase": 1,
+   "archetype": "round",
+   "label": "round"
+  },
+  {
+   "id": "p1-round-5",
+   "file": "faces/p1-round-5.webp",
+   "phase": 1,
+   "archetype": "round",
+   "label": "round"
+  },
+  {
+   "id": "p1-round-6",
+   "file": "faces/p1-round-6.webp",
+   "phase": 1,
+   "archetype": "round",
+   "label": "round"
+  },
+  {
+   "id": "p1-round-7",
+   "file": "faces/p1-round-7.webp",
+   "phase": 1,
+   "archetype": "round",
+   "label": "round"
+  },
+  {
+   "id": "p1-round-8",
+   "file": "faces/p1-round-8.webp",
+   "phase": 1,
+   "archetype": "round",
+   "label": "round"
+  },
+  {
+   "id": "p2a11",
+   "file": "faces/p2a11.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a11-jaw-soft",
+   "file": "faces/p2a11-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a11-lips-full",
+   "file": "faces/p2a11-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.39,
+   "pair_target_z": 2.59,
+   "pair_dir_z": 2.59
+  },
+  {
+   "id": "p2a11-lips-thin",
+   "file": "faces/p2a11-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.39,
+   "pair_target_z": 2.59,
+   "pair_dir_z": 2.59
+  },
+  {
+   "id": "p2a11-eyes-wide",
+   "file": "faces/p2a11-eyes-wide.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "eyes",
+   "variant": "wide",
+   "pair_validity": -0.36,
+   "pair_target_z": 0.72,
+   "pair_dir_z": 0.72
+  },
+  {
+   "id": "p2a11-eyes-close",
+   "file": "faces/p2a11-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "eyes",
+   "variant": "close",
+   "pair_validity": -0.36,
+   "pair_target_z": 0.72,
+   "pair_dir_z": 0.72
+  },
+  {
+   "id": "p2a11-brow-thick",
+   "file": "faces/p2a11-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": 0.14,
+   "pair_target_z": 0.85,
+   "pair_dir_z": 0.85
+  },
+  {
+   "id": "p2a11-brow-thin",
+   "file": "faces/p2a11-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": 0.14,
+   "pair_target_z": 0.85,
+   "pair_dir_z": 0.85
+  },
+  {
+   "id": "p2a11-nose-narrow",
+   "file": "faces/p2a11-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": 0.25,
+   "pair_target_z": 0.96,
+   "pair_dir_z": -0.88
+  },
+  {
+   "id": "p2a11-nose-wide",
+   "file": "faces/p2a11-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a11",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": 0.25,
+   "pair_target_z": 0.96,
+   "pair_dir_z": -0.88
+  },
+  {
+   "id": "p2a12",
+   "file": "faces/p2a12.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a12-jaw-soft",
+   "file": "faces/p2a12-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a12-lips-full",
+   "file": "faces/p2a12-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.91,
+   "pair_target_z": 3.26,
+   "pair_dir_z": 3.26
+  },
+  {
+   "id": "p2a12-lips-thin",
+   "file": "faces/p2a12-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.91,
+   "pair_target_z": 3.26,
+   "pair_dir_z": 3.26
+  },
+  {
+   "id": "p2a12-eyes-wide",
+   "file": "faces/p2a12-eyes-wide.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "eyes",
+   "variant": "wide",
+   "pair_validity": -1.33,
+   "pair_target_z": 0.71,
+   "pair_dir_z": 0.13
+  },
+  {
+   "id": "p2a12-eyes-close",
+   "file": "faces/p2a12-eyes-close.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "eyes",
+   "variant": "close",
+   "pair_validity": -1.33,
+   "pair_target_z": 0.71,
+   "pair_dir_z": 0.13
+  },
+  {
+   "id": "p2a12-brow-thick",
+   "file": "faces/p2a12-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": 0.01,
+   "pair_target_z": 1.37,
+   "pair_dir_z": 1.37
+  },
+  {
+   "id": "p2a12-brow-thin",
+   "file": "faces/p2a12-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": 0.01,
+   "pair_target_z": 1.37,
+   "pair_dir_z": 1.37
+  },
+  {
+   "id": "p2a12-nose-narrow",
+   "file": "faces/p2a12-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.06,
+   "pair_target_z": 1.11,
+   "pair_dir_z": -1.11
+  },
+  {
+   "id": "p2a12-nose-wide",
+   "file": "faces/p2a12-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a12",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.06,
+   "pair_target_z": 1.11,
+   "pair_dir_z": -1.11
+  },
+  {
+   "id": "p2a01",
+   "file": "faces/p2a01.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a01-jaw-soft",
+   "file": "faces/p2a01-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a01-lips-full",
+   "file": "faces/p2a01-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.8,
+   "pair_target_z": 3.8,
+   "pair_dir_z": 3.8
+  },
+  {
+   "id": "p2a01-lips-thin",
+   "file": "faces/p2a01-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.8,
+   "pair_target_z": 3.8,
+   "pair_dir_z": 3.8
+  },
+  {
+   "id": "p2a01-brow-thick",
+   "file": "faces/p2a01-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.7,
+   "pair_target_z": 0.74,
+   "pair_dir_z": 0.33
+  },
+  {
+   "id": "p2a01-brow-thin",
+   "file": "faces/p2a01-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.7,
+   "pair_target_z": 0.74,
+   "pair_dir_z": 0.33
+  },
+  {
+   "id": "p2a01-nose-narrow",
+   "file": "faces/p2a01-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.51,
+   "pair_target_z": 0.87,
+   "pair_dir_z": -0.62
+  },
+  {
+   "id": "p2a01-nose-wide",
+   "file": "faces/p2a01-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a01",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.51,
+   "pair_target_z": 0.87,
+   "pair_dir_z": -0.62
+  },
+  {
+   "id": "p2a02",
+   "file": "faces/p2a02.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": null,
+   "variant": null,
+   "role": "anchor"
+  },
+  {
+   "id": "p2a02-jaw-soft",
+   "file": "faces/p2a02-jaw-soft.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "jaw",
+   "variant": "soft"
+  },
+  {
+   "id": "p2a02-lips-full",
+   "file": "faces/p2a02-lips-full.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "lips",
+   "variant": "full",
+   "pair_validity": 0.68,
+   "pair_target_z": 2.45,
+   "pair_dir_z": 2.45
+  },
+  {
+   "id": "p2a02-lips-thin",
+   "file": "faces/p2a02-lips-thin.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "lips",
+   "variant": "thin",
+   "pair_validity": 0.68,
+   "pair_target_z": 2.45,
+   "pair_dir_z": 2.45
+  },
+  {
+   "id": "p2a02-brow-thick",
+   "file": "faces/p2a02-brow-thick.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "brow",
+   "variant": "thick",
+   "pair_validity": -0.68,
+   "pair_target_z": 0.26,
+   "pair_dir_z": 0.26
+  },
+  {
+   "id": "p2a02-brow-thin",
+   "file": "faces/p2a02-brow-thin.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "brow",
+   "variant": "thin",
+   "pair_validity": -0.68,
+   "pair_target_z": 0.26,
+   "pair_dir_z": 0.26
+  },
+  {
+   "id": "p2a02-nose-narrow",
+   "file": "faces/p2a02-nose-narrow.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "nose",
+   "variant": "narrow",
+   "pair_validity": -0.1,
+   "pair_target_z": 2.47,
+   "pair_dir_z": -2.47
+  },
+  {
+   "id": "p2a02-nose-wide",
+   "file": "faces/p2a02-nose-wide.webp",
+   "phase": 2,
+   "anchor": "p2a02",
+   "axis": "nose",
+   "variant": "wide",
+   "pair_validity": -0.1,
+   "pair_target_z": 2.47,
+   "pair_dir_z": -2.47
+  }
+ ]
+}

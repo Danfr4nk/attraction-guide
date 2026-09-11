@@ -18,6 +18,15 @@ let landmarker = null;
 let ready = false;
 let failed = false;
 
+// Extended landmark indices for the diagnostic metric set (same as the
+// offline audit pipeline — telemetry_bank.py — so game measurements match
+// the pair-validity numbers exactly).
+const EXTRA = {
+  brow_L: [70, 63, 105, 66, 107], brow_R: [300, 293, 334, 296, 336],
+  brow_inner_L: 107, brow_inner_R: 336, brow_outer_L: 70, brow_outer_R: 300,
+  mouth_inner_top: 13, mouth_inner_bot: 14,
+};
+
 export async function ensureLandmarker(onStatus) {
   if (landmarker || failed) return landmarker;
   try {
@@ -68,6 +77,19 @@ export function detectLandmarks(img) {
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
 const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
+const meanp = (pts) => ({ x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length });
+const angleAt = (a, b, c) => {
+  const v1x = a.x - b.x, v1y = a.y - b.y, v2x = c.x - b.x, v2y = c.y - b.y;
+  const m = Math.hypot(v1x, v1y) * Math.hypot(v2x, v2y) || 1;
+  const cos = Math.min(1, Math.max(-1, (v1x * v2x + v1y * v2y) / m));
+  return Math.acos(cos) * 180 / Math.PI;
+};
+// canthal tilt: signed elevation of outer corner above inner corner, |dx| convention (+ = outer higher)
+const tiltOf = (inner, outer) => Math.atan2(-(outer.y - inner.y), Math.abs(outer.x - inner.x)) * 180 / Math.PI;
+const perpDist = (p, a, b) => {
+  const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
+  return Math.abs(dy * p.x - dx * p.y + b.x * a.y - b.y * a.x) / L;
+};
 
 // img: HTMLImageElement (must be loaded). Returns ratios or null.
 export function measureImage(img) {
@@ -98,6 +120,25 @@ export function measureImage(img) {
     return Math.abs(dL - dR) / denom;
   });
 
+  // ---- diagnostic metric set (exact port of the offline audit pipeline) ----
+  const gonL = angleAt(P.cheek_L, P.jaw_L, P.chin);
+  const gonR = angleAt(P.cheek_R, P.jaw_R, P.chin);
+  const tiltL = tiltOf(P.eye_inner_L, P.eye_outer_L);
+  const tiltR = tiltOf(P.eye_inner_R, P.eye_outer_R);
+  const browL = EXTRA.brow_L.map((i) => lm[i]);
+  const browR = EXTRA.brow_R.map((i) => lm[i]);
+  const boL = lm[EXTRA.brow_outer_L], biL = lm[EXTRA.brow_inner_L];
+  const boR = lm[EXTRA.brow_outer_R], biR = lm[EXTRA.brow_inner_R];
+  const archL = Math.max(...browL.map((p) => perpDist(p, boL, biL))) / eye_w;
+  const archR = Math.max(...browR.map((p) => perpDist(p, boR, biR))) / eye_w;
+  const browEye = (dist(meanp(browL), P.eye_top_L) + dist(meanp(browR), P.eye_top_R)) / 2 / face_h * 100;
+  const innerTop = lm[EXTRA.mouth_inner_top], innerBot = lm[EXTRA.mouth_inner_bot];
+  const asym9 = [...pairs.map(([l, r]) => [P[l], P[r]]), [biL, biR], [boL, boR], [P.eye_top_L, P.eye_top_R]]
+    .map(([l, r]) => {
+      const dL = Math.abs(l.x - x_mid), dR = Math.abs(r.x - x_mid);
+      return Math.abs(dL - dR) / (((dL + dR) / 2) || 1);
+    }).reduce((a, b) => a + b, 0) / 9;
+
   const r3 = (v) => Math.round(v * 1000) / 1000;
   return {
     width_height_ratio: r3(cheek_w / face_h),
@@ -108,6 +149,15 @@ export function measureImage(img) {
     mouth_to_cheek: r3(mouth_w / cheek_w),
     lip_fullness: r3(lip_h / mouth_w),
     mean_asymmetry: r3(asyms.reduce((a, b) => a + b, 0) / asyms.length),
+    gonial_angle_mean: r3((gonL + gonR) / 2),
+    eye_spacing_widths: r3(ipd / eye_w),
+    nose_w_to_intercanthal: r3(nose_w / dist(P.eye_inner_L, P.eye_inner_R)),
+    brow_arch_mean: r3((archL + archR) / 2),
+    canthal_tilt_mean: r3((tiltL + tiltR) / 2),
+    brow_eye_dist_pct: r3(browEye),
+    mouth_to_nose: r3(mouth_w / nose_w),
+    upper_lower_lip: r3(dist(P.lip_top, innerTop) / (dist(innerBot, P.lip_bot) || 1)),
+    asymmetry_9: r3(asym9),
   };
 }
 
@@ -120,6 +170,15 @@ export const METRIC_LABELS = {
   mouth_to_cheek: 'mth:chk',
   lip_fullness: 'lip full',
   mean_asymmetry: 'asym',
+  gonial_angle_mean: 'gonial°',
+  eye_spacing_widths: 'eye spc',
+  nose_w_to_intercanthal: 'nose:ic',
+  brow_arch_mean: 'brow arch',
+  canthal_tilt_mean: 'tilt',
+  brow_eye_dist_pct: 'brw-eye%',
+  mouth_to_nose: 'mth:nose',
+  upper_lower_lip: 'u:l lip',
+  asymmetry_9: 'asym9',
 };
 
 export function formatMetrics(m) {

@@ -14,7 +14,7 @@
 </head>
 <body>
 <header>
-  <div class="brand">attraction-guide <span class="ver">v1</span></div>
+  <div class="brand">attraction-guide <span class="ver">v2</span></div>
   <nav>
     <button data-view="setup" class="active">setup</button>
     <button data-view="play">play</button>
@@ -37,7 +37,7 @@
       <ul>
         <li><b>Eye color is pinned.</b> Every face in the bank is brown-eyed. It is never the deciding variable.</li>
         <li><b>Phase 1</b> — pick/rank 1 of 4 structural archetypes: wide-angular, long-narrow, heart, round.</li>
-        <li><b>Phase 2</b> — infinite pairs, one micro-variable each: jaw, lips, eye spacing, brows, nose.</li>
+        <li><b>Phase 2 (adaptive)</b> — the engine drills the highest-uncertainty micro-variable next: jaw, lips, eye spacing, brows, nose. Every pick is scored on <i>measured</i> metric deltas, z-scored against the bank — evidence accrues per metric direction, not per label. Axes retire at 3 consistent or 6 inconclusive trials.</li>
         <li><b>Rank mode:</b> click faces in order of preference, then lock the ranking. Richer than single-pick.</li>
         <li>Confidence: 1 pick = weak · 2 consistent = leaning · 3+ = confirmed.</li>
       </ul>

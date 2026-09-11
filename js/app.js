@@ -1,7 +1,16 @@
-// attraction-guide — game engine. Static, no backend. All state in localStorage.
-import { ensureLandmarker, measureImage, formatMetrics, METRIC_LABELS } from './measure.js';
+// attraction-guide — game engine v2: adaptive drill-down on precision.
+// Static, no backend. All state in localStorage.
+//
+// Phase 2 is an adaptive engine, not a fixed queue:
+//  - every pick is scored on MEASURED metric deltas (winner − loser), z-scored
+//    against bank-wide stats (js/bank-stats.json from the offline audit)
+//  - evidence accrues per metric-direction, not per prompt label
+//  - next pair = highest-uncertainty open axis; axes retire at 3 consistent
+//    target-direction wins, or 6 inconclusive trials
+//  - pairs carry their audit validity score; weak pairs are auto-excluded
+import { ensureLandmarker, measureImage, METRIC_LABELS } from './measure.js';
 
-const LS_KEY = 'attraction-guide-run-v1';
+const LS_KEY = 'attraction-guide-run-v2';
 const ARCHETYPES = ['wide', 'long', 'heart', 'round'];
 const ARCHETYPE_LABELS = { wide: 'wide-angular', long: 'long-narrow', heart: 'heart', round: 'round' };
 const PAIR_AXES = {
@@ -11,17 +20,35 @@ const PAIR_AXES = {
   brow: ['thick', 'thin'],
   nose: ['narrow', 'wide'],
 };
+// target metric per axis — evidence accrues on these, not on labels
+const AXIS_TARGET = {
+  jaw: 'gonial_angle_mean', lips: 'lip_fullness', eyes: 'eye_spacing_widths',
+  brow: 'brow_arch_mean', nose: 'nose_w_to_intercanthal',
+};
+// metrics z-scored per trial (must match the offline audit's STRUCT set)
+const STRUCT = ['gonial_angle_mean', 'jaw_to_cheek', 'width_height_ratio', 'fwhr_proxy',
+  'ipd_to_cheek', 'eye_spacing_widths', 'eye_w_to_h', 'canthal_tilt_mean',
+  'fifths', 'nose_to_cheek', 'nose_w_to_intercanthal', 'mouth_to_cheek',
+  'mouth_to_nose', 'lip_fullness', 'upper_lower_lip', 'brow_arch_mean',
+  'brow_eye_dist_pct', 'mean_asymmetry', 'asymmetry_9', 'third_upper_pct',
+  'third_mid_pct', 'third_lower_pct', 'chin_to_lower_third', 'philtrum_to_nose'];
+// card display subset (full vector still logged/exported)
+const DISPLAY_KEYS = ['lip_fullness', 'gonial_angle_mean', 'eye_spacing_widths',
+  'nose_w_to_intercanthal', 'brow_arch_mean', 'jaw_to_cheek', 'mean_asymmetry'];
+const CONFIRM_WINS = 3, MAX_TRIALS = 6;
 const P1_ROUNDS_BEFORE_ADVANCE = 3;
 
 let BANK = [];
+let STATS = null;   // { metrics: {k:{mean,std}}, axis_dir: {axis: -1|0|+1} }
 let state = null;
-let currentRound = null;   // {phase, faces:[faceIds], axis?}
-let rankOrder = [];        // faceIds in click order
+let currentRound = null;
+let rankOrder = [];
 const measureCache = new Map();
 
 const $ = (s) => document.querySelector(s);
 const shuffle = (a) => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
 const faceById = (id) => BANK.find((f) => f.id === id);
+const fmtShort = (m) => DISPLAY_KEYS.map((k) => `${METRIC_LABELS[k]} ${m[k].toFixed(3)}`).join('\n');
 
 // ---------- state ----------
 function blankState() {
@@ -30,16 +57,18 @@ function blankState() {
     refVector: null,
     rounds: [],
     archWins: { wide: 0, long: 0, heart: 0, round: 0 },
-    pairWins: { jaw: { sharp: 0, soft: 0 }, lips: { full: 0, thin: 0 }, eyes: { wide: 0, close: 0 }, brow: { thick: 0, thin: 0 }, nose: { narrow: 0, wide: 0 } },
     phase: 1,
     p1Round: 0,
     p1Used: [],
-    p2Queue: [],
+    p2Round: 0,
+    axisTrials: { jaw: [], lips: [], eyes: [], brow: [], nose: [] },
+    axisStatus: { jaw: 'open', lips: 'open', eyes: 'open', brow: 'open', nose: 'open' },
+    recentAnchors: { jaw: [], lips: [], eyes: [], brow: [], nose: [] },
   };
 }
 function save() { localStorage.setItem(LS_KEY, JSON.stringify(state)); }
 function load() {
-  try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.rounds) return s; } catch (e) {}
+  try { const s = JSON.parse(localStorage.getItem(LS_KEY)); if (s && s.rounds && s.axisTrials) return s; } catch (e) {}
   return null;
 }
 
@@ -54,7 +83,7 @@ async function initMeasure() {
 }
 const pendingMeasures = [];
 function kickMeasure(faceId, imgEl, statsEl) {
-  if (measureCache.has(faceId)) { statsEl.textContent = formatMetrics(measureCache.get(faceId)); return; }
+  if (measureCache.has(faceId)) { statsEl.textContent = fmtShort(measureCache.get(faceId)); return; }
   pendingMeasures.push({ faceId, imgEl, statsEl });
   flushMeasures();
 }
@@ -62,9 +91,9 @@ function flushMeasures() {
   if (!window.__lmReady) return;
   while (pendingMeasures.length) {
     const { faceId, imgEl, statsEl } = pendingMeasures.shift();
-    if (measureCache.has(faceId)) { statsEl.textContent = formatMetrics(measureCache.get(faceId)); continue; }
+    if (measureCache.has(faceId)) { statsEl.textContent = fmtShort(measureCache.get(faceId)); continue; }
     const m = measureImage(imgEl);
-    if (m) { measureCache.set(faceId, m); statsEl.textContent = formatMetrics(m); }
+    if (m) { measureCache.set(faceId, m); statsEl.textContent = fmtShort(m); }
     else statsEl.textContent = 'no face detected';
   }
 }
@@ -81,16 +110,98 @@ function inferPhase1(winnerArch, shownArchs) {
   const [cls, label] = confidence(w);
   const rejected = shownArchs.filter((a) => a !== winnerArch).map((a) => ARCHETYPE_LABELS[a]).join(', ');
   let s = `Round ${state.p1Round}: ${ARCHETYPE_LABELS[winnerArch]} takes it (${w}W) — ${label}. Rejected: ${rejected}.`;
-  // contradiction: previous leader displaced
   const lead = Object.entries(state.archWins).sort((a, b) => b[1] - a[1])[0];
   if (lead[0] !== winnerArch && lead[1] >= 2) s += ` Note: ${ARCHETYPE_LABELS[lead[0]]} led at ${lead[1]}W — lead change, treat as contested.`;
   return { text: s, cls };
 }
-function inferPhase2(axis, winnerVar, loserVar) {
-  const w = state.pairWins[axis];
-  w[winnerVar]++;
-  const [cls, label] = confidence(w[winnerVar]);
-  return { text: `${winnerVar} > ${loserVar} on ${axis} (${w[winnerVar]}W–${w[loserVar]}L) — ${label}.`, cls };
+function consistentCount(axis) {
+  return state.axisTrials[axis].filter((t) => t.consistent).length;
+}
+function inferPhase2(axis, winner, loser) {
+  const mw = measureCache.get(winner.id), ml = measureCache.get(loser.id);
+  const target = AXIS_TARGET[axis];
+  const dir = STATS ? STATS.axis_dir[axis] : 0;
+  const trial = {
+    n: state.p2Round, anchor: winner.anchor, shown: [winner.id, loser.id],
+    winner: winner.id, loser: loser.id, targetMetric: target,
+    targetDelta: null, targetZ: null, consistent: null, confound: false,
+    confoundMetric: null, topDeltas: [], unmeasured: false,
+  };
+  let inf;
+  if (mw && ml && STATS) {
+    const sd = STATS.metrics;
+    const dz = (k) => (mw[k] - ml[k]) / sd[k].std;
+    const tz = dz(target);
+    trial.targetDelta = +(mw[target] - ml[target]).toFixed(3);
+    trial.targetZ = +tz.toFixed(2);
+    trial.consistent = dir === 0
+      ? winner.variant === PAIR_AXES[axis][0]
+      : Math.sign(tz) === dir && Math.abs(tz) > 0.05;
+    const ranked = STRUCT.filter((k) => isFinite(dz(k))).map((k) => ({ k, z: dz(k) }))
+      .sort((a, b) => Math.abs(b.z) - Math.abs(a.z));
+    trial.topDeltas = ranked.slice(0, 3).map((o) => ({ k: o.k, z: +o.z.toFixed(2) }));
+    const topConf = ranked.find((o) => o.k !== target);
+    if (topConf && Math.abs(topConf.z) > Math.abs(tz)) {
+      trial.confound = true;
+      trial.confoundMetric = topConf.k;
+    }
+    const c = consistentCount(axis) + (trial.consistent ? 1 : 0);
+    const [cls, label] = confidence(c);
+    const dLabel = dir === 0
+      ? (trial.consistent ? `${winner.variant} (label)` : `${loser.variant} (label)`)
+      : `${target} ${tz >= 0 ? '+' : ''}${tz.toFixed(2)}σ`;
+    inf = {
+      text: `${axis} · ${winner.variant} > ${loser.variant} — ${dLabel}, target-consistent ${c}W — ${label}.` +
+        (trial.confound ? ` ⚠ confound: ${METRIC_LABELS[trial.confoundMetric]} moved harder (${topConf.z.toFixed(2)}σ vs ${tz.toFixed(2)}σ).` : ''),
+      cls: trial.confound ? 'weak' : cls,
+    };
+  } else {
+    // measurement or stats unavailable: label fallback, flagged
+    trial.unmeasured = true;
+    const c = consistentCount(axis);
+    const [cls, label] = confidence(c);
+    inf = { text: `${axis} · ${winner.variant} > ${loser.variant} — unmeasured fallback (${label}).`, cls: 'weak' };
+  }
+  state.axisTrials[axis].push(trial);
+  updateAxisStatus(axis);
+  return { text: inf.text, cls: inf.cls, trial };
+}
+function updateAxisStatus(axis) {
+  const t = state.axisTrials[axis];
+  if (consistentCount(axis) >= CONFIRM_WINS) state.axisStatus[axis] = 'confirmed';
+  else if (t.length >= MAX_TRIALS) state.axisStatus[axis] = 'unresolved';
+}
+
+// ---------- adaptive queue ----------
+// Admission bar: the pair must ISOLATE its variable — target-family z must
+// exceed every true-confound z (audit validity > 0). Strength (target z) is
+// reported in the UI and drives pair preference, not admission.
+function pairPool(axis) {
+  const [v0, v1] = PAIR_AXES[axis];
+  const byAnchor = {};
+  for (const f of BANK) {
+    if (f.phase !== 2 || f.axis !== axis || !f.variant) continue;
+    (byAnchor[f.anchor] = byAnchor[f.anchor] || {})[f.variant] = f;
+  }
+  return Object.entries(byAnchor)
+    .filter(([, p]) => p[v0] && p[v1] && (p[v0].pair_validity ?? -1) > 0)
+    .map(([anchor, p]) => ({ anchor, faces: shuffle([p[v0], p[v1]]), validity: p[v0].pair_validity, targetZ: p[v0].pair_target_z ?? 0 }));
+}
+function pickAxis() {
+  const open = Object.keys(PAIR_AXES).filter((a) => state.axisStatus[a] === 'open' && pairPool(a).length > 0);
+  if (!open.length) return null;
+  const fresh = open.filter((a) => state.axisTrials[a].length === 0);
+  if (fresh.length) return fresh[0]; // initial sweep, fixed axis order
+  // adaptive: fewest target-consistent trials, then fewest trials total
+  return open.slice().sort((a, b) =>
+    consistentCount(a) - consistentCount(b) || state.axisTrials[a].length - state.axisTrials[b].length)[0];
+}
+function pickPair(axis) {
+  const pool = pairPool(axis).sort((a, b) => b.targetZ - a.targetZ);
+  const recent = state.recentAnchors[axis] || [];
+  const pick = pool.find((p) => !recent.includes(p.anchor)) || pool[0];
+  state.recentAnchors[axis] = [...recent, pick.anchor].slice(-2);
+  return pick;
 }
 
 // ---------- rounds ----------
@@ -104,15 +215,6 @@ function p1Faces() {
   }
   return picked;
 }
-function refillP2Queue() {
-  const q = [];
-  for (const [axis, vars] of Object.entries(PAIR_AXES)) {
-    const a = BANK.find((f) => f.phase === 2 && f.axis === axis && f.variant === vars[0]);
-    const b = BANK.find((f) => f.phase === 2 && f.axis === axis && f.variant === vars[1]);
-    if (a && b) q.push({ axis, pair: shuffle([a.id, b.id]) });
-  }
-  state.p2Queue = shuffle(q);
-}
 function nextRound() {
   rankOrder = [];
   if (state.phase === 1) {
@@ -121,10 +223,11 @@ function nextRound() {
     state.p1Used.push(...faces.map((f) => f.id));
     currentRound = { phase: 1, n: state.p1Round, faces: faces.map((f) => f.id) };
   } else {
-    if (!state.p2Queue.length) refillP2Queue();
-    const { axis, pair } = state.p2Queue.pop();
-    state.p2Round = (state.p2Round || 0) + 1;
-    currentRound = { phase: 2, n: state.p2Round, faces: pair, axis };
+    const axis = pickAxis();
+    if (!axis) { renderComplete(); return; }
+    const pair = pickPair(axis);
+    state.p2Round++;
+    currentRound = { phase: 2, n: state.p2Round, faces: pair.faces.map((f) => f.id), axis, anchor: pair.anchor, validity: pair.validity, targetZ: pair.targetZ };
   }
   save();
   renderRound();
@@ -132,6 +235,9 @@ function nextRound() {
 function faceLabel(f) {
   if (f.phase === 1) return `arch · ${ARCHETYPE_LABELS[f.archetype]}`;
   return `${f.axis} · ${f.variant}`;
+}
+function openAxesCount() {
+  return Object.keys(PAIR_AXES).filter((a) => state.axisStatus[a] === 'open').length;
 }
 
 // ---------- rendering ----------
@@ -148,11 +254,11 @@ function renderRound() {
   const r = currentRound;
   head.textContent = r.phase === 1
     ? `phase 1 · round ${r.n} — structural archetypes (4-way)`
-    : `phase 2 · pair ${r.n} — one variable: ${r.axis}`;
+    : `phase 2 · pair ${r.n} — ${r.axis} (anchor ${r.anchor} · isol +${r.validity.toFixed(1)}σ · target ${r.targetZ.toFixed(1)}σ) · ${openAxesCount()} axes open`;
 
   if (r.phase === 1 && state.p1Round >= 2) {
     head.innerHTML += ` <button id="adv-btn" class="ghost" style="margin-left:12px">advance to phase 2 →</button>`;
-    $('#adv-btn').onclick = () => { state.phase = 2; refillP2Queue(); nextRound(); };
+    $('#adv-btn').onclick = () => { state.phase = 2; nextRound(); };
   }
 
   r.faces.forEach((fid) => {
@@ -168,6 +274,13 @@ function renderRound() {
     stage.appendChild(card);
   });
   updateRankUI();
+}
+function renderComplete() {
+  $('#round-head').textContent = 'phase 2 complete — all axes resolved';
+  $('#stage').innerHTML = '<p class="hint">Every axis is confirmed or declared unresolved. See the profile tab.</p>';
+  $('#lock-btn').disabled = true;
+  $('#inference').textContent = summaryText();
+  renderProfile();
 }
 function toggleRank(fid, card) {
   const i = rankOrder.indexOf(fid);
@@ -193,22 +306,27 @@ function lockRanking() {
   const r = currentRound;
   const ranking = [...rankOrder];
   const winner = faceById(ranking[0]);
-  let inf;
+  let inf, trialRec = null;
   if (r.phase === 1) {
     inf = inferPhase1(winner.archetype, r.faces.map((id) => faceById(id).archetype));
   } else {
     const loser = faceById(ranking[1]);
-    inf = inferPhase2(r.axis, winner.variant, loser.variant);
+    const res = inferPhase2(r.axis, winner, loser);
+    inf = res; trialRec = res.trial;
   }
-  state.rounds.push({ n: r.n, phase: r.phase, axis: r.axis || null, shown: r.faces, ranking, inference: inf.text });
+  const rec = { n: r.n, phase: r.phase, axis: r.axis || null, anchor: r.anchor || null, shown: r.faces, ranking, inference: inf.text };
+  if (trialRec) rec.trial = trialRec;
+  state.rounds.push(rec);
   save();
   $('#inference').textContent = inf.text;
   renderRoundStats(ranking);
+  const done = state.phase === 2 && openAxesCount() === 0;
   const nb = document.createElement('button');
   nb.id = 'next-btn'; nb.className = 'primary'; nb.style.marginLeft = '8px';
-  nb.textContent = r.phase === 1 && state.p1Round >= P1_ROUNDS_BEFORE_ADVANCE ? 'Start phase 2 →' : 'Next round →';
+  nb.textContent = done ? 'See final profile →' : (r.phase === 1 && state.p1Round >= P1_ROUNDS_BEFORE_ADVANCE ? 'Start phase 2 →' : 'Next round →');
   nb.onclick = () => {
-    if (r.phase === 1 && state.p1Round >= P1_ROUNDS_BEFORE_ADVANCE) { state.phase = 2; refillP2Queue(); }
+    if (done) { showView('profile'); return; }
+    if (r.phase === 1 && state.p1Round >= P1_ROUNDS_BEFORE_ADVANCE) state.phase = 2;
     nextRound();
   };
   $('.stage-actions').appendChild(nb);
@@ -217,50 +335,57 @@ function lockRanking() {
 }
 function renderRoundStats(ranking) {
   const el = $('#round-stats');
-  const keys = Object.keys(METRIC_LABELS);
-  let html = '<table><tr><th>face</th>' + keys.map((k) => `<th>${METRIC_LABELS[k]}</th>`).join('') + '</tr>';
+  let html = '<table><tr><th>face</th>' + DISPLAY_KEYS.map((k) => `<th>${METRIC_LABELS[k]}</th>`).join('') + '</tr>';
   ranking.forEach((fid, i) => {
     const m = measureCache.get(fid);
     html += `<tr class="${i === 0 ? 'winner' : ''}"><td>#${i + 1} ${fid}</td>` +
-      keys.map((k) => `<td>${m ? m[k].toFixed(3) : '—'}</td>`).join('') + '</tr>';
+      DISPLAY_KEYS.map((k) => `<td>${m ? m[k].toFixed(3) : '—'}</td>`).join('') + '</tr>';
   });
   el.innerHTML = html + '</table>';
 }
 
 // ---------- profile ----------
+const AXIS_STATUS_LABEL = { open: 'open', confirmed: 'confirmed', unresolved: 'unresolved', 'no-pairs': 'no valid pairs' };
 function renderProfile() {
   if (!state) return;
-  let html = '<table class="axes"><tr><th>axis</th><th>variant</th><th>record</th><th>confidence</th></tr>';
+  let html = '<table class="axes"><tr><th>axis</th><th>evidence</th><th>trials</th><th>confounds</th><th>status</th></tr>';
   for (const a of ARCHETYPES) {
     const w = state.archWins[a];
     const [cls, label] = confidence(w);
-    html += `<tr><td>archetype</td><td>${ARCHETYPE_LABELS[a]}</td><td class="mono">${w}W</td><td><span class="conf ${cls}">${label}</span></td></tr>`;
+    html += `<tr><td>archetype</td><td>${ARCHETYPE_LABELS[a]}</td><td class="mono">${w}W</td><td class="mono">—</td><td><span class="conf ${cls}">${label}</span></td></tr>`;
   }
-  for (const [axis, vars] of Object.entries(PAIR_AXES)) {
-    for (const v of vars) {
-      const w = state.pairWins[axis][v], l = state.pairWins[axis][vars.find((x) => x !== v)];
-      const [cls, label] = confidence(w);
-      html += `<tr><td>${axis}</td><td>${v}</td><td class="mono">${w}W–${l}L</td><td><span class="conf ${cls}">${label}</span></td></tr>`;
-    }
+  for (const axis of Object.keys(PAIR_AXES)) {
+    const trials = state.axisTrials[axis];
+    const c = consistentCount(axis);
+    const conf = trials.filter((t) => t.confound).length;
+    const unm = trials.filter((t) => t.unmeasured).length;
+    const [cls, label] = confidence(c);
+    const st = state.axisStatus[axis];
+    const pool = pairPool(axis).length;
+    const statusLabel = st === 'open' && pool === 0 ? 'no valid pairs' : (AXIS_STATUS_LABEL[st] || st);
+    const ev = `${AXIS_TARGET[axis]} ${c}W-consistent${unm ? ` (+${unm} unmeasured)` : ''}`;
+    html += `<tr><td>${axis}</td><td class="mono">${ev}</td><td class="mono">${trials.length}</td>` +
+      `<td class="mono">${conf ? `⚠${conf}` : '—'}</td>` +
+      `<td><span class="conf ${st === 'confirmed' ? 'confirmed' : st === 'unresolved' ? 'weak' : 'leaning'}">${statusLabel}</span> <span class="hint">${label}</span></td></tr>`;
   }
   $('#profile-axes').innerHTML = html + '</table>';
 
-  // winner means
   const winners = state.rounds.map((r) => r.ranking[0]).filter((id) => measureCache.has(id));
   if (!winners.length) { $('#profile-means').innerHTML = '<p class="hint">no measured winners yet</p>'; return; }
-  const keys = Object.keys(METRIC_LABELS);
   const means = {};
-  for (const k of keys) means[k] = winners.reduce((s, id) => s + measureCache.get(id)[k], 0) / winners.length;
+  for (const k of DISPLAY_KEYS) means[k] = winners.reduce((s, id) => s + measureCache.get(id)[k], 0) / winners.length;
   $('#profile-means').innerHTML = '<div class="means-grid">' +
-    keys.map((k) => `<div class="mean-cell"><div class="k">${k}</div><div class="v">${means[k].toFixed(3)}</div></div>`).join('') + '</div>';
+    DISPLAY_KEYS.map((k) => `<div class="mean-cell"><div class="k">${k}</div><div class="v">${means[k].toFixed(3)}</div></div>`).join('') + '</div>';
 }
 function summaryText() {
-  const lines = ['attraction-guide run ' + state.startedAt];
+  const lines = ['attraction-guide run ' + state.startedAt + ' (adaptive v2)'];
   if (state.refVector) lines.push('round 0 (reference): ' + JSON.stringify(state.refVector));
   for (const a of ARCHETYPES) lines.push(`archetype ${ARCHETYPE_LABELS[a]}: ${state.archWins[a]}W [${confidence(state.archWins[a])[1]}]`);
-  for (const [axis, vars] of Object.entries(PAIR_AXES)) {
-    const w = state.pairWins[axis];
-    lines.push(`${axis}: ${vars[0]} ${w[vars[0]]}W – ${vars[1]} ${w[vars[1]]}W`);
+  for (const axis of Object.keys(PAIR_AXES)) {
+    const t = state.axisTrials[axis];
+    const c = consistentCount(axis);
+    const conf = t.filter((x) => x.confound).length;
+    lines.push(`${axis} [${state.axisStatus[axis]}]: ${c} target-consistent / ${t.length} trials, ${conf} confounded, target=${AXIS_TARGET[axis]}`);
   }
   return lines.join('\n');
 }
@@ -268,10 +393,13 @@ function summaryText() {
 // ---------- log ----------
 function renderLog() {
   if (!state) return;
-  let html = '<table><tr><th>#</th><th>phase</th><th>shown</th><th>ranking</th><th>inference</th></tr>';
-  if (state.refVector) html += `<tr><td>0</td><td>ref</td><td>—</td><td>—</td><td class="mono">${JSON.stringify(state.refVector)}</td></tr>`;
+  let html = '<table><tr><th>#</th><th>phase</th><th>shown</th><th>ranking</th><th>measured deltas</th><th>inference</th></tr>';
+  if (state.refVector) html += `<tr><td>0</td><td>ref</td><td>—</td><td>—</td><td>—</td><td class="mono">${JSON.stringify(state.refVector)}</td></tr>`;
   for (const r of state.rounds) {
-    html += `<tr><td>${r.n}</td><td>${r.phase}${r.axis ? ' · ' + r.axis : ''}</td><td class="mono">${r.shown.join(', ')}</td><td class="mono">${r.ranking.join(' > ')}</td><td>${r.inference}</td></tr>`;
+    const deltas = r.trial && r.trial.topDeltas.length
+      ? r.trial.topDeltas.map((d) => `${d.k} ${d.z >= 0 ? '+' : ''}${d.z}σ`).join(', ') + (r.trial.confound ? ' ⚠' : '')
+      : '—';
+    html += `<tr><td>${r.n}</td><td>${r.phase}${r.axis ? ' · ' + r.axis : ''}</td><td class="mono">${r.shown.join(', ')}</td><td class="mono">${r.ranking.join(' > ')}</td><td class="mono">${deltas}</td><td>${r.inference}</td></tr>`;
   }
   $('#log-table').innerHTML = html + '</table>';
 }
@@ -304,7 +432,16 @@ function showView(name) {
 async function boot() {
   const res = await fetch('faces/faces.json');
   BANK = (await res.json()).faces;
+  try {
+    const sres = await fetch('js/bank-stats.json');
+    STATS = await sres.json();
+  } catch (e) { STATS = null; }
   state = load() || blankState();
+  // axes with no qualifying pairs are dead on arrival — say so
+  for (const axis of Object.keys(PAIR_AXES)) {
+    if (state.axisStatus[axis] === 'open' && pairPool(axis).length === 0 && state.axisTrials[axis].length === 0)
+      state.axisStatus[axis] = 'no-pairs';
+  }
   save();
 
   document.querySelectorAll('nav button').forEach((b) => b.onclick = () => showView(b.dataset.view));
