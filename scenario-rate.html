@@ -249,18 +249,18 @@ function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.fl
 let items = [];
 function buildItems() {
   items = [];
-  let n = 0;
   const order = shuffle(BASES.map((_, i) => i));
   for (const gi of order) {
     const b = BASES[gi];
     const baseVec = {};
     MKEYS.forEach((k, i) => baseVec[k] = b.v[i]);
-    items.push({ id: "r" + (++n), group: gi, gdesc: b.d, kind: "base", desc: b.d, vec: baseVec });
+    /* stable ids from BASES indices — immune to shuffle, so ratings survive reloads */
+    items.push({ id: "g" + gi, group: gi, gdesc: b.d, kind: "base", desc: b.d, vec: baseVec });
     for (const mi of shuffle(b.m.map((_, i) => i))) {
       const [md, patch] = b.m[mi];
       const vec = { ...baseVec };
       for (const k in patch) vec[k] = patch[k];
-      items.push({ id: "r" + (++n), group: gi, gdesc: b.d, kind: "mod", desc: md, vec });
+      items.push({ id: "g" + gi + "m" + mi, group: gi, gdesc: b.d, kind: "mod", desc: md, vec });
     }
   }
 }
@@ -269,6 +269,8 @@ function buildItems() {
 const LS_KEY = "scen_rate_v1";
 let ratings = {};   // id -> 0 (veto) | 1..10
 try { ratings = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { ratings = {}; }
+/* v1 used positional ids (r1..rN) assigned post-shuffle — those scramble on reload, drop them */
+if (Object.keys(ratings).some(k => /^r\d+$/.test(k))) { ratings = {}; save(); }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(ratings)); } catch (e) {} }
 
 /* ---- ui ---- */
@@ -279,13 +281,12 @@ function updateProg() {
   document.querySelector("#prog > div").style.width = (items.length ? done / items.length * 100 : 0) + "%";
 }
 function rate(id, val) {
-  if (ratings[id] === val) delete ratings[id];
-  else ratings[id] = val;
+  ratings[id] = val;   /* no toggle-off: tapping the active value keeps it */
   save(); paint(id); updateProg();
 }
 function paint(id) {
   const v = ratings[id];
-  document.querySelectorAll(`[data-item="${id}"] .scale button`).forEach(b => {
+  document.querySelectorAll(`[data-item="${id}"] button`).forEach(b => {
     const bv = b.dataset.v === "veto" ? 0 : parseInt(b.dataset.v, 10);
     b.classList.toggle("on", v !== undefined && bv === v);
   });
