@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scenario telemetry v5 — diff bullets</title>
+<title>scenario telemetry v6 — preset bouts + isolation</title>
 <style>
   :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; --vio:#c678dd; }
   * { box-sizing:border-box; }
@@ -60,12 +60,17 @@
   .btnrow button:hover { border-color:var(--pick); }
   .hidden { display:none; }
   .conf { font-size:12px; color:var(--dim); }
+  .scen-pick { display:flex; gap:10px; align-items:flex-start; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:8px; cursor:pointer; }
+  .scen-pick:hover { border-color:var(--pick); }
+  .scen-pick input { margin-top:4px; accent-color:var(--pick); transform:scale(1.3); }
+  .scen-pick .sn { font-weight:700; }
+  .scen-pick .sd { color:var(--dim); font-size:13.5px; }
   h3.sec { margin:26px 0 4px; }
 </style>
 </head>
 <body>
 <header>
-  <span class="brand">scenario telemetry <span style="color:var(--dim)">v5</span></span>
+  <span class="brand">scenario telemetry <span style="color:var(--dim)">v6</span></span>
   <span class="sub">all scenarios presume consenting adults</span>
   <a href="index.html">← attraction game</a>
 </header>
@@ -77,7 +82,18 @@
     willing to do, <b>veto both</b> if neither clears the bar, <b>reluctant</b> if barely.
   </div>
 
-  <div id="playView">
+  <div id="pickView">
+    <div class="note">
+      <b>Pick the scenarios to run.</b> Each one gets a bout against the 2019 baseline and against
+      every other scenario you picked — then phase 2 isolates whichever metrics actually moved you.
+    </div>
+    <div id="scenList"></div>
+    <div class="btnrow">
+      <button id="startBtn">start →</button>
+    </div>
+  </div>
+
+  <div id="playView" class="hidden">
     <div class="trial-meta"><span id="trialLabel">trial 1</span><span id="phaseLabel"></span><span id="badge2019"></span></div>
     <div id="prog"><div></div></div>
     <div class="backbone">
@@ -150,6 +166,19 @@ const MNAME = Object.fromEntries(METRICS.map(m => [m.k, m.name]));
 const MLV = Object.fromEntries(METRICS.map(m => [m.k, m.lv]));
 const BASE = Object.fromEntries(METRICS.map(m => [m.k, m.base]));
 
+/* named scenario presets — metric vectors are one reading of each one-liner.
+   Order: S_sub,F_attr,P_pur,N_x,A_auth,film,E_env,novel,priv,recip,M_fam,intim,F_init,after,turf,party,M_age,inten,expl,dur,atten,visib,F_part,M_enth */
+const PRESETS = [
+  { id:"p-foursome", name:"foursome", desc:"foursome with a male male couple",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:1,novel:2,priv:0,recip:1,M_fam:0,intim:1,F_init:1,after:1,turf:1,party:1,M_age:1,inten:1,expl:1,dur:1,atten:1,visib:0,F_part:2,M_enth:1} },
+  { id:"p-herex", name:"her ex", desc:"watching girlfriend with her ex",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:1,film:0,E_env:1,novel:2,priv:0,recip:1,M_fam:0,intim:2,F_init:1,after:0,turf:1,party:0,M_age:1,inten:1,expl:1,dur:0,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-shewatches", name:"she watches", desc:"girlfriend watches you with another guy",
+    vec:{S_sub:1,F_attr:2,P_pur:2,N_x:2,A_auth:2,film:0,E_env:1,novel:2,priv:0,recip:1,M_fam:0,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:1,expl:1,dur:0,atten:0,visib:0,F_part:0,M_enth:1} },
+  { id:"p-2019", name:"2019 baseline", desc:"the filmed one — your only data point",
+    vec:{ ...BASE } }
+];
+
 /* backbone gloss: one line from the metrics A and B share.
    Any structural metric that differs is left out here — it appears in the bullets. */
 function backboneText(vec, dk) {
@@ -185,16 +214,23 @@ function diffKeys(a, b) { return MKEYS.filter(k => a.vec[k] !== b.vec[k]); }
 function is2019(s) { return MKEYS.every(k => s.vec[k] === BASE[k]); }
 
 /* ---- trial generation ---- */
-const P1_N = 16, P2_N = 16;
-let TOTAL = P1_N + P2_N, trials = [], phase = 1;
-function broadPair() {
-  for (let i = 0; i < 200; i++) {
-    const a = mkScen(perturb(BASE, 3 + Math.floor(Math.random() * 4)));
-    const b = mkScen(perturb(BASE, 3 + Math.floor(Math.random() * 4)));
-    const d = diffKeys(a, b).length;
-    if (d >= 4 && d <= 10) return [a, b];
+const P2_N = 16;
+let bouts = [], selectedIds = [];
+let TOTAL = 0, trials = [], phase = 1;
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function mkPreset(p) { return { id: p.id, name: p.name, desc: p.desc, vec: { ...p.vec } }; }
+/* phase 1 = preset bouts: each scenario vs the 2019 baseline, then every scenario pair */
+function buildBouts(sel) {
+  const bs = [];
+  const base = sel.find(p => p.id === "p-2019");
+  if (base) for (const s of sel) {
+    if (s.id === "p-2019") continue;
+    bs.push([mkPreset(s), mkPreset(base)]);
   }
-  return [mkScen(perturb(BASE, 4)), mkScen(perturb(BASE, 4))];
+  for (let i = 0; i < sel.length; i++)
+    for (let j = i + 1; j < sel.length; j++)
+      bs.push([mkPreset(sel[i]), mkPreset(sel[j])]);
+  return shuffle(bs);
 }
 function metricStats() {
   const st = {};
@@ -233,8 +269,8 @@ function isoPair() {
   return [mkScen({ ...base }), mkScen({ ...base, [tk]: l2 })];
 }
 function nextPair() {
-  phase = trials.length < P1_N ? 1 : 2;
-  return phase === 1 ? broadPair() : isoPair();
+  if (trials.length < bouts.length) { phase = 1; return bouts[trials.length]; }
+  phase = 2; return isoPair();
 }
 
 /* ---- k-means (theme discovery on accepts) ---- */
@@ -294,15 +330,18 @@ function silhouette(points, assign) {
 let cur = null;
 const $ = (id) => document.getElementById(id);
 function render() {
-  const done = trials.length >= TOTAL;
-  $("playView").classList.toggle("hidden", done);
+  const inPicker = bouts.length === 0;
+  const done = !inPicker && trials.length >= TOTAL;
+  $("pickView").classList.toggle("hidden", !inPicker);
+  $("playView").classList.toggle("hidden", inPicker || done);
   $("doneView").classList.toggle("hidden", !done);
-  $("introNote").classList.toggle("hidden", done);
+  $("introNote").classList.toggle("hidden", inPicker || done);
+  if (inPicker) return;
   if (done) { renderResults(); return; }
   const pr = nextPair();
-  const flip = Math.random() < 0.5;
+  const flip = phase === 1 ? false : Math.random() < 0.5;
   const L = flip ? pr[1] : pr[0], R = flip ? pr[0] : pr[1];
-  cur = { a: L, b: R };
+  cur = { a: L, b: R, aName: L.name || null, bName: R.name || null };
   const dk = diffKeys(L, R);
   $("backboneText").textContent = backboneText(L.vec, dk);
   const badge = $("badge2019");
@@ -333,14 +372,15 @@ function render() {
     li.appendChild(mn); li.appendChild(da); li.appendChild(ar); li.appendChild(db);
     ul.appendChild(li);
   }
-  $("trialLabel").textContent = `trial ${trials.length + 1} / ${TOTAL}`;
-  $("phaseLabel").textContent = phase === 1 ? "phase 1 · broad sampling" : "phase 2 · metric isolation";
+  const nameTag = (phase === 1 && cur.aName && cur.bName) ? ` — ${cur.aName} vs ${cur.bName}` : "";
+  $("trialLabel").textContent = `trial ${trials.length + 1} / ${TOTAL}${nameTag}`;
+  $("phaseLabel").textContent = phase === 1 ? "phase 1 · preset bouts" : "phase 2 · metric isolation";
   document.querySelector("#prog > div").style.width = (trials.length / TOTAL * 100) + "%";
 }
 function respond(r, rel) {
   if (!cur || trials.length >= TOTAL) return;
   trials.push({ a: cur.a, b: cur.b, resp: r, rel: !!(rel && (r === "A" || r === "B")), phase });
-  try { localStorage.setItem("scen_tel_v3", JSON.stringify(trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, rel: t.rel, phase: t.phase })))); } catch (e) {}
+  try { localStorage.setItem("scen_tel_v6", JSON.stringify({ sel: selectedIds, trials: trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, rel: t.rel, phase: t.phase })) })); } catch (e) {}
   render();
 }
 $("pickA").onclick = () => respond("A", false);
@@ -416,18 +456,45 @@ function renderResults() {
     `<p class="conf">n=${trials.length} trials · ${trials.filter(t => t.resp === "V").length} double-vetoes · ${accepts.length} accepts · 2019 baseline: ${baseTxt}.</p>`;
   $("sessLog").textContent =
     trials.map((t, i) => `${i + 1}. [${t.phase === 1 ? "broad" : "iso"}] ${t.a.id} vs ${t.b.id} → ${t.resp === "V" ? "VETO BOTH" : "picked " + t.resp + (t.rel ? " (reluctant)" : "")} · Δ=${diffKeys(t.a, t.b).map(k => MNAME[k]).join(",")}`).join("\n");
-  try { localStorage.setItem("scen_tel_done_v3", "1"); } catch (e) {}
+  try { localStorage.setItem("scen_tel_done_v6", "1"); } catch (e) {}
 }
 $("moreBtn").onclick = () => { TOTAL += 16; render(); };
 $("dlBtn").onclick = () => {
   const blob = new Blob([JSON.stringify({
-    ts: new Date().toISOString(), version: 5, metrics: METRICS, baseline: BASE,
+    ts: new Date().toISOString(), version: 6, metrics: METRICS, baseline: BASE,
+    presets: PRESETS, selected: selectedIds,
     trials: trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, reluctant: t.rel, phase: t.phase }))
   }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = "scenario-telemetry-v5.json"; a.click(); URL.revokeObjectURL(u);
+  a.href = u; a.download = "scenario-telemetry-v6.json"; a.click(); URL.revokeObjectURL(u);
 };
-$("restartBtn").onclick = () => { trials = []; scenSeq = 0; TOTAL = P1_N + P2_N; try { localStorage.removeItem("scen_tel_v3"); } catch (e) {} render(); };
+$("restartBtn").onclick = () => { trials = []; scenSeq = 0; bouts = []; selectedIds = []; TOTAL = 0; try { localStorage.removeItem("scen_tel_v6"); } catch (e) {} renderPicker(); render(); };
+function renderPicker() {
+  const box = $("scenList");
+  box.innerHTML = "";
+  for (const p of PRESETS) {
+    const lab = document.createElement("label");
+    lab.className = "scen-pick";
+    const cb = document.createElement("input");
+    cb.type = "checkbox"; cb.checked = true; cb.dataset.pid = p.id;
+    const sp = document.createElement("span");
+    const sn = document.createElement("span"); sn.className = "sn"; sn.textContent = p.name;
+    const sd = document.createElement("span"); sd.className = "sd"; sd.textContent = p.desc;
+    sp.appendChild(sn); sp.appendChild(document.createElement("br")); sp.appendChild(sd);
+    lab.appendChild(cb); lab.appendChild(sp);
+    box.appendChild(lab);
+  }
+}
+$("startBtn").onclick = () => {
+  const ids = [...document.querySelectorAll("#scenList input:checked")].map(el => el.dataset.pid);
+  if (!ids.length) return;
+  selectedIds = ids;
+  bouts = buildBouts(PRESETS.filter(p => ids.includes(p.id)));
+  if (!bouts.length) return;
+  TOTAL = bouts.length + P2_N;
+  render();
+};
+renderPicker();
 render();
 </script>
 </body>
