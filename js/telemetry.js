@@ -279,19 +279,39 @@ async function analyzeFile(file) {
 }
 
 async function handleFiles(files) {
-  const list = [...files].filter(f => f.type.startsWith('image/'));
-  if (!list.length) return;
+  const picked = [...files];
+  // some sources (iOS Files app, share sheets) hand over files with an empty
+  // MIME type — fall back to the extension so they aren't silently dropped
+  const IMG_EXT = /\.(jpe?g|png|webp|gif|bmp|heic|heif|avif|tiff?)$/i;
+  const isImg = (f) => (f.type && f.type.startsWith('image/')) || IMG_EXT.test(f.name || '');
+  const list = picked.filter(isImg);
+  const skipped = picked.length - list.length;
+  if (!list.length) {
+    setStatus(picked.length ? `nothing analyzable — ${skipped} file(s) skipped (not images)` : 'no files selected', true);
+    fileInput.value = '';
+    return;
+  }
+  // never report "no face detected" when the real problem is the model
+  const lm = await ensureLandmarker((t) => setStatus(t, false));
+  if (!lm) {
+    setStatus('measurement unavailable — landmark model failed to load', true);
+    fileInput.value = '';
+    return;
+  }
   setStatus('analyzing…', false);
-  let ok = 0, fail = 0;
+  let ok = 0; const errs = {};
   for (const f of list) {
     try { await analyzeFile(f); ok++; }
-    catch (e) { fail++; console.warn(f.name, e.message); }
+    catch (e) { errs[e.message] = (errs[e.message] || 0) + 1; console.warn(f.name, e.message); }
   }
+  fileInput.value = ''; // allow re-picking the same file
   const last = state.items[state.items.length - 1];
   if (last) state.activeId = last.id;
   renderHistory(); renderViewer(); renderMetrics(); renderCompare();
   exportCard.hidden = !state.items.length;
-  setStatus(ok + ' analyzed' + (fail ? ` · ${fail} failed (no face)` : ''), true);
+  const errTxt = Object.entries(errs).map(([m, n]) => `${n} failed (${m})`).join(' · ');
+  setStatus(ok + ' analyzed' + (errTxt ? ' · ' + errTxt : '') +
+    (skipped ? ` · ${skipped} skipped (not images)` : ''), true);
 }
 
 // ---- history strip ----
