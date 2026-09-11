@@ -5,56 +5,80 @@
    "file": "faces/p1-wide-1.webp",
    "id": "p1-wide-1",
    "label": "wide-angular",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "wide",
    "file": "faces/p1-wide-2.webp",
    "id": "p1-wide-2",
    "label": "wide-angular",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "long",
    "file": "faces/p1-long-1.webp",
    "id": "p1-long-1",
    "label": "long-narrow",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "long",
    "file": "faces/p1-long-2.webp",
    "id": "p1-long-2",
    "label": "long-narrow",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "heart",
    "file": "faces/p1-heart-1.webp",
    "id": "p1-heart-1",
    "label": "heart",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "heart",
    "file": "faces/p1-heart-2.webp",
    "id": "p1-heart-2",
    "label": "heart",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "round",
    "file": "faces/p1-round-1.webp",
    "id": "p1-round-1",
    "label": "round",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "archetype": "round",
    "file": "faces/p1-round-2.webp",
    "id": "p1-round-2",
    "label": "round",
-   "phase": 1
+   "phase": 1,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "jaw",
@@ -64,7 +88,10 @@
    "variant": "sharp",
    "pair_validity": -0.74,
    "pair_target_z": 1.59,
-   "pair_dir_z": 1.51
+   "pair_dir_z": 1.51,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "jaw",
@@ -74,7 +101,10 @@
    "variant": "soft",
    "pair_validity": -0.74,
    "pair_target_z": 1.59,
-   "pair_dir_z": 1.51
+   "pair_dir_z": 1.51,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "lips",
@@ -84,7 +114,10 @@
    "variant": "full",
    "pair_validity": -0.07,
    "pair_target_z": 3.24,
-   "pair_dir_z": 3.24
+   "pair_dir_z": 3.24,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "lips",
@@ -94,7 +127,10 @@
    "variant": "thin",
    "pair_validity": -0.07,
    "pair_target_z": 3.24,
-   "pair_dir_z": 3.24
+   "pair_dir_z": 3.24,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "eyes",
@@ -104,7 +140,10 @@
    "variant": "wide",
    "pair_validity": -0.81,
    "pair_target_z": 0.59,
-   "pair_dir_z": 0.08
+   "pair_dir_z": 0.08,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "eyes",
@@ -114,7 +153,10 @@
    "variant": "close",
    "pair_validity": -0.81,
    "pair_target_z": 0.59,
-   "pair_dir_z": 0.08
+   "pair_dir_z": 0.08,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "brow",
@@ -124,7 +166,10 @@
    "variant": "thick",
    "pair_validity": -1.68,
    "pair_target_z": 0.65,
-   "pair_dir_z": 0.65
+   "pair_dir_z": 0.65,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "brow",
@@ -134,7 +179,10 @@
    "variant": "thin",
    "pair_validity": -1.68,
    "pair_target_z": 0.65,
-   "pair_dir_z": 0.65
+   "pair_dir_z": 0.65,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "nose",
@@ -144,7 +192,10 @@
    "variant": "narrow",
    "pair_validity": -0.55,
    "pair_target_z": 1.93,
-   "pair_dir_z": -1.93
+   "pair_dir_z": -1.93,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "axis": "nose",
@@ -154,7 +205,10 @@
    "variant": "wide",
    "pair_validity": -0.55,
    "pair_target_z": 1.93,
-   "pair_dir_z": -1.93
+   "pair_dir_z": -1.93,
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "id": "p2a03",
@@ -163,7 +217,10 @@
    "anchor": "p2a03",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-jaw-soft",
@@ -171,7 +228,10 @@
    "phase": 2,
    "anchor": "p2a03",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-lips-full",
@@ -182,7 +242,10 @@
    "variant": "full",
    "pair_validity": 1.05,
    "pair_target_z": 3.37,
-   "pair_dir_z": 3.37
+   "pair_dir_z": 3.37,
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-lips-thin",
@@ -193,7 +256,10 @@
    "variant": "thin",
    "pair_validity": 1.05,
    "pair_target_z": 3.37,
-   "pair_dir_z": 3.37
+   "pair_dir_z": 3.37,
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-brow-thick",
@@ -204,7 +270,10 @@
    "variant": "thick",
    "pair_validity": -0.41,
    "pair_target_z": 1.18,
-   "pair_dir_z": 1.18
+   "pair_dir_z": 1.18,
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-brow-thin",
@@ -215,7 +284,10 @@
    "variant": "thin",
    "pair_validity": -0.41,
    "pair_target_z": 1.18,
-   "pair_dir_z": 1.18
+   "pair_dir_z": 1.18,
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-nose-narrow",
@@ -226,7 +298,10 @@
    "variant": "narrow",
    "pair_validity": 0.46,
    "pair_target_z": 1.93,
-   "pair_dir_z": -1.42
+   "pair_dir_z": -1.42,
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a03-nose-wide",
@@ -237,7 +312,10 @@
    "variant": "wide",
    "pair_validity": 0.46,
    "pair_target_z": 1.93,
-   "pair_dir_z": -1.42
+   "pair_dir_z": -1.42,
+   "group": "middle-eastern",
+   "subgroup": "levantine",
+   "sex": "female"
   },
   {
    "id": "p2a04",
@@ -246,7 +324,10 @@
    "anchor": "p2a04",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-jaw-sharp",
@@ -257,7 +338,10 @@
    "variant": "sharp",
    "pair_validity": -0.96,
    "pair_target_z": 0.33,
-   "pair_dir_z": -0.11
+   "pair_dir_z": -0.11,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-jaw-soft",
@@ -268,7 +352,10 @@
    "variant": "soft",
    "pair_validity": -0.96,
    "pair_target_z": 0.33,
-   "pair_dir_z": -0.11
+   "pair_dir_z": -0.11,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-lips-full",
@@ -279,7 +366,10 @@
    "variant": "full",
    "pair_validity": 0.64,
    "pair_target_z": 4.09,
-   "pair_dir_z": 4.09
+   "pair_dir_z": 4.09,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-lips-thin",
@@ -290,7 +380,10 @@
    "variant": "thin",
    "pair_validity": 0.64,
    "pair_target_z": 4.09,
-   "pair_dir_z": 4.09
+   "pair_dir_z": 4.09,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-brow-thick",
@@ -301,7 +394,10 @@
    "variant": "thick",
    "pair_validity": -0.38,
    "pair_target_z": 1.18,
-   "pair_dir_z": 1.18
+   "pair_dir_z": 1.18,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-brow-thin",
@@ -312,7 +408,10 @@
    "variant": "thin",
    "pair_validity": -0.38,
    "pair_target_z": 1.18,
-   "pair_dir_z": 1.18
+   "pair_dir_z": 1.18,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-nose-narrow",
@@ -323,7 +422,10 @@
    "variant": "narrow",
    "pair_validity": -0.81,
    "pair_target_z": 1.06,
-   "pair_dir_z": -0.97
+   "pair_dir_z": -0.97,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a04-nose-wide",
@@ -334,7 +436,10 @@
    "variant": "wide",
    "pair_validity": -0.81,
    "pair_target_z": 1.06,
-   "pair_dir_z": -0.97
+   "pair_dir_z": -0.97,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a05",
@@ -343,7 +448,10 @@
    "anchor": "p2a05",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-jaw-sharp",
@@ -354,7 +462,10 @@
    "variant": "sharp",
    "pair_validity": -0.51,
    "pair_target_z": 0.25,
-   "pair_dir_z": -0.06
+   "pair_dir_z": -0.06,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-jaw-soft",
@@ -365,7 +476,10 @@
    "variant": "soft",
    "pair_validity": -0.51,
    "pair_target_z": 0.25,
-   "pair_dir_z": -0.06
+   "pair_dir_z": -0.06,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-lips-full",
@@ -376,7 +490,10 @@
    "variant": "full",
    "pair_validity": 0.38,
    "pair_target_z": 3.06,
-   "pair_dir_z": 3.06
+   "pair_dir_z": 3.06,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-lips-thin",
@@ -387,7 +504,10 @@
    "variant": "thin",
    "pair_validity": 0.38,
    "pair_target_z": 3.06,
-   "pair_dir_z": 3.06
+   "pair_dir_z": 3.06,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-eyes-wide",
@@ -398,7 +518,10 @@
    "variant": "wide",
    "pair_validity": -1.14,
    "pair_target_z": 0.12,
-   "pair_dir_z": 0.11
+   "pair_dir_z": 0.11,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-eyes-close",
@@ -409,7 +532,10 @@
    "variant": "close",
    "pair_validity": -1.14,
    "pair_target_z": 0.12,
-   "pair_dir_z": 0.11
+   "pair_dir_z": 0.11,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-nose-narrow",
@@ -420,7 +546,10 @@
    "variant": "narrow",
    "pair_validity": -1.16,
    "pair_target_z": 0.14,
-   "pair_dir_z": -0.14
+   "pair_dir_z": -0.14,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-nose-wide",
@@ -431,7 +560,10 @@
    "variant": "wide",
    "pair_validity": -1.16,
    "pair_target_z": 0.14,
-   "pair_dir_z": -0.14
+   "pair_dir_z": -0.14,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-brow-thick",
@@ -442,7 +574,10 @@
    "variant": "thick",
    "pair_validity": -1.28,
    "pair_target_z": 0.11,
-   "pair_dir_z": 0.0
+   "pair_dir_z": 0.0,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a05-brow-thin",
@@ -453,7 +588,10 @@
    "variant": "thin",
    "pair_validity": -1.28,
    "pair_target_z": 0.11,
-   "pair_dir_z": 0.0
+   "pair_dir_z": 0.0,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a06",
@@ -462,7 +600,10 @@
    "anchor": "p2a06",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-jaw-soft",
@@ -470,7 +611,10 @@
    "phase": 2,
    "anchor": "p2a06",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-lips-full",
@@ -481,7 +625,10 @@
    "variant": "full",
    "pair_validity": 0.59,
    "pair_target_z": 3.04,
-   "pair_dir_z": 3.04
+   "pair_dir_z": 3.04,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-lips-thin",
@@ -492,7 +639,10 @@
    "variant": "thin",
    "pair_validity": 0.59,
    "pair_target_z": 3.04,
-   "pair_dir_z": 3.04
+   "pair_dir_z": 3.04,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-eyes-close",
@@ -500,7 +650,10 @@
    "phase": 2,
    "anchor": "p2a06",
    "axis": "eyes",
-   "variant": "close"
+   "variant": "close",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-nose-narrow",
@@ -511,7 +664,10 @@
    "variant": "narrow",
    "pair_validity": -0.1,
    "pair_target_z": 2.02,
-   "pair_dir_z": -0.34
+   "pair_dir_z": -0.34,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-nose-wide",
@@ -522,7 +678,10 @@
    "variant": "wide",
    "pair_validity": -0.1,
    "pair_target_z": 2.02,
-   "pair_dir_z": -0.34
+   "pair_dir_z": -0.34,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-brow-thick",
@@ -533,7 +692,10 @@
    "variant": "thick",
    "pair_validity": -0.57,
    "pair_target_z": 0.72,
-   "pair_dir_z": 0.72
+   "pair_dir_z": 0.72,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a06-brow-thin",
@@ -544,7 +706,10 @@
    "variant": "thin",
    "pair_validity": -0.57,
    "pair_target_z": 0.72,
-   "pair_dir_z": 0.72
+   "pair_dir_z": 0.72,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a07",
@@ -553,7 +718,10 @@
    "anchor": "p2a07",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-jaw-sharp",
@@ -564,7 +732,10 @@
    "variant": "sharp",
    "pair_validity": -3.95,
    "pair_target_z": 1.95,
-   "pair_dir_z": -1.95
+   "pair_dir_z": -1.95,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-jaw-soft",
@@ -575,7 +746,10 @@
    "variant": "soft",
    "pair_validity": -3.95,
    "pair_target_z": 1.95,
-   "pair_dir_z": -1.95
+   "pair_dir_z": -1.95,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-lips-full",
@@ -586,7 +760,10 @@
    "variant": "full",
    "pair_validity": -0.34,
    "pair_target_z": 3.56,
-   "pair_dir_z": 3.49
+   "pair_dir_z": 3.49,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-lips-thin",
@@ -597,7 +774,10 @@
    "variant": "thin",
    "pair_validity": -0.34,
    "pair_target_z": 3.56,
-   "pair_dir_z": 3.49
+   "pair_dir_z": 3.49,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-eyes-close",
@@ -605,7 +785,10 @@
    "phase": 2,
    "anchor": "p2a07",
    "axis": "eyes",
-   "variant": "close"
+   "variant": "close",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-brow-thick",
@@ -616,7 +799,10 @@
    "variant": "thick",
    "pair_validity": -0.02,
    "pair_target_z": 0.83,
-   "pair_dir_z": 0.72
+   "pair_dir_z": 0.72,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-brow-thin",
@@ -627,7 +813,10 @@
    "variant": "thin",
    "pair_validity": -0.02,
    "pair_target_z": 0.83,
-   "pair_dir_z": 0.72
+   "pair_dir_z": 0.72,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-nose-narrow",
@@ -638,7 +827,10 @@
    "variant": "narrow",
    "pair_validity": -0.03,
    "pair_target_z": 2.6,
-   "pair_dir_z": -0.97
+   "pair_dir_z": -0.97,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a07-nose-wide",
@@ -649,7 +841,10 @@
    "variant": "wide",
    "pair_validity": -0.03,
    "pair_target_z": 2.6,
-   "pair_dir_z": -0.97
+   "pair_dir_z": -0.97,
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a08",
@@ -658,7 +853,10 @@
    "anchor": "p2a08",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-jaw-soft",
@@ -666,7 +864,10 @@
    "phase": 2,
    "anchor": "p2a08",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-lips-full",
@@ -677,7 +878,10 @@
    "variant": "full",
    "pair_validity": 1.04,
    "pair_target_z": 3.69,
-   "pair_dir_z": 2.95
+   "pair_dir_z": 2.95,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-lips-thin",
@@ -688,7 +892,10 @@
    "variant": "thin",
    "pair_validity": 1.04,
    "pair_target_z": 3.69,
-   "pair_dir_z": 2.95
+   "pair_dir_z": 2.95,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-eyes-wide",
@@ -699,7 +906,10 @@
    "variant": "wide",
    "pair_validity": -1.8,
    "pair_target_z": 1.01,
-   "pair_dir_z": 1.01
+   "pair_dir_z": 1.01,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-eyes-close",
@@ -710,7 +920,10 @@
    "variant": "close",
    "pair_validity": -1.8,
    "pair_target_z": 1.01,
-   "pair_dir_z": 1.01
+   "pair_dir_z": 1.01,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-brow-thick",
@@ -721,7 +934,10 @@
    "variant": "thick",
    "pair_validity": 0.17,
    "pair_target_z": 1.18,
-   "pair_dir_z": 1.18
+   "pair_dir_z": 1.18,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-brow-thin",
@@ -732,7 +948,10 @@
    "variant": "thin",
    "pair_validity": 0.17,
    "pair_target_z": 1.18,
-   "pair_dir_z": 1.18
+   "pair_dir_z": 1.18,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-nose-narrow",
@@ -743,7 +962,10 @@
    "variant": "narrow",
    "pair_validity": 0.14,
    "pair_target_z": 1.25,
-   "pair_dir_z": -1.14
+   "pair_dir_z": -1.14,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a08-nose-wide",
@@ -754,7 +976,10 @@
    "variant": "wide",
    "pair_validity": 0.14,
    "pair_target_z": 1.25,
-   "pair_dir_z": -1.14
+   "pair_dir_z": -1.14,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a09",
@@ -763,7 +988,10 @@
    "anchor": "p2a09",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-jaw-sharp",
@@ -774,7 +1002,10 @@
    "variant": "sharp",
    "pair_validity": -0.53,
    "pair_target_z": 0.5,
-   "pair_dir_z": -0.5
+   "pair_dir_z": -0.5,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-jaw-soft",
@@ -785,7 +1016,10 @@
    "variant": "soft",
    "pair_validity": -0.53,
    "pair_target_z": 0.5,
-   "pair_dir_z": -0.5
+   "pair_dir_z": -0.5,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-lips-full",
@@ -796,7 +1030,10 @@
    "variant": "full",
    "pair_validity": 0.25,
    "pair_target_z": 2.61,
-   "pair_dir_z": 2.61
+   "pair_dir_z": 2.61,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-lips-thin",
@@ -807,7 +1044,10 @@
    "variant": "thin",
    "pair_validity": 0.25,
    "pair_target_z": 2.61,
-   "pair_dir_z": 2.61
+   "pair_dir_z": 2.61,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-eyes-wide",
@@ -818,7 +1058,10 @@
    "variant": "wide",
    "pair_validity": -1.5,
    "pair_target_z": 0.59,
-   "pair_dir_z": 0.59
+   "pair_dir_z": 0.59,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-eyes-close",
@@ -829,7 +1072,10 @@
    "variant": "close",
    "pair_validity": -1.5,
    "pair_target_z": 0.59,
-   "pair_dir_z": 0.59
+   "pair_dir_z": 0.59,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-brow-thick",
@@ -840,7 +1086,10 @@
    "variant": "thick",
    "pair_validity": -0.49,
    "pair_target_z": 0.92,
-   "pair_dir_z": 0.92
+   "pair_dir_z": 0.92,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-brow-thin",
@@ -851,7 +1100,10 @@
    "variant": "thin",
    "pair_validity": -0.49,
    "pair_target_z": 0.92,
-   "pair_dir_z": 0.92
+   "pair_dir_z": 0.92,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a09-nose-narrow",
@@ -859,7 +1111,10 @@
    "phase": 2,
    "anchor": "p2a09",
    "axis": "nose",
-   "variant": "narrow"
+   "variant": "narrow",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10",
@@ -868,7 +1123,10 @@
    "anchor": "p2a10",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-jaw-soft",
@@ -876,7 +1134,10 @@
    "phase": 2,
    "anchor": "p2a10",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-lips-full",
@@ -887,7 +1148,10 @@
    "variant": "full",
    "pair_validity": 0.74,
    "pair_target_z": 3.49,
-   "pair_dir_z": 3.49
+   "pair_dir_z": 3.49,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-lips-thin",
@@ -898,7 +1162,10 @@
    "variant": "thin",
    "pair_validity": 0.74,
    "pair_target_z": 3.49,
-   "pair_dir_z": 3.49
+   "pair_dir_z": 3.49,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-eyes-wide",
@@ -909,7 +1176,10 @@
    "variant": "wide",
    "pair_validity": -0.6,
    "pair_target_z": 0.47,
-   "pair_dir_z": 0.15
+   "pair_dir_z": 0.15,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-eyes-close",
@@ -920,7 +1190,10 @@
    "variant": "close",
    "pair_validity": -0.6,
    "pair_target_z": 0.47,
-   "pair_dir_z": 0.15
+   "pair_dir_z": 0.15,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-brow-thick",
@@ -931,7 +1204,10 @@
    "variant": "thick",
    "pair_validity": -0.36,
    "pair_target_z": 0.47,
-   "pair_dir_z": -0.07
+   "pair_dir_z": -0.07,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-brow-thin",
@@ -942,7 +1218,10 @@
    "variant": "thin",
    "pair_validity": -0.36,
    "pair_target_z": 0.47,
-   "pair_dir_z": -0.07
+   "pair_dir_z": -0.07,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-nose-narrow",
@@ -953,7 +1232,10 @@
    "variant": "narrow",
    "pair_validity": -0.06,
    "pair_target_z": 1.06,
-   "pair_dir_z": -1.02
+   "pair_dir_z": -1.02,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a10-nose-wide",
@@ -964,175 +1246,250 @@
    "variant": "wide",
    "pair_validity": -0.06,
    "pair_target_z": 1.06,
-   "pair_dir_z": -1.02
+   "pair_dir_z": -1.02,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p1-wide-3",
    "file": "faces/p1-wide-3.webp",
    "phase": 1,
    "archetype": "wide",
-   "label": "wide-angular"
+   "label": "wide-angular",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p1-wide-4",
    "file": "faces/p1-wide-4.webp",
    "phase": 1,
    "archetype": "wide",
-   "label": "wide-angular"
+   "label": "wide-angular",
+   "group": "latina",
+   "subgroup": "european",
+   "sex": "female"
   },
   {
    "id": "p1-wide-5",
    "file": "faces/p1-wide-5.webp",
    "phase": 1,
    "archetype": "wide",
-   "label": "wide-angular"
+   "label": "wide-angular",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-wide-6",
    "file": "faces/p1-wide-6.webp",
    "phase": 1,
    "archetype": "wide",
-   "label": "wide-angular"
+   "label": "wide-angular",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p1-wide-7",
    "file": "faces/p1-wide-7.webp",
    "phase": 1,
    "archetype": "wide",
-   "label": "wide-angular"
+   "label": "wide-angular",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-wide-8",
    "file": "faces/p1-wide-8.webp",
    "phase": 1,
    "archetype": "wide",
-   "label": "wide-angular"
+   "label": "wide-angular",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-long-3",
    "file": "faces/p1-long-3.webp",
    "phase": 1,
    "archetype": "long",
-   "label": "long-narrow"
+   "label": "long-narrow",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p1-long-4",
    "file": "faces/p1-long-4.webp",
    "phase": 1,
    "archetype": "long",
-   "label": "long-narrow"
+   "label": "long-narrow",
+   "group": "south-asian",
+   "subgroup": "south-indian",
+   "sex": "female"
   },
   {
    "id": "p1-long-5",
    "file": "faces/p1-long-5.webp",
    "phase": 1,
    "archetype": "long",
-   "label": "long-narrow"
+   "label": "long-narrow",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-long-6",
    "file": "faces/p1-long-6.webp",
    "phase": 1,
    "archetype": "long",
-   "label": "long-narrow"
+   "label": "long-narrow",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-long-7",
    "file": "faces/p1-long-7.webp",
    "phase": 1,
    "archetype": "long",
-   "label": "long-narrow"
+   "label": "long-narrow",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p1-long-8",
    "file": "faces/p1-long-8.webp",
    "phase": 1,
    "archetype": "long",
-   "label": "long-narrow"
+   "label": "long-narrow",
+   "group": "latina",
+   "subgroup": "european",
+   "sex": "female"
   },
   {
    "id": "p1-heart-3",
    "file": "faces/p1-heart-3.webp",
    "phase": 1,
    "archetype": "heart",
-   "label": "heart"
+   "label": "heart",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-heart-4",
    "file": "faces/p1-heart-4.webp",
    "phase": 1,
    "archetype": "heart",
-   "label": "heart"
+   "label": "heart",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p1-heart-5",
    "file": "faces/p1-heart-5.webp",
    "phase": 1,
    "archetype": "heart",
-   "label": "heart"
+   "label": "heart",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-heart-6",
    "file": "faces/p1-heart-6.webp",
    "phase": 1,
    "archetype": "heart",
-   "label": "heart"
+   "label": "heart",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-heart-7",
    "file": "faces/p1-heart-7.webp",
    "phase": 1,
    "archetype": "heart",
-   "label": "heart"
+   "label": "heart",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-heart-8",
    "file": "faces/p1-heart-8.webp",
    "phase": 1,
    "archetype": "heart",
-   "label": "heart"
+   "label": "heart",
+   "group": "caucasian",
+   "subgroup": "eastern-european",
+   "sex": "female"
   },
   {
    "id": "p1-round-3",
    "file": "faces/p1-round-3.webp",
    "phase": 1,
    "archetype": "round",
-   "label": "round"
+   "label": "round",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p1-round-4",
    "file": "faces/p1-round-4.webp",
    "phase": 1,
    "archetype": "round",
-   "label": "round"
+   "label": "round",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p1-round-5",
    "file": "faces/p1-round-5.webp",
    "phase": 1,
    "archetype": "round",
-   "label": "round"
+   "label": "round",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-round-6",
    "file": "faces/p1-round-6.webp",
    "phase": 1,
    "archetype": "round",
-   "label": "round"
+   "label": "round",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-round-7",
    "file": "faces/p1-round-7.webp",
    "phase": 1,
    "archetype": "round",
-   "label": "round"
+   "label": "round",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p1-round-8",
    "file": "faces/p1-round-8.webp",
    "phase": 1,
    "archetype": "round",
-   "label": "round"
+   "label": "round",
+   "group": "black",
+   "subgroup": "west-african",
+   "sex": "female"
   },
   {
    "id": "p2a11",
@@ -1141,7 +1498,10 @@
    "anchor": "p2a11",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-jaw-soft",
@@ -1149,7 +1509,10 @@
    "phase": 2,
    "anchor": "p2a11",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-lips-full",
@@ -1160,7 +1523,10 @@
    "variant": "full",
    "pair_validity": 0.39,
    "pair_target_z": 2.59,
-   "pair_dir_z": 2.59
+   "pair_dir_z": 2.59,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-lips-thin",
@@ -1171,7 +1537,10 @@
    "variant": "thin",
    "pair_validity": 0.39,
    "pair_target_z": 2.59,
-   "pair_dir_z": 2.59
+   "pair_dir_z": 2.59,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-eyes-wide",
@@ -1182,7 +1551,10 @@
    "variant": "wide",
    "pair_validity": -0.36,
    "pair_target_z": 0.72,
-   "pair_dir_z": 0.72
+   "pair_dir_z": 0.72,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-eyes-close",
@@ -1193,7 +1565,10 @@
    "variant": "close",
    "pair_validity": -0.36,
    "pair_target_z": 0.72,
-   "pair_dir_z": 0.72
+   "pair_dir_z": 0.72,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-brow-thick",
@@ -1204,7 +1579,10 @@
    "variant": "thick",
    "pair_validity": 0.14,
    "pair_target_z": 0.85,
-   "pair_dir_z": 0.85
+   "pair_dir_z": 0.85,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-brow-thin",
@@ -1215,7 +1593,10 @@
    "variant": "thin",
    "pair_validity": 0.14,
    "pair_target_z": 0.85,
-   "pair_dir_z": 0.85
+   "pair_dir_z": 0.85,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-nose-narrow",
@@ -1226,7 +1607,10 @@
    "variant": "narrow",
    "pair_validity": 0.25,
    "pair_target_z": 0.96,
-   "pair_dir_z": -0.88
+   "pair_dir_z": -0.88,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a11-nose-wide",
@@ -1237,7 +1621,10 @@
    "variant": "wide",
    "pair_validity": 0.25,
    "pair_target_z": 0.96,
-   "pair_dir_z": -0.88
+   "pair_dir_z": -0.88,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12",
@@ -1246,7 +1633,10 @@
    "anchor": "p2a12",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-jaw-soft",
@@ -1254,7 +1644,10 @@
    "phase": 2,
    "anchor": "p2a12",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-lips-full",
@@ -1265,7 +1658,10 @@
    "variant": "full",
    "pair_validity": 0.91,
    "pair_target_z": 3.26,
-   "pair_dir_z": 3.26
+   "pair_dir_z": 3.26,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-lips-thin",
@@ -1276,7 +1672,10 @@
    "variant": "thin",
    "pair_validity": 0.91,
    "pair_target_z": 3.26,
-   "pair_dir_z": 3.26
+   "pair_dir_z": 3.26,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-eyes-wide",
@@ -1287,7 +1686,10 @@
    "variant": "wide",
    "pair_validity": -1.33,
    "pair_target_z": 0.71,
-   "pair_dir_z": 0.13
+   "pair_dir_z": 0.13,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-eyes-close",
@@ -1298,7 +1700,10 @@
    "variant": "close",
    "pair_validity": -1.33,
    "pair_target_z": 0.71,
-   "pair_dir_z": 0.13
+   "pair_dir_z": 0.13,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-brow-thick",
@@ -1309,7 +1714,10 @@
    "variant": "thick",
    "pair_validity": 0.01,
    "pair_target_z": 1.37,
-   "pair_dir_z": 1.37
+   "pair_dir_z": 1.37,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-brow-thin",
@@ -1320,7 +1728,10 @@
    "variant": "thin",
    "pair_validity": 0.01,
    "pair_target_z": 1.37,
-   "pair_dir_z": 1.37
+   "pair_dir_z": 1.37,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-nose-narrow",
@@ -1331,7 +1742,10 @@
    "variant": "narrow",
    "pair_validity": -0.06,
    "pair_target_z": 1.11,
-   "pair_dir_z": -1.11
+   "pair_dir_z": -1.11,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a12-nose-wide",
@@ -1342,7 +1756,10 @@
    "variant": "wide",
    "pair_validity": -0.06,
    "pair_target_z": 1.11,
-   "pair_dir_z": -1.11
+   "pair_dir_z": -1.11,
+   "group": "latina",
+   "subgroup": "mestiza",
+   "sex": "female"
   },
   {
    "id": "p2a01",
@@ -1351,7 +1768,10 @@
    "anchor": "p2a01",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-jaw-soft",
@@ -1359,7 +1779,10 @@
    "phase": 2,
    "anchor": "p2a01",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-lips-full",
@@ -1370,7 +1793,10 @@
    "variant": "full",
    "pair_validity": 0.8,
    "pair_target_z": 3.8,
-   "pair_dir_z": 3.8
+   "pair_dir_z": 3.8,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-lips-thin",
@@ -1381,7 +1807,10 @@
    "variant": "thin",
    "pair_validity": 0.8,
    "pair_target_z": 3.8,
-   "pair_dir_z": 3.8
+   "pair_dir_z": 3.8,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-brow-thick",
@@ -1392,7 +1821,10 @@
    "variant": "thick",
    "pair_validity": -0.7,
    "pair_target_z": 0.74,
-   "pair_dir_z": 0.33
+   "pair_dir_z": 0.33,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-brow-thin",
@@ -1403,7 +1835,10 @@
    "variant": "thin",
    "pair_validity": -0.7,
    "pair_target_z": 0.74,
-   "pair_dir_z": 0.33
+   "pair_dir_z": 0.33,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-nose-narrow",
@@ -1414,7 +1849,10 @@
    "variant": "narrow",
    "pair_validity": -0.51,
    "pair_target_z": 0.87,
-   "pair_dir_z": -0.62
+   "pair_dir_z": -0.62,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a01-nose-wide",
@@ -1425,7 +1863,10 @@
    "variant": "wide",
    "pair_validity": -0.51,
    "pair_target_z": 0.87,
-   "pair_dir_z": -0.62
+   "pair_dir_z": -0.62,
+   "group": "caucasian",
+   "subgroup": "northern-european",
+   "sex": "female"
   },
   {
    "id": "p2a02",
@@ -1434,7 +1875,10 @@
    "anchor": "p2a02",
    "axis": null,
    "variant": null,
-   "role": "anchor"
+   "role": "anchor",
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-jaw-soft",
@@ -1442,7 +1886,10 @@
    "phase": 2,
    "anchor": "p2a02",
    "axis": "jaw",
-   "variant": "soft"
+   "variant": "soft",
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-lips-full",
@@ -1453,7 +1900,10 @@
    "variant": "full",
    "pair_validity": 0.68,
    "pair_target_z": 2.45,
-   "pair_dir_z": 2.45
+   "pair_dir_z": 2.45,
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-lips-thin",
@@ -1464,7 +1914,10 @@
    "variant": "thin",
    "pair_validity": 0.68,
    "pair_target_z": 2.45,
-   "pair_dir_z": 2.45
+   "pair_dir_z": 2.45,
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-brow-thick",
@@ -1475,7 +1928,10 @@
    "variant": "thick",
    "pair_validity": -0.68,
    "pair_target_z": 0.26,
-   "pair_dir_z": 0.26
+   "pair_dir_z": 0.26,
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-brow-thin",
@@ -1486,7 +1942,10 @@
    "variant": "thin",
    "pair_validity": -0.68,
    "pair_target_z": 0.26,
-   "pair_dir_z": 0.26
+   "pair_dir_z": 0.26,
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-nose-narrow",
@@ -1497,7 +1956,10 @@
    "variant": "narrow",
    "pair_validity": -0.1,
    "pair_target_z": 2.47,
-   "pair_dir_z": -2.47
+   "pair_dir_z": -2.47,
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   },
   {
    "id": "p2a02-nose-wide",
@@ -1508,7 +1970,10 @@
    "variant": "wide",
    "pair_validity": -0.1,
    "pair_target_z": 2.47,
-   "pair_dir_z": -2.47
+   "pair_dir_z": -2.47,
+   "group": "asian",
+   "subgroup": "east-asian",
+   "sex": "female"
   }
  ]
 }

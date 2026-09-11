@@ -45,6 +45,79 @@ let currentRound = null;
 let rankOrder = [];
 const measureCache = new Map();
 
+// ---------- pregame preferences ----------
+// Which faces may appear. Two-level: group → subgroup. Neutral framing — the
+// user picks which groups to evaluate; everything is selected by default.
+// Stored in localStorage, separate from the run.
+const PREFS_KEY = 'attraction-guide-prefs-v1';
+const GROUP_TREE = {
+  caucasian: { label: 'Caucasian', subs: {
+    'northern-european': 'Northern European', 'southern-european': 'Southern European',
+    'eastern-european': 'Eastern European' } },
+  latina: { label: 'Latina', subs: {
+    mestiza: 'Mestiza', norteno: 'Norteña (northern Mexican)', european: 'European-descended',
+    'afro-latina': 'Afro-Latina' } },
+  asian: { label: 'East / Southeast Asian', subs: {
+    'east-asian': 'East Asian', 'southeast-asian': 'Southeast Asian' } },
+  black: { label: 'Black', subs: {
+    'west-african': 'West African', 'east-african': 'East African', caribbean: 'Caribbean' } },
+  'south-asian': { label: 'South Asian', subs: {
+    'north-indian': 'North Indian', 'south-indian': 'South Indian' } },
+  'middle-eastern': { label: 'Middle Eastern', subs: {
+    levantine: 'Levantine', gulf: 'Gulf Arab', persian: 'Persian' } },
+  mixed: { label: 'Mixed / ambiguous', subs: { mixed: 'Mixed / ambiguous' } },
+};
+const subKey = (g, s) => g + ':' + s;
+const faceKey = (f) => subKey(f.group || 'mixed', f.subgroup || 'mixed');
+function allKeys() {
+  const ks = [];
+  for (const [g, t] of Object.entries(GROUP_TREE))
+    for (const s of Object.keys(t.subs)) ks.push(subKey(g, s));
+  return ks;
+}
+function loadPrefs() {
+  try {
+    const p = JSON.parse(localStorage.getItem(PREFS_KEY));
+    if (p && typeof p === 'object') return { sel: p.sel || null, sex: p.sex || 'female' };
+  } catch (e) {}
+  return { sel: null, sex: 'female' }; // sel null = everything selected
+}
+let prefs = loadPrefs();
+function savePrefs() { localStorage.setItem(PREFS_KEY, JSON.stringify(prefs)); }
+function normSel(sel) { // full selection collapses back to null (= default)
+  const all = allKeys();
+  return sel.length >= all.length ? null : [...new Set(sel)];
+}
+// faces eligible under current prefs
+function activeBank() {
+  return BANK.filter((f) =>
+    (f.sex || 'female') === prefs.sex &&
+    (!prefs.sel || prefs.sel.includes(faceKey(f))));
+}
+// counts per group/sub among the current sex's bank faces
+function treeCounts() {
+  const t = {};
+  for (const f of BANK.filter((f) => (f.sex || 'female') === prefs.sex)) {
+    const g = f.group || 'mixed', s = f.subgroup || 'mixed';
+    if (!GROUP_TREE[g]) continue;
+    t[g] = t[g] || { total: 0, subs: {} };
+    t[g].total++;
+    t[g].subs[s] = (t[g].subs[s] || 0) + 1;
+  }
+  return t;
+}
+function prefsSummary(sel) {
+  const parts = [];
+  for (const [g, t] of Object.entries(GROUP_TREE)) {
+    const on = Object.keys(t.subs).filter((s) => sel.includes(subKey(g, s)));
+    if (!on.length) continue;
+    parts.push(on.length === Object.keys(t.subs).length
+      ? t.label
+      : `${t.label} (${on.map((s) => t.subs[s]).join(', ')})`);
+  }
+  return parts.join(' · ');
+}
+
 const $ = (s) => document.querySelector(s);
 const shuffle = (a) => { const x = [...a]; for (let i = x.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [x[i], x[j]] = [x[j], x[i]]; } return x; };
 const faceById = (id) => BANK.find((f) => f.id === id);
@@ -179,7 +252,7 @@ function updateAxisStatus(axis) {
 function pairPool(axis) {
   const [v0, v1] = PAIR_AXES[axis];
   const byAnchor = {};
-  for (const f of BANK) {
+  for (const f of activeBank()) {
     if (f.phase !== 2 || f.axis !== axis || !f.variant) continue;
     (byAnchor[f.anchor] = byAnchor[f.anchor] || {})[f.variant] = f;
   }
@@ -206,7 +279,7 @@ function pickPair(axis) {
 
 // ---------- rounds ----------
 function p1Faces() {
-  const pool = BANK.filter((f) => f.phase === 1);
+  const pool = activeBank().filter((f) => f.phase === 1);
   const picked = [];
   for (const arch of shuffle(ARCHETYPES)) {
     const cands = shuffle(pool.filter((f) => f.archetype === arch && !state.p1Used.includes(f.id)));
@@ -379,6 +452,7 @@ function renderProfile() {
 }
 function summaryText() {
   const lines = ['attraction-guide run ' + state.startedAt + ' (adaptive v2)'];
+  if (state.prefs) lines.push('selection: presenting as ' + state.prefs.sex + ' · ' + prefsSummary(state.prefs.sel));
   if (state.refVector) lines.push('round 0 (reference): ' + JSON.stringify(state.refVector));
   for (const a of ARCHETYPES) lines.push(`archetype ${ARCHETYPE_LABELS[a]}: ${state.archWins[a]}W [${confidence(state.archWins[a])[1]}]`);
   for (const axis of Object.keys(PAIR_AXES)) {
@@ -421,6 +495,103 @@ function initRefUpload() {
   });
 }
 
+// ---------- pregame preferences UI ----------
+function renderPrefs() {
+  const host = $('#group-picks');
+  host.innerHTML = '';
+  const counts = treeCounts();
+  const sel = prefs.sel || allKeys();
+  for (const [g, t] of Object.entries(GROUP_TREE)) {
+    const c = counts[g];
+    if (!c) continue; // group absent from bank — don't render it
+    const subKeys = Object.keys(t.subs).map((s) => subKey(g, s));
+    const nOn = subKeys.filter((k) => sel.includes(k)).length;
+    const sec = document.createElement('div');
+    sec.className = 'gsec';
+    const head = document.createElement('label');
+    head.className = 'gpick' + (nOn === 0 ? ' off' : '');
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = nOn > 0;
+    cb.indeterminate = nOn > 0 && nOn < subKeys.length;
+    cb.addEventListener('change', () => onGroupToggle(g, cb.checked));
+    head.append(cb, document.createTextNode(t.label + ' '));
+    const cnt = document.createElement('span');
+    cnt.className = 'cnt'; cnt.textContent = c.total;
+    head.append(cnt);
+    sec.appendChild(head);
+    const subs = document.createElement('div');
+    subs.className = 'gsubs';
+    for (const [s, sl] of Object.entries(t.subs)) {
+      const k = subKey(g, s);
+      const n = c.subs[s] || 0;
+      const chip = document.createElement('label');
+      chip.className = 'gpick sub' + (sel.includes(k) ? '' : ' off');
+      chip.title = n === 0 ? 'no faces in this subgroup yet' : '';
+      const scb = document.createElement('input');
+      scb.type = 'checkbox';
+      scb.checked = sel.includes(k);
+      scb.disabled = n === 0;
+      scb.addEventListener('change', () => onSubToggle(k, scb.checked));
+      chip.append(scb, document.createTextNode(sl + ' '));
+      const cc = document.createElement('span');
+      cc.className = 'cnt'; cc.textContent = n;
+      chip.append(cc);
+      subs.appendChild(chip);
+    }
+    sec.appendChild(subs);
+    host.appendChild(sec);
+  }
+  const sf = $('#sex-f'), sm = $('#sex-m');
+  sf.classList.toggle('active', prefs.sex === 'female');
+  // male bank doesn't exist yet — the button stays disabled until it does
+  sm.disabled = !BANK.some((f) => f.sex === 'male');
+  sm.textContent = sm.disabled ? 'male · soon' : 'male';
+  sm.classList.toggle('active', prefs.sex === 'male');
+  sf.onclick = () => setSex('female');
+  sm.onclick = () => { if (!sm.disabled) setSex('male'); };
+  updatePrefsHint();
+}
+function confirmPrefsReset() {
+  if (state && state.rounds.length && !confirm('Changing who appears will reset the current run. Continue?')) {
+    renderPrefs(); return false;
+  }
+  if (state && state.rounds.length) { state = blankState(); currentRound = null; rankOrder = []; save(); }
+  return true;
+}
+function onGroupToggle(g, on) {
+  if (!confirmPrefsReset()) return;
+  const sel = new Set(prefs.sel || allKeys());
+  for (const s of Object.keys(GROUP_TREE[g].subs)) {
+    const k = subKey(g, s);
+    if (on) sel.add(k); else sel.delete(k);
+  }
+  prefs.sel = normSel([...sel]);
+  savePrefs(); renderPrefs(); renderProfile(); renderLog();
+}
+function onSubToggle(k, on) {
+  if (!confirmPrefsReset()) return;
+  const sel = new Set(prefs.sel || allKeys());
+  if (on) sel.add(k); else sel.delete(k);
+  prefs.sel = normSel([...sel]);
+  savePrefs(); renderPrefs(); renderProfile(); renderLog();
+}
+function setSex(s) {
+  if (s === prefs.sex) return;
+  if (!confirmPrefsReset()) return;
+  prefs.sex = s;
+  savePrefs(); renderPrefs(); renderProfile(); renderLog();
+}
+function updatePrefsHint() {
+  const n1 = activeBank().filter((f) => f.phase === 1).length;
+  const axes = Object.keys(PAIR_AXES).filter((a) => pairPool(a).length > 0).length;
+  $('#prefs-hint').textContent =
+    `${n1} archetype faces · ${axes}/5 drill-down axes have valid pairs under this selection`;
+}
+function prefsValid() {
+  return activeBank().filter((f) => f.phase === 1).length >= 4;
+}
+
 // ---------- nav / boot ----------
 function showView(name) {
   document.querySelectorAll('.view').forEach((v) => v.classList.add('hidden'));
@@ -445,7 +616,18 @@ async function boot() {
   save();
 
   document.querySelectorAll('nav button').forEach((b) => b.onclick = () => showView(b.dataset.view));
-  $('#start-btn').onclick = () => { showView('play'); if (!currentRound) nextRound(); else renderRound(); };
+  renderPrefs();
+  $('#start-btn').onclick = () => {
+    if (!prefsValid()) {
+      $('#prefs-hint').textContent = 'select enough groups to include at least 4 archetype faces';
+      showView('setup');
+      return;
+    }
+    state.prefs = { sex: prefs.sex, sel: prefs.sel || allKeys() };
+    save();
+    showView('play');
+    if (!currentRound) nextRound(); else renderRound();
+  };
   $('#reset-btn').onclick = () => { if (confirm('Reset the run? All picks are wiped.')) { state = blankState(); currentRound = null; rankOrder = []; save(); renderProfile(); renderLog(); showView('setup'); } };
   $('#lock-btn').onclick = lockRanking;
   $('#clear-rank').onclick = () => { rankOrder = []; updateRankUI(); };

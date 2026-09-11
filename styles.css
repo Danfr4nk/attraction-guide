@@ -122,3 +122,28 @@ footer {
   border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font-family: var(--mono);
 }
 .telemetry-link:hover { color: var(--acc); border-color: var(--acc); }
+
+/* pregame filters */
+.lede-sm { font-size: 13px; color: var(--dim); margin: 0 0 10px; }
+.group-picks { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.gpick {
+  display: inline-flex; align-items: center; gap: 7px; padding: 7px 12px;
+  border: 1px solid var(--line); border-radius: 20px; cursor: pointer; font-size: 13px;
+}
+.gpick input { accent-color: var(--acc); width: 15px; height: 15px; }
+.gpick .cnt { color: var(--dim); font-family: var(--mono); font-size: 11px; }
+.gpick.off { opacity: .45; }
+.sex-row { display: flex; align-items: center; gap: 8px; }
+.sex-label { font-size: 13px; color: var(--dim); margin-right: 4px; }
+.seg {
+  padding: 7px 16px; border-radius: 20px; border: 1px solid var(--line);
+  background: transparent; color: var(--txt); cursor: pointer; font-size: 13px;
+}
+.seg.active { background: var(--acc); color: #141414; border-color: var(--acc); font-weight: 600; }
+.seg:disabled { opacity: .4; cursor: not-allowed; }
+
+/* pregame two-level group picker */
+.gsec { margin-bottom: 10px; }
+.gsubs { display: flex; flex-wrap: wrap; gap: 6px; margin: 7px 0 2px 24px; }
+.gpick.sub { font-size: 12px; padding: 5px 10px; }
+.gpick.sub input { width: 13px; height: 13px; }
