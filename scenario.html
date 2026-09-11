@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scenario telemetry v4 — spec-sheet trials</title>
+<title>scenario telemetry v5 — diff bullets</title>
 <style>
   :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; --vio:#c678dd; }
   * { box-sizing:border-box; }
@@ -12,35 +12,40 @@
   header .brand { font-weight:700; letter-spacing:.5px; }
   header .sub { color:var(--dim); font-size:13px; }
   header a { color:var(--pick); font-size:13px; margin-left:auto; }
-  main { max-width:760px; margin:0 auto; padding:18px; }
+  main { max-width:640px; margin:0 auto; padding:18px; }
   .note { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; color:var(--dim); font-size:13.5px; margin-bottom:16px; }
   .note b { color:var(--txt); }
   #prog { height:6px; background:#22262e; border-radius:3px; overflow:hidden; margin:6px 0 18px; }
   #prog > div { height:100%; width:0; background:var(--acc); transition:width .25s; }
-  .trial-meta { color:var(--dim); font-size:13px; margin-bottom:4px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
-  .testing { color:var(--vio); font-size:13px; margin-bottom:14px; }
-  .glosses { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
-  @media (max-width:600px){ .glosses{ grid-template-columns:1fr; } }
-  .gloss { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; }
-  .gloss .glabel { font-weight:700; font-size:18px; margin-bottom:6px; display:flex; align-items:center; gap:8px; }
-  .gloss p { margin:0 0 12px; font-size:14px; }
-  .gloss .pickbtn { display:block; width:100%; padding:10px; border-radius:8px; border:1px solid var(--pick); background:transparent; color:var(--pick); font-size:14px; cursor:pointer; }
-  .gloss .pickbtn:hover { background:rgba(97,175,239,.12); }
-  .gloss .relbtn { display:block; width:100%; margin-top:6px; padding:4px; border:none; background:transparent; color:var(--dim); font-size:12px; cursor:pointer; text-decoration:underline; }
-  .gloss .relbtn:hover { color:var(--gold); }
-  .badge2019 { font-size:11px; color:var(--gold); border:1px solid var(--gold); border-radius:20px; padding:2px 10px; font-weight:400; }
-  table.spec { width:100%; border-collapse:collapse; margin:0 0 14px; font-size:13.5px; background:var(--panel); border:1px solid var(--line); border-radius:10px; overflow:hidden; }
-  table.spec th, table.spec td { text-align:left; padding:7px 12px; border-bottom:1px solid var(--line); }
-  table.spec th { color:var(--dim); font-weight:600; font-size:12px; }
-  table.spec td.mk { color:var(--dim); width:38%; }
-  table.spec tr.hot td { color:var(--vio); }
-  table.spec tr.hot td.mk { color:var(--vio); font-weight:600; }
-  table.spec td.va, table.spec td.vb { width:31%; }
-  .actions { display:flex; gap:10px; margin-top:4px; }
+  .trial-meta { color:var(--dim); font-size:13px; margin-bottom:10px; display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .backbone { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:12px 14px; margin-bottom:14px; font-size:14px; }
+  .backbone .blabel { color:var(--dim); font-size:12px; margin-bottom:4px; }
+  .backbone details { margin-top:8px; }
+  .backbone summary { color:var(--dim); font-size:12px; cursor:pointer; }
+  .backbone table { width:100%; border-collapse:collapse; margin-top:8px; font-size:12.5px; }
+  .backbone td { padding:4px 6px; border-bottom:1px solid var(--line); color:var(--dim); }
+  .difflist { list-style:none; margin:0 0 16px; padding:0; }
+  .difflist li { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--vio); border-radius:8px; padding:10px 14px; margin-bottom:8px; font-size:14.5px; }
+  .difflist .dm { color:var(--vio); font-weight:600; font-size:12.5px; display:block; margin-bottom:2px; }
+  .difflist .da { color:var(--txt); }
+  .difflist .arr { color:var(--dim); margin:0 6px; }
+  .difflist .db { color:var(--txt); }
+  .diffhead { color:var(--dim); font-size:13px; margin:0 0 10px; }
+  .diffhead b { color:var(--txt); }
+  .picks { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:10px; }
+  .picks button { padding:14px; border-radius:10px; font-size:15px; cursor:pointer; }
+  #pickA { border:1px solid var(--pick); background:transparent; color:var(--pick); font-weight:700; }
+  #pickB { border:1px solid var(--pick); background:transparent; color:var(--pick); font-weight:700; }
+  #pickA:hover, #pickB:hover { background:rgba(97,175,239,.12); }
+  .rels { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:14px; }
+  .rels button { background:transparent; border:none; color:var(--dim); font-size:12px; cursor:pointer; text-decoration:underline; padding:4px; }
+  .rels button:hover { color:var(--gold); }
+  .actions { display:flex; gap:10px; }
   .actions button { flex:1; padding:12px; border-radius:10px; font-size:14px; cursor:pointer; }
   #vetoBoth { background:transparent; border:1px solid var(--veto); color:var(--veto); }
   #vetoBoth:hover { background:rgba(224,108,117,.12); }
   #skipBtn { background:transparent; border:1px solid var(--line); color:var(--dim); flex:0 0 110px; }
+  .badge2019 { font-size:11px; color:var(--gold); border:1px solid var(--gold); border-radius:20px; padding:2px 10px; }
   table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; }
   th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
   th { color:var(--dim); font-weight:600; }
@@ -60,31 +65,36 @@
 </head>
 <body>
 <header>
-  <span class="brand">scenario telemetry <span style="color:var(--dim)">v4</span></span>
-  <span class="sub">spec-sheet trials · all scenarios presume consenting adults</span>
+  <span class="brand">scenario telemetry <span style="color:var(--dim)">v5</span></span>
+  <span class="sub">all scenarios presume consenting adults</span>
   <a href="index.html">← attraction game</a>
 </header>
 <main>
   <div class="note" id="introNote">
-    <b>How a trial works.</b> Two scenarios, one table. The <b>violet rows</b> are the only
-    metrics that differ between A and B — that's what's being tested. Read the one-line gloss
-    for the gut read, scan the violet rows for the variables, pick the one you'd be more
-    willing to do. <b>Veto both</b> if neither clears the bar; <b>reluctant</b> if you'd do
-    it but barely. Under the hood it's still the full 24-metric instrument: per-metric
-    discrimination ranking and theme clustering on your accepts.
+    <b>Each trial shows you one thing: what's different.</b> The bullets below are every
+    metric where A and B disagree — <b>A's value → B's value</b>. Everything they share
+    is in the backbone line (tap to expand the full 24). Pick the side you'd be more
+    willing to do, <b>veto both</b> if neither clears the bar, <b>reluctant</b> if barely.
   </div>
 
   <div id="playView">
-    <div class="trial-meta"><span id="trialLabel">trial 1</span><span id="phaseLabel">phase 1 · broad sampling</span></div>
+    <div class="trial-meta"><span id="trialLabel">trial 1</span><span id="phaseLabel"></span><span id="badge2019"></span></div>
     <div id="prog"><div></div></div>
-    <div class="testing" id="testingLine"></div>
-    <div class="glosses">
-      <div class="gloss"><div class="glabel">A <span id="badgeA"></span></div><p id="glossA"></p>
-        <button class="pickbtn" id="pickA">more willing → A</button><button class="relbtn" id="relA">reluctant → A</button></div>
-      <div class="gloss"><div class="glabel">B <span id="badgeB"></span></div><p id="glossB"></p>
-        <button class="pickbtn" id="pickB">more willing → B</button><button class="relbtn" id="relB">reluctant → B</button></div>
+    <div class="backbone">
+      <div class="blabel">shared backbone — identical in A and B</div>
+      <div id="backboneText"></div>
+      <details><summary>all 24 metrics</summary><table id="fullSpec"></table></details>
     </div>
-    <table class="spec"><thead><tr><th>metric</th><th>A</th><th>B</th></tr></thead><tbody id="specBody"></tbody></table>
+    <p class="diffhead" id="diffHead"></p>
+    <ul class="difflist" id="diffList"></ul>
+    <div class="picks">
+      <button id="pickA">more willing → A</button>
+      <button id="pickB">more willing → B</button>
+    </div>
+    <div class="rels">
+      <button id="relA">reluctant → A</button>
+      <button id="relB">reluctant → B</button>
+    </div>
     <div class="actions">
       <button id="vetoBoth">veto both — neither clears the bar</button>
       <button id="skipBtn">skip</button>
@@ -140,21 +150,22 @@ const MNAME = Object.fromEntries(METRICS.map(m => [m.k, m.name]));
 const MLV = Object.fromEntries(METRICS.map(m => [m.k, m.lv]));
 const BASE = Object.fromEntries(METRICS.map(m => [m.k, m.base]));
 
-/* ---- one-line glosses: the gut read. B is always expressed as a delta from A. ---- */
-function glossA(vec) {
-  const a = ["unplanned", "she directs", "you direct"][vec.A_auth];
-  const s = vec.S_sub === 2 ? "MMF, she's central and your type"
-          : vec.S_sub === 1 ? "she's present, watching"
-          : "just you and him";
-  const p = ["he's experimenting", "he's mildly into you", "he's pursuing you"][vec.P_pur];
-  const e = ["touch only", "oral included", "open-ended"][vec.E_env];
-  const f = vec.film === 2 ? ", filmed" : vec.film === 0 ? ", not filmed" : "";
-  return `${a} · ${s} — ${p}; ${e}${f}.`;
-}
-function glossB(a, b) {
-  const dk = diffKeys(a, b);
-  const clauses = dk.slice(0, 4).map(k => `${MNAME[k]}: ${MLV[k][a.vec[k]]} → ${MLV[k][b.vec[k]]}`);
-  return "same, but " + clauses.join("; ") + (dk.length > 4 ? ` (+${dk.length - 4} more below).` : ".");
+/* backbone gloss: one line from the metrics A and B share.
+   Any structural metric that differs is left out here — it appears in the bullets. */
+function backboneText(vec, dk) {
+  const bits = [];
+  const has = (k) => !dk.includes(k);
+  if (has("A_auth")) bits.push(["unplanned", "she directs", "you direct"][vec.A_auth]);
+  else bits.push("authorship differs ↓");
+  if (has("S_sub")) bits.push(vec.S_sub === 2 ? "MMF, she's central and your type" : vec.S_sub === 1 ? "she's present, watching" : "just you and him");
+  else bits.push("substrate differs ↓");
+  if (has("P_pur")) bits.push(["he's experimenting", "he's mildly into you", "he's pursuing you"][vec.P_pur]);
+  else bits.push("his stance differs ↓");
+  if (has("E_env")) bits.push(["touch only", "oral included", "open-ended"][vec.E_env]);
+  else bits.push("contact differs ↓");
+  if (has("film")) bits.push(vec.film === 2 ? "filmed" : vec.film === 0 ? "not filmed" : "maybe filmed");
+  else bits.push("recording differs ↓");
+  return bits.join(" · ") + ".";
 }
 
 let scenSeq = 0;
@@ -293,21 +304,34 @@ function render() {
   const L = flip ? pr[1] : pr[0], R = flip ? pr[0] : pr[1];
   cur = { a: L, b: R };
   const dk = diffKeys(L, R);
-  $("testingLine").textContent = "testing: " + dk.map(k => MNAME[k]).join(" · ");
-  $("glossA").textContent = glossA(L.vec);
-  $("glossB").textContent = glossB(L, R);
-  for (const [side, s] of [["A", L], ["B", R]]) {
-    const badge = $("badge" + side);
-    badge.innerHTML = "";
-    if (is2019(s)) { const b = document.createElement("span"); b.className = "badge2019"; b.textContent = "★ 2019 shape"; badge.appendChild(b); }
+  $("backboneText").textContent = backboneText(L.vec, dk);
+  const badge = $("badge2019");
+  badge.innerHTML = "";
+  if (is2019(L) || is2019(R)) {
+    const b = document.createElement("span");
+    b.className = "badge2019";
+    b.textContent = "★ 2019 shape in play";
+    badge.appendChild(b);
   }
-  const tb = $("specBody");
-  tb.innerHTML = "";
+  const fs = $("fullSpec");
+  fs.innerHTML = "";
   for (const m of METRICS) {
     const tr = document.createElement("tr");
-    if (L.vec[m.k] !== R.vec[m.k]) tr.className = "hot";
-    tr.innerHTML = `<td class="mk">${m.name}</td><td class="va">${m.lv[L.vec[m.k]]}</td><td class="vb">${m.lv[R.vec[m.k]]}</td>`;
-    tb.appendChild(tr);
+    const same = L.vec[m.k] === R.vec[m.k];
+    tr.innerHTML = `<td>${m.name}</td><td>${same ? m.lv[L.vec[m.k]] : m.lv[L.vec[m.k]] + " / " + m.lv[R.vec[m.k]]}</td>`;
+    fs.appendChild(tr);
+  }
+  $("diffHead").innerHTML = `<b>${dk.length} difference${dk.length === 1 ? "" : "s"}</b> — A → B`;
+  const ul = $("diffList");
+  ul.innerHTML = "";
+  for (const k of dk) {
+    const li = document.createElement("li");
+    const mn = document.createElement("span"); mn.className = "dm"; mn.textContent = MNAME[k];
+    const da = document.createElement("span"); da.className = "da"; da.textContent = "A: " + MLV[k][L.vec[k]];
+    const ar = document.createElement("span"); ar.className = "arr"; ar.textContent = "→";
+    const db = document.createElement("span"); db.className = "db"; db.textContent = "B: " + MLV[k][R.vec[k]];
+    li.appendChild(mn); li.appendChild(da); li.appendChild(ar); li.appendChild(db);
+    ul.appendChild(li);
   }
   $("trialLabel").textContent = `trial ${trials.length + 1} / ${TOTAL}`;
   $("phaseLabel").textContent = phase === 1 ? "phase 1 · broad sampling" : "phase 2 · metric isolation";
@@ -397,11 +421,11 @@ function renderResults() {
 $("moreBtn").onclick = () => { TOTAL += 16; render(); };
 $("dlBtn").onclick = () => {
   const blob = new Blob([JSON.stringify({
-    ts: new Date().toISOString(), version: 4, metrics: METRICS, baseline: BASE,
+    ts: new Date().toISOString(), version: 5, metrics: METRICS, baseline: BASE,
     trials: trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, reluctant: t.rel, phase: t.phase }))
   }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = "scenario-telemetry-v4.json"; a.click(); URL.revokeObjectURL(u);
+  a.href = u; a.download = "scenario-telemetry-v5.json"; a.click(); URL.revokeObjectURL(u);
 };
 $("restartBtn").onclick = () => { trials = []; scenSeq = 0; TOTAL = P1_N + P2_N; try { localStorage.removeItem("scen_tel_v3"); } catch (e) {} render(); };
 render();
