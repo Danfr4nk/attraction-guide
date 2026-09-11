@@ -15,6 +15,7 @@ FILES = [
     "index.html",
     "styles.css",
     "scenario.html",
+    "scenario-rate.html",
     ".gitignore",
     "test/push-via-api.py",
     "test/analysis-harness/README.md",
@@ -24,7 +25,7 @@ FILES = [
     "test/analysis-harness/stubs/mediapipe.mjs",
 ]
 
-MESSAGE = """UX refresh + analysis fixes to complement the new system
+DEFAULT_MESSAGE = """UX refresh + analysis fixes to complement the new system
 
 - Play HUD: per-axis evidence dots (filled=consistent, hollow=inconsistent,
   ringed=direct pick), status pills, retirement progress, and a "queue:"
@@ -45,6 +46,8 @@ MESSAGE = """UX refresh + analysis fixes to complement the new system
   were never the trial axis.
 - Harness: 53/53 green, covering no-tell semantics, HUD dots/pills,
   queue rationale, and cross-axis retirement."""
+
+MESSAGE = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_MESSAGE
 
 
 def api(method, path, body=None):
