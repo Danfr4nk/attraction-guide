@@ -2,7 +2,7 @@
 // Uses the SAME detector + landmark indices as the game (js/measure.js),
 // but lives outside the game flow: upload → full telemetry vector → overlay.
 import { ensureLandmarker, detectLandmarks, LANDMARK_IDX } from './measure.js';
-import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING } from './telemetry2.js';
+import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING, IRIS } from './telemetry2.js';
 import { computeV3, V3_METRIC_DEFS, V3_GROUPS, bootstrapCI } from './telemetry3.js';
 // NOTE: V2 defs are appended AFTER the METRIC_DEFS / GROUPS declarations below
 // (const arrays are in the temporal dead zone until their declaration executes).
@@ -442,6 +442,130 @@ function renderViewer() {
     }
   }
 
+  // ---- technical overlay suite (visual only — no metric changes) ----
+  const rollR = it.metrics.roll_deg * Math.PI / 180;
+  const rdx = Math.cos(rollR), rdy = Math.sin(rollR); // facial horizontal (eye axis)
+  octx.font = '10px ui-monospace, monospace';
+
+  if ($('layerMidline').checked) {
+    const f = X(lm[I.forehead]), c = X(lm[I.chin]);
+    const ex = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
+    const a = ex(f, c, -0.3), b = ex(f, c, 1.3);
+    octx.strokeStyle = 'rgba(45,212,191,.55)'; octx.lineWidth = 1; octx.setLineDash([4, 4]);
+    octx.beginPath(); octx.moveTo(a.x, a.y); octx.lineTo(b.x, b.y); octx.stroke();
+    octx.setLineDash([]);
+    octx.fillStyle = 'rgba(45,212,191,.85)';
+    octx.fillText('MIDLINE', b.x + 6, b.y + 3);
+  }
+
+  if ($('layerFifths').checked) {
+    const cL = X(lm[I.cheek_L]), cR = X(lm[I.cheek_R]);
+    const f = X(lm[I.forehead]), ch = X(lm[I.chin]);
+    const vlen = Math.hypot(ch.x - f.x, ch.y - f.y) * 0.7;
+    octx.strokeStyle = 'rgba(196,141,255,.4)'; octx.lineWidth = 1; octx.setLineDash([3, 5]);
+    octx.beginPath();
+    for (let k = 1; k < 5; k++) {
+      const px = cL.x + (cR.x - cL.x) * k / 5, py = cL.y + (cR.y - cL.y) * k / 5;
+      octx.moveTo(px + rdy * vlen, py - rdx * vlen);
+      octx.lineTo(px - rdy * vlen, py + rdx * vlen);
+    }
+    octx.stroke();
+    octx.setLineDash([]);
+    octx.fillStyle = 'rgba(196,141,255,.75)';
+    const top5 = { x: cL.x + (cR.x - cL.x) / 5, y: cL.y + (cR.y - cL.y) / 5 };
+    octx.fillText('FIFTHS', top5.x + rdy * vlen + 4, top5.y - rdx * vlen);
+  }
+
+  if ($('layerIris').checked && it.metrics.iris_diam_px) {
+    const s = overlay.width / it.w;
+    const r = Math.max(3, it.metrics.iris_diam_px * s / 2);
+    octx.strokeStyle = 'rgba(125,211,252,.9)'; octx.lineWidth = 1.5;
+    for (const idx of [IRIS.center_L, IRIS.center_R]) {
+      const p = X(lm[idx]);
+      octx.beginPath(); octx.arc(p.x, p.y, r, 0, 7); octx.stroke();
+      octx.beginPath();
+      octx.moveTo(p.x - r - 6, p.y); octx.lineTo(p.x - r + 4, p.y);
+      octx.moveTo(p.x + r - 4, p.y); octx.lineTo(p.x + r + 6, p.y);
+      octx.moveTo(p.x, p.y - r - 6); octx.lineTo(p.x, p.y - r + 4);
+      octx.moveTo(p.x, p.y + r - 4); octx.lineTo(p.x, p.y + r + 6);
+      octx.stroke();
+    }
+    octx.fillStyle = 'rgba(125,211,252,.9)';
+    const pc = X(lm[IRIS.center_R]);
+    octx.fillText(`IRIS Ø${it.metrics.iris_diam_px.toFixed(0)}px`, pc.x + r + 8, pc.y - r - 6);
+  }
+
+  if ($('layerDims').checked) {
+    const a = X(A.eyeCL), b = X(A.eyeCR);
+    const ang = Math.atan2(b.y - a.y, b.x - a.x);
+    const nx = -Math.sin(ang), ny = Math.cos(ang), off = 30;
+    const a2 = { x: a.x + nx * off, y: a.y + ny * off }, b2 = { x: b.x + nx * off, y: b.y + ny * off };
+    octx.strokeStyle = 'rgba(252,211,77,.9)'; octx.lineWidth = 1.5;
+    octx.beginPath();
+    octx.moveTo(a.x + nx * 8, a.y + ny * 8); octx.lineTo(a2.x + nx * 8, a2.y + ny * 8);
+    octx.moveTo(b.x + nx * 8, b.y + ny * 8); octx.lineTo(b2.x + nx * 8, b2.y + ny * 8);
+    octx.moveTo(a2.x, a2.y); octx.lineTo(b2.x, b2.y);
+    for (const p of [a2, b2]) {
+      octx.moveTo(p.x - nx * 5 - Math.cos(ang) * 5, p.y - ny * 5 - Math.sin(ang) * 5);
+      octx.lineTo(p.x + nx * 5 + Math.cos(ang) * 5, p.y + ny * 5 + Math.sin(ang) * 5);
+    }
+    octx.stroke();
+    octx.fillStyle = 'rgba(252,211,77,.95)';
+    const ipdTxt = it.metrics.ipd_mm ? `IPD ${it.metrics.ipd_mm.toFixed(1)}mm` : `IPD ${it.metrics.ipd_px.toFixed(0)}px`;
+    octx.fillText(ipdTxt, (a2.x + b2.x) / 2 + 10, (a2.y + b2.y) / 2 - 6);
+    const tiltArc = (innerLm, outerLm, tiltDeg) => {
+      const o = X(outerLm), inn = X(innerLm);
+      const s = Math.sign(o.x - inn.x) || 1; // outward, away from the nose
+      const aRef = Math.atan2(s * rdy, s * rdx);
+      const aAct = Math.atan2(inn.y - o.y, inn.x - o.x);
+      let d = aAct - aRef;
+      while (d > Math.PI) d -= 2 * Math.PI;
+      while (d < -Math.PI) d += 2 * Math.PI;
+      octx.strokeStyle = 'rgba(248,113,113,.9)'; octx.lineWidth = 1.5;
+      octx.beginPath(); octx.arc(o.x, o.y, 17, aRef, aRef + d, d < 0); octx.stroke();
+      octx.setLineDash([2, 3]);
+      octx.beginPath();
+      octx.moveTo(o.x, o.y); octx.lineTo(o.x + Math.cos(aRef) * 28, o.y + Math.sin(aRef) * 28);
+      octx.stroke(); octx.setLineDash([]);
+      octx.fillStyle = 'rgba(248,113,113,.9)';
+      octx.fillText(tiltDeg.toFixed(1) + '°', o.x + Math.cos(aRef) * 32 - 10, o.y + Math.sin(aRef) * 32 + 3);
+    };
+    tiltArc(lm[I.eye_inner_L], lm[I.eye_outer_L], it.metrics.canthal_tilt_L);
+    tiltArc(lm[I.eye_inner_R], lm[I.eye_outer_R], it.metrics.canthal_tilt_R);
+  }
+
+  if ($('layerGrid').checked) {
+    const W = overlay.width, H = overlay.height, cx = W / 2, cy = H / 2;
+    const step = 36, diag = Math.hypot(W, H);
+    octx.strokeStyle = 'rgba(148,163,184,.12)'; octx.lineWidth = 1;
+    octx.beginPath();
+    for (let t = -diag; t <= diag; t += step) {
+      octx.moveTo(cx - rdy * t - rdx * diag, cy + rdx * t - rdy * diag);
+      octx.lineTo(cx - rdy * t + rdx * diag, cy + rdx * t + rdy * diag);
+      octx.moveTo(cx + rdx * t + rdy * diag, cy + rdy * t - rdx * diag);
+      octx.lineTo(cx + rdx * t - rdy * diag, cy + rdy * t + rdx * diag);
+    }
+    octx.stroke();
+  }
+
+  // ---- HUD frame: corner brackets + data block (always on) ----
+  {
+    const W = overlay.width, H = overlay.height, B = 16, L = 42;
+    octx.strokeStyle = 'rgba(45,212,191,.8)'; octx.lineWidth = 2;
+    octx.beginPath();
+    for (const [cx, cy, sx, sy] of [[B, B, 1, 1], [W - B, B, -1, 1], [B, H - B, 1, -1], [W - B, H - B, -1, -1]]) {
+      octx.moveTo(cx + sx * L, cy); octx.lineTo(cx, cy); octx.lineTo(cx, cy + sy * L);
+    }
+    octx.stroke();
+    octx.fillStyle = 'rgba(45,212,191,.9)';
+    const hud = [
+      `FACELANDMARKER-${it.lm.length} · ${it.w}×${it.h}px · ${it.name.slice(0, 26)}`,
+      `FRONT ${it.metrics.frontality.toFixed(0)} · ROLL ${it.metrics.roll_deg.toFixed(1)}° · YAW≈${it.metrics.yaw_proxy_deg.toFixed(1)}°`,
+      `CONF ${it.confidence}/100 · ${it.qv.verdict.toUpperCase()} · ${it.scaleSource}${it.metrics.mm_per_px ? ' ' + it.metrics.mm_per_px.toFixed(4) + 'mm/px' : ''}`,
+    ];
+    hud.forEach((t, i) => octx.fillText(t, B + 10, B + 18 + i * 13));
+  }
+
   const q = $('qualityBox');
   const qv = it.qv;
   q.innerHTML = `image quality <b class="${qv.verdict}">${qv.verdict}</b>` +
@@ -459,6 +583,12 @@ function renderViewer() {
 }
 
 // ---- metric tables ----
+function relBar(v, sd) {
+  // visual encoding of relative 95% CI width; bar half-width ∝ 1.96·sd/|v|, capped
+  if (sd == null || !isFinite(sd) || typeof v !== 'number' || !isFinite(v) || v === 0) return '';
+  const half = Math.max(2, Math.min(30, (1.96 * sd / Math.abs(v)) * 160));
+  return `<div class="cibar" title="relative 95% CI width"><div class="ciw" style="left:${(32 - half).toFixed(1)}px;width:${(half * 2).toFixed(1)}px"></div><div class="cic"></div></div>`;
+}
 function renderMetrics() {
   const it = activeItem();
   metricsCard.hidden = !it;
@@ -476,14 +606,14 @@ function renderMetrics() {
     det.appendChild(sum);
     const tbl = document.createElement('table');
     const hr = document.createElement('tr');
-    hr.innerHTML = `<th>metric</th><th>value</th><th>±95%</th><th></th>`;
+    hr.innerHTML = `<th>metric</th><th>value</th><th>±95%</th><th>rel σ</th><th></th>`;
     tbl.appendChild(hr);
     for (const d of defs) {
       const tr = document.createElement('tr');
       const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
       const ciTxt = d.noCI || sd == null ? '—' : '±' + d.fmt(1.96 * sd);
       tr.innerHTML = `<td class="k">${d.label}${d.game ? '<span class="gametag">game</span>' : ''}</td>` +
-        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="ci">${ciTxt}</td><td class="n">${d.hint || ''}</td>`;
+        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="ci">${ciTxt}</td><td class="bar">${relBar(it.metrics[d.key], sd)}</td><td class="n">${d.hint || ''}</td>`;
       tbl.appendChild(tr);
     }
     det.appendChild(tbl);
@@ -517,9 +647,11 @@ function renderCompare() {
     const sig = se != null && Math.abs(dv) > se;
     if (sig) tr.className = 'hot';
     const dvTxt = `${dv >= 0 ? '+' : '-'}${d.fmt(Math.abs(dv))}${se != null ? ' ± ' + d.fmt(se) : ''}`;
+    const bw = Math.min(60, Math.abs(pct) / 25 * 60); // ±25% fills the bar
+    const dbar = `<span class="dbar ${pct >= 0 ? 'pos' : 'neg'}"><i style="width:${bw.toFixed(1)}px"></i></span>`;
     tr.innerHTML = `<td>${d.label}</td><td>${d.fmt(va)}</td><td>${d.fmt(vb)}</td>` +
       `<td class="dv">${dvTxt}</td>` +
-      `<td class="dv">${dv >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>`;
+      `<td class="dv">${dbar}${dv >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>`;
     tb.appendChild(tr);
   }
 }
@@ -662,7 +794,7 @@ dropzone.addEventListener('drop', (e) => {
   handleFiles(e.dataTransfer.files);
 });
 fileInput.addEventListener('change', () => handleFiles(fileInput.files));
-for (const id of ['layerMesh', 'layerMetrics', 'layerThirds'])
+for (const id of ['layerMesh', 'layerMetrics', 'layerThirds', 'layerMidline', 'layerFifths', 'layerIris', 'layerDims', 'layerGrid'])
   $(id).addEventListener('change', renderViewer);
 
 renderMethod();
