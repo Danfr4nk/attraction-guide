@@ -92,17 +92,22 @@ export function computeV2(lm, w, h, calibIpDmm) {
   const P = {};
   for (const [k, i] of Object.entries(I)) P[k] = PX(lm[i], w, h);
   const ex = {};
-  let irisPx = null;
+  let irisPx = null, irisL = null, irisR = null;
   if (lm.length >= 478) {
-    const axes = [...IRIS.L_axes, ...IRIS.R_axes];
-    const ds = axes.map(([a, b]) => dist(PX(lm[a], w, h), PX(lm[b], w, h)));
-    irisPx = ds.reduce((s, v) => s + v, 0) / ds.length;
+    const dia = (axes) => {
+      const ds = axes.map(([a, b]) => dist(PX(lm[a], w, h), PX(lm[b], w, h)));
+      return ds.reduce((s, v) => s + v, 0) / ds.length;
+    };
+    irisL = dia(IRIS.L_axes); irisR = dia(IRIS.R_axes);
+    irisPx = (irisL + irisR) / 2;
   }
   const eL = mid(P.eye_outer_L, P.eye_inner_L), eR = mid(P.eye_outer_R, P.eye_inner_R);
   let mmpp = null, src = 'none';
   if (calibIpDmm && calibIpDmm > 0) { mmpp = calibIpDmm / dist(eL, eR); src = 'calibrated'; }
   else if (irisPx) { mmpp = IRIS_MM / irisPx; src = 'iris'; }
   ex.iris_diam_px = irisPx ? r3(irisPx) : null;
+  ex.iris_diam_L_px = irisL ? r3(irisL) : null;
+  ex.iris_diam_R_px = irisR ? r3(irisR) : null;
   ex.mm_per_px = mmpp ? Math.round(mmpp * 10000) / 10000 : null;
   ex.scale_source = src;
   const mm = (px) => mmpp ? r3(px * mmpp) : null;
@@ -163,6 +168,8 @@ export const V2_GROUPS = [
 
 export const V2_METRIC_DEFS = [
   { key: 'iris_diam_px', group: 'physical', label: 'iris diameter', fmt: (v) => v == null ? '—' : Math.round(v) + ' px', hint: '4 axes, both eyes' },
+  { key: 'iris_diam_L_px', group: 'physical', label: 'iris diameter L', fmt: (v) => v == null ? '—' : Math.round(v) + ' px', hint: '2 axes, left eye' },
+  { key: 'iris_diam_R_px', group: 'physical', label: 'iris diameter R', fmt: (v) => v == null ? '—' : Math.round(v) + ' px', hint: '2 axes, right eye' },
   { key: 'mm_per_px', group: 'physical', label: 'mm per px', fmt: (v) => v == null ? '—' : v.toFixed(4), hint: '11.7mm iris anchor' },
   { key: 'scale_source', group: 'physical', label: 'scale source', fmt: txt, hint: 'iris | calibrated | none', noCI: true },
   { key: 'face_width_mm', group: 'physical', label: 'face width', fmt: mm1 },

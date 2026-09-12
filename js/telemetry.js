@@ -69,9 +69,9 @@ export const METRIC_DEFS = [
   { key: 'ipd_to_cheek', group: 'eyes', label: 'IPD : cheek', fmt: f3, game: true },
   { key: 'eye_spacing_widths', group: 'eyes', label: 'spacing (eye-widths)', fmt: f3, hint: 'IPD ÷ eye width · canon 2.0' },
   { key: 'eye_w_to_h', group: 'eyes', label: 'eye width : height', fmt: f3, game: true },
-  { key: 'canthal_tilt_mean', group: 'eyes', label: 'canthal tilt', fmt: deg, hint: '+ = outer corner higher' },
-  { key: 'canthal_tilt_L', group: 'eyes', label: 'canthal tilt L', fmt: deg },
-  { key: 'canthal_tilt_R', group: 'eyes', label: 'canthal tilt R', fmt: deg },
+  { key: 'canthal_tilt_mean', group: 'eyes', label: 'canthal tilt', fmt: deg, hint: '+ = outer corner higher · face-frame (roll-corrected)' },
+  { key: 'canthal_tilt_L', group: 'eyes', label: 'canthal tilt L', fmt: deg, hint: 'face-frame (roll-corrected)' },
+  { key: 'canthal_tilt_R', group: 'eyes', label: 'canthal tilt R', fmt: deg, hint: 'face-frame (roll-corrected)' },
   { key: 'fifths', group: 'eyes', label: 'facial fifths', fmt: f3, hint: 'face width ÷ eye width · canon 5' },
   // nose
   { key: 'nose_w_px', group: 'nose', label: 'nose width', fmt: px0, hint: 'alar 98↔327' },
@@ -127,6 +127,7 @@ export function computeTelemetry(lm, w, h) {
   const face_h = dist(P.forehead, P.chin);
   const jaw_w = dist(P.jaw_L, P.jaw_R);
   const eyeCL = mid(P.eye_outer_L, P.eye_inner_L), eyeCR = mid(P.eye_outer_R, P.eye_inner_R);
+  const roll = Math.atan2(eyeCR.y - eyeCL.y, eyeCR.x - eyeCL.x) * 180 / Math.PI; // + = image-right side lower
   const ipd = dist(eyeCL, eyeCR);
   const eye_w = (dist(P.eye_outer_L, P.eye_inner_L) + dist(P.eye_outer_R, P.eye_inner_R)) / 2;
   const eye_h = (dist(P.eye_top_L, P.eye_bot_L) + dist(P.eye_top_R, P.eye_bot_R)) / 2;
@@ -141,9 +142,11 @@ export function computeTelemetry(lm, w, h) {
   const philtrum = dist(subnasale, P.lip_top), noseLen = dist(nasion, P.nose_tip);
 
   // eyes — canthal tilt: signed elevation of the outer corner above the inner
-  // corner. Uses |dx| so both eyes share one convention (+ = outer higher).
+  // corner, in the FACE frame. Uses |dx| so both eyes share one convention
+  // (+ = outer higher); adding roll removes head-roll contamination, so two
+  // photos of one face at different rolls report the same anatomy.
   const tilt = (inner, outer) => Math.atan2(-(outer.y - inner.y), Math.abs(outer.x - inner.x)) * 180 / Math.PI;
-  const tiltL = tilt(P.eye_inner_L, P.eye_outer_L), tiltR = tilt(P.eye_inner_R, P.eye_outer_R);
+  const tiltL = tilt(P.eye_inner_L, P.eye_outer_L) + roll, tiltR = tilt(P.eye_inner_R, P.eye_outer_R) + roll;
 
   // brows
   const arch = (pts, outer, inner) => Math.max(...pts.map(p => perpDist(p, outer, inner))) / eye_w;
@@ -166,7 +169,6 @@ export function computeTelemetry(lm, w, h) {
   ]);
   const asym6 = pairs6.reduce((s, [l, r]) => s + asymPair(l, r), 0) / pairs6.length;
   const asym9 = pairs9.reduce((s, [l, r]) => s + asymPair(l, r), 0) / pairs9.length;
-  const roll = Math.atan2(eyeCR.y - eyeCL.y, eyeCR.x - eyeCL.x) * 180 / Math.PI;
   const dYawL = dist(P.cheek_L, P.nose_tip), dYawR = dist(P.nose_tip, P.cheek_R);
   const yaw = Math.atan2(dYawR - dYawL, dYawR + dYawL) * 180 / Math.PI;
   const frontality = clamp(100 - (Math.abs(roll) * 5 + Math.abs(yaw) * 4 + asym9 * 150), 0, 100);
@@ -280,6 +282,15 @@ async function analyzeFile(file) {
   // bootstrap confidence: jitter landmarks, resample the full vector
   const ci = bootstrapCI((jl, jw, jh) => computeAllMetrics(jl, jw, jh, calib), lm, w, h);
   const v2src = metrics.scale_source;
+  // scale-robustness notes: the iris anchor is the weakest link in the mm chain
+  const scaleNotes = [];
+  if (metrics.scale_source === 'iris' && metrics.iris_diam_L_px && metrics.iris_diam_R_px) {
+    const iMean = (metrics.iris_diam_L_px + metrics.iris_diam_R_px) / 2;
+    const iRel = Math.abs(metrics.iris_diam_L_px - metrics.iris_diam_R_px) / (iMean || 1);
+    if (iRel > 0.15) scaleNotes.push(`iris L/R disagree ${(iRel * 100).toFixed(0)}% — mm scale suspect`);
+  }
+  if (metrics.scale_source === 'iris' && Math.abs(metrics.yaw_proxy_deg) > 15)
+    scaleNotes.push(`yaw ${Math.abs(metrics.yaw_proxy_deg).toFixed(0)}° foreshortens far iris — mm values carry extra error`);
   const quality = analyzeQuality(img, lm);
   // composite measurement confidence: pose quality × image quality
   const qScore = quality.verdict === 'pass' ? 100 : quality.verdict === 'warn' ? 65 : 25;
@@ -289,7 +300,7 @@ async function analyzeFile(file) {
     url, thumb: makeThumb(img), img, w, h, lm,
     metrics, ci, confidence,
     quality: metrics.frontality >= 85 ? 'high' : metrics.frontality >= 60 ? 'medium' : 'low',
-    anchors: tel.anchors,
+    anchors: tel.anchors, scaleNotes,
     qv: quality, scaleSource: v2src,
   };
   state.items.push(item);
@@ -407,19 +418,27 @@ function renderViewer() {
     }
   }
   if ($('layerThirds').checked) {
-    const x0 = X(lm[I.cheek_L]).x, x1 = X(lm[I.cheek_R]).x;
+    // dividers run perpendicular to the facial midline: rotate each by the
+    // head roll around its own anchor, so tilted heads get anatomical thirds
+    // instead of horizontal slices (the old horizontal lines mis-cut on roll).
+    const rollRad = it.metrics.roll_deg * Math.PI / 180;
+    const dx = Math.cos(rollRad), dy = Math.sin(rollRad);
+    const halfSpan = Math.abs(X(lm[I.cheek_R]).x - X(lm[I.cheek_L]).x) / 2 + 20;
     const rows = [
-      [X(lm[I.forehead]).y, '#f472b6', `U ${it.metrics.third_upper_pct.toFixed(1)}%`],
-      [X(A.glabella).y, '#f472b6', ''],
-      [X(A.subnasale).y, '#f472b6', `M ${it.metrics.third_mid_pct.toFixed(1)}%`],
-      [X(lm[I.chin]).y, '#f472b6', `L ${it.metrics.third_lower_pct.toFixed(1)}%`],
+      [X(lm[I.forehead]), '#f472b6', `U ${it.metrics.third_upper_pct.toFixed(1)}%`],
+      [X(A.glabella), '#f472b6', ''],
+      [X(A.subnasale), '#f472b6', `M ${it.metrics.third_mid_pct.toFixed(1)}%`],
+      [X(lm[I.chin]), '#f472b6', `L ${it.metrics.third_lower_pct.toFixed(1)}%`],
     ];
     octx.font = '11px ui-monospace, monospace';
-    for (const [y, c, lab] of rows) {
+    for (const [a, c, lab] of rows) {
       octx.strokeStyle = c; octx.lineWidth = 1.5; octx.setLineDash([6, 4]);
-      octx.beginPath(); octx.moveTo(x0 - 20, y); octx.lineTo(x1 + 20, y); octx.stroke();
+      octx.beginPath();
+      octx.moveTo(a.x - dx * halfSpan, a.y - dy * halfSpan);
+      octx.lineTo(a.x + dx * halfSpan, a.y + dy * halfSpan);
+      octx.stroke();
       octx.setLineDash([]);
-      if (lab) { octx.fillStyle = c; octx.fillText(lab, x1 + 26, y + 4); }
+      if (lab) { octx.fillStyle = c; octx.fillText(lab, a.x + dx * halfSpan + 6, a.y + dy * halfSpan + 4); }
     }
   }
 
@@ -431,6 +450,7 @@ function renderViewer() {
     ` &nbsp; light-bal ${qv.illum_balance.toFixed(2)}` +
     (qv.notes.length ? `<br>notes: ${qv.notes.join(' · ')}` : '') +
     `<br>scale: ${it.scaleSource}${it.metrics.mm_per_px ? ` (${it.metrics.mm_per_px.toFixed(4)} mm/px)` : ' — mm values unavailable'}` +
+    (it.scaleNotes && it.scaleNotes.length ? `<br><span class="low">scale notes: ${it.scaleNotes.join(' · ')}</span>` : '') +
     `<br>frontality <b class="${it.quality}">${it.metrics.frontality.toFixed(0)} · ${it.quality}</b>` +
     ` &nbsp; roll ${it.metrics.roll_deg.toFixed(1)}° &nbsp; yaw≈ ${it.metrics.yaw_proxy_deg.toFixed(1)}°` +
     ` &nbsp; asym(9) ${it.metrics.asymmetry_9.toFixed(3)}` +
@@ -519,6 +539,7 @@ function exportPayload() {
     tool: 'telemetry lab v3 · MediaPipe FaceLandmarker (same detector as the game) · bootstrap CI n=32',
     images: state.items.map(it => ({
       name: it.name, quality: it.quality, confidence: it.confidence,
+      scale_notes: it.scaleNotes || [],
       metrics: it.metrics,
       ci95: Object.fromEntries(Object.entries(it.ci || {}).map(([k, v]) => [k, v.sd == null ? null : Math.round(v.sd * 1.96 * 1e6) / 1e6])),
     })),
@@ -570,7 +591,10 @@ function renderMethod() {
     <h3>pose &amp; quality</h3>
     <p>roll = eye-axis angle vs horizontal. yaw = proxy from cheek↔nose-tip foreshortening
     (approximate — true yaw needs a 3D head model). frontality = 100 − (|roll|·5 + |yaw|·4 + asym₉·150),
-    clamped 0–100. high ≥ 85 · medium ≥ 60 · low &lt; 60 (flagged: pose may distort ratios).</p>
+    clamped 0–100. high ≥ 85 · medium ≥ 60 · low &lt; 60 (flagged: pose may distort ratios).
+    Canthal tilt is reported in the face frame (image-frame tilt + roll), so head roll can't
+    contaminate it; |L−R| remains the landmark-noise indicator. Telestrator thirds dividers are
+    drawn perpendicular to the facial midline (roll-rotated), not horizontal.</p>
     <h3>game landmark indices (shared)</h3>
     <table>${gameIdx}</table>
     <h3>lab-only landmark indices</h3>
@@ -588,7 +612,8 @@ function renderMethod() {
     mm/px = 11.7 ÷ iris px. Human iris ≈ 11.7mm ±5% biological variation, so mm
     values are estimates. Entering a known IPD overrides the anchor (scale source
     shows iris | calibrated | none). If the detector returns only 468 points, mm
-    values are unavailable.</p>
+    values are unavailable. Per-eye iris diameters are reported; L/R disagreement
+    &gt;15% or |yaw| &gt;15° flags the mm scale as suspect in the quality box and export.</p>
     <h3>v2 — contour areas</h3>
     <p>shoelace area of full landmark rings: eye fissure 16-pt rings
     (L: 33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246;

@@ -12,6 +12,8 @@ APP = "/home/hatch/workspace/attraction-guide"
 
 FILES = [
     "js/app.js",
+    "js/telemetry.js",
+    "js/telemetry2.js",
     "index.html",
     "game.html",
     "styles.css",
