@@ -13,9 +13,13 @@ APP = "/home/hatch/workspace/attraction-guide"
 FILES = [
     "js/app.js",
     "index.html",
+    "game.html",
     "styles.css",
     "scenario.html",
     "scenario-rate.html",
+    "telemetry.html",
+    "face-book.html",
+    "README.md",
     ".gitignore",
     "test/push-via-api.py",
     "test/analysis-harness/README.md",

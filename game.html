@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>attraction-guide — facial preference diagnostic</title>
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": {
+  "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs",
+  "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
+} }
+</script>
+</head>
+<body>
+<header>
+  <div class="brand">attraction-guide <span class="ver">v3</span></div>
+  <nav>
+    <button data-view="setup" class="active">setup</button>
+    <button data-view="play">play</button>
+    <button data-view="profile">profile</button>
+    <button data-view="log">log</button>
+  </nav>
+  <a href="index.html" class="telemetry-link" title="all instruments">instruments</a>
+  <a href="telemetry.html" class="telemetry-link" title="standalone precision measurement lab">telemetry lab</a>
+  <a href="scenario.html" class="telemetry-link" title="scenario veto-boundary diagnostic">scenario dx</a>
+  <div id="measure-status" class="measure-status" title="In-browser facial landmark measurement">measuring…</div>
+</header>
+
+<main>
+  <!-- SETUP -->
+  <section id="view-setup" class="view">
+    <h1>Map what you find attractive. Numerically.</h1>
+    <p class="lede">Iterative A/B testing of synthetic faces. Broad archetypes first, then single-variable pairs.
+    Every face is measured in-browser with facial landmarks — ratios, not adjectives.</p>
+
+    <div class="card">
+      <h2>Rules</h2>
+      <ul>
+        <li><b>Eye color is pinned.</b> Every face in the bank is brown-eyed. It is never the deciding variable.</li>
+        <li><b>Phase 1</b> — pick/rank 1 of 4 structural archetypes: wide-angular, long-narrow, heart, round.</li>
+        <li><b>Phase 2 (adaptive)</b> — the engine drills the highest-uncertainty micro-variable next: jaw, lips, eye spacing, brows, nose. Every pick is scored on <i>measured</i> metric deltas, z-scored against the bank. Optional per-feature A/B calls are <i>direct</i> evidence: they override the holistic read for their metric, count toward any axis whose target they touch, and confounded holistic reads with no direct backup are dropped. Axes retire at 3 consistent or 6 inconclusive evidence points. The play HUD shows live evidence dots and why the queue picked the current pair.</li>
+        <li><b>Rank mode:</b> click faces in order of preference, then lock the ranking. Richer than single-pick.</li>
+        <li><b>Feature picks (phase 2):</b> for each measured difference between the pair, optionally pick which face's version you prefer — "A's jaw, B's eyes" becomes data, not just one holistic vote. Tap again to clear. <b>Ø</b> = you genuinely can't tell them apart — that's discrimination data, not a skip. Untouched rows are just skipped: missing, not evidence.</li>
+        <li>Confidence: 1 pick = weak · 2 consistent = leaning · 3+ = confirmed.</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <h2>Round 0 — reference face (optional)</h2>
+      <p>Upload a reference face. It gets landmark-measured and logged as your Round 0 vector.</p>
+      <input type="file" id="ref-upload" accept="image/*">
+      <div id="ref-result" class="ref-result"></div>
+    </div>
+
+    <div class="card">
+      <h2>Who appears in this run</h2>
+      <p class="lede-sm">This maps what you respond to, so it works best on faces you'd actually evaluate. Everything is selected by default — narrow it however you like.</p>
+      <div id="group-picks" class="group-picks"></div>
+      <div class="sex-row">
+        <span class="sex-label">presenting as</span>
+        <button id="sex-f" class="seg active">female</button>
+        <button id="sex-m" class="seg" disabled title="male face bank not built yet">male · soon</button>
+      </div>
+      <p class="hint" id="prefs-hint"></p>
+    </div>
+
+    <div class="card">
+      <h2>Start</h2>
+      <button id="start-btn" class="primary">Start diagnostic</button>
+      <button id="reset-btn" class="ghost">Reset run</button>
+    </div>
+  </section>
+
+  <!-- PLAY -->
+  <section id="view-play" class="view hidden">
+    <div id="hud" class="hud"></div>
+    <div id="round-head" class="round-head"></div>
+    <div id="inference" class="inference"></div>
+    <div id="stage" class="stage"></div>
+    <div class="stage-actions">
+      <button id="lock-btn" class="primary" disabled>Lock ranking</button>
+      <button id="clear-rank" class="ghost">Clear</button>
+      <span id="rank-hint" class="hint">click faces in order of preference</span>
+    </div>
+    <div id="feature-picks"></div>
+    <div id="round-stats" class="round-stats"></div>
+  </section>
+
+  <!-- PROFILE -->
+  <section id="view-profile" class="view hidden">
+    <h1>Preference profile</h1>
+    <div id="profile-axes"></div>
+    <h2>Feature picks <span class="sub">direct per-feature preferences — prefer higher vs lower</span></h2>
+    <div id="profile-features"></div>
+    <h2>Winner means <span class="sub">average measured ratios across your 1st picks</span></h2>
+    <div id="profile-means"></div>
+    <div class="profile-actions">
+      <button id="export-json" class="ghost">Export run JSON</button>
+      <button id="copy-summary" class="ghost">Copy summary</button>
+    </div>
+  </section>
+
+  <!-- LOG -->
+  <section id="view-log" class="view hidden">
+    <h1>Run log</h1>
+    <div id="log-table"></div>
+  </section>
+</main>
+
+<footer>
+  <span>attraction-guide · synthetic faces only · measurements: MediaPipe FaceMesh ratios, computed locally</span>
+</footer>
+
+<script type="module" src="js/app.js?v=20260911f"></script>
+</body>
+</html>

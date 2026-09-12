@@ -21,7 +21,7 @@ Or locally: `python3 -m http.server` in this dir (needs internet for the MediaPi
 
 ## Face bank
 
-`faces/` holds 18 synthetic portraits (AI-generated, not real people) + `faces.json` manifest.
+`faces/` holds 155 synthetic portraits (AI-generated, not real people) + `faces.json` manifest.
 To extend the bank, add webp files and matching manifest entries:
 
 ```json
@@ -32,7 +32,8 @@ New phase-2 axes are picked up automatically (add labels in `js/app.js` `PAIR_AX
 
 ## Files
 
-- `index.html` — the app
+- `index.html` — instrument index: splash page linking every instrument
+- `game.html` — the preference-diagnostic app (moved off the root 2026-09-12)
 - `styles.css`
 - `js/app.js` — game engine: rounds, ranking, inference, profile, log, persistence
 - `js/measure.js` — in-browser FaceLandmarker wrapper + ratio definitions
