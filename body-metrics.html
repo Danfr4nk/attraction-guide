@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>body metrics — attraction-guide</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .lab { max-width: 1100px; margin: 0 auto; padding: 18px; display: flex; flex-direction: column; gap: 16px; }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px; }
+  .card h2 { margin: 0 0 10px; font-size: 16px; }
+  .card h3 { margin: 14px 0 8px; font-size: 14px; color: var(--dim); }
+  .hint { color: var(--dim); font-size: 13px; margin: 6px 0; }
+  .dropzone { border: 2px dashed var(--line); border-radius: 10px; padding: 26px; text-align: center; cursor: pointer; }
+  .dropzone.drag { border-color: var(--acc); background: rgba(120,140,255,.06); }
+  .filebtn { display: inline-block; background: var(--acc); color: #fff; border-radius: 8px; padding: 8px 16px; cursor: pointer; font-weight: 600; }
+  .filebtn input { display: none; }
+  .thumbs { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+  .thumb { width: 120px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; cursor: pointer; position: relative; background: #111; }
+  .thumb img { width: 100%; height: 150px; object-fit: cover; display: block; }
+  .thumb .t-meta { font-size: 10.5px; font-family: var(--mono); padding: 5px 7px; color: var(--dim); }
+  .thumb.sel { border-color: var(--acc); box-shadow: 0 0 0 2px var(--acc); }
+  .thumb .t-badge { position: absolute; top: 5px; left: 5px; font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 999px; }
+  .t-badge.ok { background: rgba(0,200,0,.85); color: #fff; }
+  .t-badge.skip { background: rgba(200,0,0,.85); color: #fff; }
+  .t-badge.working { background: rgba(200,160,0,.9); color: #000; }
+  .viewer-body { display: flex; gap: 16px; flex-wrap: wrap; }
+  .canvas-wrap { flex: 1 1 380px; min-width: 0; }
+  .canvas-wrap canvas { width: 100%; border-radius: 8px; background: #000; }
+  .side { flex: 1 1 280px; min-width: 260px; }
+  table.ratios { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+  table.ratios td, table.ratios th { padding: 4px 8px; border-bottom: 1px solid var(--line); text-align: right; font-family: var(--mono); }
+  table.ratios td:first-child, table.ratios th:first-child { text-align: left; font-family: inherit; }
+  table.ratios tr.inv td:first-child { color: var(--acc); }
+  .warn { color: var(--warn); font-size: 12.5px; margin: 4px 0; }
+  .err { color: #f66; font-size: 13px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  input[type=text] { background: #111; border: 1px solid var(--line); color: inherit; border-radius: 8px; padding: 8px 12px; font-size: 14px; }
+  button.btn { background: var(--panel); border: 1px solid var(--line); color: inherit; border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13.5px; }
+  button.btn:hover { border-color: var(--acc); }
+  button.btn.primary { background: var(--acc); color: #fff; border-color: var(--acc); }
+  button.btn.danger:hover { border-color: #f66; color: #f66; }
+  .model-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin: 8px 0; }
+  .model-card .m-head { display: flex; justify-content: space-between; align-items: center; }
+  .model-card .m-head b { font-size: 15px; }
+  .zrow td.flag { color: #f66; font-weight: 700; }
+  .zrow td.zpos { color: #fa0; }
+  .pill { display: inline-block; font-size: 11px; font-family: var(--mono); border: 1px solid var(--line); border-radius: 999px; padding: 2px 10px; color: var(--dim); margin-right: 6px; }
+  .topbar-sub { color: var(--dim); font-size: 13px; }
+  .model-status { font-family: var(--mono); font-size: 12px; color: var(--dim); }
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="brand"><a href="index.html" class="backlink">← instruments</a> <span class="brand-name">body metrics</span></div>
+  <div class="topbar-sub">full-body measurement · MediaPipe Pose · runs fully in-browser</div>
+  <div id="modelStatus" class="model-status">loading…</div>
+</header>
+
+<main class="lab">
+  <section class="card">
+    <h2>upload</h2>
+    <div id="dropzone" class="dropzone">
+      <p>drop full-body photos here, or</p>
+      <label class="filebtn">choose files<input type="file" id="fileInput" accept="image/*" multiple></label>
+      <p class="hint">frontal, standing, head-to-feet in frame, arms at sides and visible, feet uncrossed. plain background measures best. everything stays on this device.</p>
+    </div>
+    <div id="thumbs" class="thumbs"></div>
+  </section>
+
+  <section class="card" id="viewerCard" hidden>
+    <h2 id="viewTitle">measurement</h2>
+    <div class="viewer-body">
+      <div class="canvas-wrap"><canvas id="overlay"></canvas></div>
+      <div class="side">
+        <div id="visBox"></div>
+        <div id="warnBox"></div>
+        <h3>ratios <span class="pill">blue = scale-invariant</span></h3>
+        <table class="ratios"><thead><tr><th>ratio</th><th>value</th></tr></thead><tbody id="ratioBody"></tbody></table>
+        <div class="row">
+          <button class="btn" id="exportJson">export JSON</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2>models</h2>
+    <p class="hint">Build a per-person model from 3+ measured photos (outliers auto-rejected). Models store ratio statistics only — no pixels. Saved in this browser.</p>
+    <div class="row">
+      <input type="text" id="personName" placeholder="person label, e.g. brunette-studio">
+      <button class="btn primary" id="buildModel">build from selected</button>
+      <span class="hint">select photos below (click thumbnails), then build</span>
+    </div>
+    <div id="modelList"></div>
+  </section>
+
+  <section class="card" id="matchCard" hidden>
+    <h2>match</h2>
+    <p class="hint">Rank the selected photo against every stored model. Distance is z-scored Euclidean over the 7 scale-invariant ratios — auxiliary signal only, never overrides face matching.</p>
+    <div class="row"><button class="btn primary" id="runMatch">match selected photo</button></div>
+    <div id="matchOut"></div>
+  </section>
+</main>
+
+<footer>
+  <span>attraction-guide · body metrics · MediaPipe Pose, computed locally · nothing uploaded</span>
+</footer>
+
+<script type="importmap">
+{ "imports": { "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/+esm" } }
+</script>
+<script type="module">
+import {
+  ensurePose, measureImage, drawSkeleton, ratioLabel,
+  RATIO_KEYS, INVARIANT_KEYS, VISIBILITY_MIN,
+  loadModels, saveModels, deleteModel, buildModel, rankModels,
+} from './js/body.js';
+
+const $ = (id) => document.getElementById(id);
+const status = (t) => { $('modelStatus').textContent = t; };
+const items = []; // {name, img, url, rec, selected}
+let selectedIdx = -1;
+
+ensurePose(status);
+
+// ---------- upload ----------
+const dz = $('dropzone'), fi = $('fileInput');
+dz.addEventListener('click', (e) => { if (e.target === dz || e.target.closest('p')) fi.click(); });
+['dragover', 'dragenter'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.add('drag'); }));
+['dragleave', 'drop'].forEach((ev) => dz.addEventListener(ev, (e) => { e.preventDefault(); dz.classList.remove('drag'); }));
+dz.addEventListener('drop', (e) => addFiles(e.dataTransfer.files));
+fi.addEventListener('change', () => { addFiles(fi.files); fi.value = ''; });
+
+function addFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const url = URL.createObjectURL(f);
+    const img = new Image();
+    const it = { name: f.name, img, url, rec: null, selected: false };
+    img.onload = async () => {
+      renderThumbs();
+      it.rec = await measureImage(img);
+      it.rec.name = f.name;
+      renderThumbs();
+      if (selectedIdx === items.indexOf(it)) showItem(items.indexOf(it));
+    };
+    img.src = url;
+    items.push(it);
+  }
+  renderThumbs();
+}
+
+function renderThumbs() {
+  const box = $('thumbs'); box.innerHTML = '';
+  items.forEach((it, i) => {
+    const d = document.createElement('div');
+    d.className = 'thumb' + (i === selectedIdx ? ' sel' : '');
+    const badge = !it.rec ? '<span class="t-badge working">…</span>'
+      : it.rec.ok ? '<span class="t-badge ok">ok</span>' : '<span class="t-badge skip">skip</span>';
+    const meta = it.rec && it.rec.ok
+      ? `s/h ${it.rec.ratios.shoulder_hip} · vis ${it.rec.visibility.min}`
+      : it.rec ? (it.rec.skip_reason || '') : 'measuring…';
+    d.innerHTML = `${badge}<img src="${it.url}"><div class="t-meta">${it.name}<br>${meta}</div>`;
+    d.title = it.rec && !it.rec.ok ? it.rec.skip_reason : it.name;
+    d.onclick = () => { showItem(i); };
+    d.ondblclick = (e) => { e.stopPropagation(); it.selected = !it.selected; renderThumbs(); };
+    const cb = document.createElement('input');
+    cb.type = 'checkbox'; cb.checked = it.selected; cb.title = 'include in model build';
+    cb.style.cssText = 'position:absolute;bottom:5px;right:5px;width:16px;height:16px;';
+    cb.onclick = (e) => { e.stopPropagation(); it.selected = cb.checked; };
+    d.appendChild(cb);
+    box.appendChild(d);
+  });
+  $('matchCard').hidden = !(selectedIdx >= 0 && items[selectedIdx]?.rec?.ok);
+}
+
+function showItem(i) {
+  selectedIdx = i;
+  const it = items[i];
+  renderThumbs();
+  if (!it.rec) return;
+  $('viewerCard').hidden = false;
+  $('viewTitle').textContent = 'measurement — ' + it.name;
+  drawSkeleton($('overlay'), it.img, it.rec.ok ? it.rec.landmarks : null);
+  const vb = $('visBox'), wb = $('warnBox'), rb = $('ratioBody');
+  if (!it.rec.ok) {
+    vb.innerHTML = `<p class="err">skipped: ${it.rec.skip_reason}</p>`;
+    wb.innerHTML = ''; rb.innerHTML = '';
+    $('matchCard').hidden = true;
+    return;
+  }
+  const v = it.rec.visibility;
+  vb.innerHTML = `<p class="hint">visibility min <b>${v.min}</b> · mean ${v.mean} (gate ≥ ${VISIBILITY_MIN})</p>`;
+  wb.innerHTML = it.rec.warnings.map((w) => `<p class="warn">⚠ ${w}</p>`).join('');
+  rb.innerHTML = RATIO_KEYS.map((k) =>
+    `<tr class="${INVARIANT_KEYS.includes(k) ? 'inv' : ''}"><td>${ratioLabel(k)}</td><td>${it.rec.ratios[k].toFixed(3)}</td></tr>`
+  ).join('');
+  $('viewTitle').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+$('exportJson').onclick = () => {
+  const it = items[selectedIdx];
+  if (!it || !it.rec?.ok) return;
+  const blob = new Blob([JSON.stringify({ image: it.name, ratios: it.rec.ratios, visibility: it.rec.visibility, warnings: it.rec.warnings }, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = it.name + '.body.json'; a.click();
+};
+
+// ---------- models ----------
+function renderModels() {
+  const models = loadModels();
+  const box = $('modelList'); box.innerHTML = '';
+  const names = Object.keys(models);
+  if (!names.length) { box.innerHTML = '<p class="hint">no models yet.</p>'; return; }
+  for (const name of names) {
+    const m = models[name];
+    const d = document.createElement('div');
+    d.className = 'model-card';
+    d.innerHTML = `<div class="m-head"><b>${name}</b>
+      <span><span class="pill">${m.n_photos} photos</span>
+      <button class="btn" data-act="json">json</button>
+      <button class="btn danger" data-act="del">delete</button></span></div>
+      <p class="hint">shoulder÷hip ${m.mean.shoulder_hip} ± ${m.std.shoulder_hip} ·
+      shoulder÷torso ${m.mean.shoulder_torso} ± ${m.std.shoulder_torso} ·
+      hip÷torso ${m.mean.hip_torso} ± ${m.std.hip_torso}</p>`;
+    d.querySelector('[data-act=json]').onclick = () => {
+      const blob = new Blob([JSON.stringify(m, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob); a.download = name + '.body-model.json'; a.click();
+    };
+    d.querySelector('[data-act=del]').onclick = () => {
+      if (confirm(`delete model "${name}"?`)) { deleteModel(name); renderModels(); }
+    };
+    box.appendChild(d);
+  }
+}
+
+$('buildModel').onclick = () => {
+  const name = $('personName').value.trim();
+  if (!name) { alert('enter a person label first'); return; }
+  const sel = items.filter((it) => it.selected && it.rec?.ok);
+  if (sel.length < 2) { alert(`select at least 2 measured-ok photos (checkbox on thumbnails). you have ${sel.length}.`); return; }
+  const { model, kept, outliers, skipped } = buildModel(name, sel.map((it) => it.rec));
+  const models = loadModels();
+  models[name] = model; saveModels(models);
+  renderModels();
+  alert(`model "${name}": ${kept.length} photos kept${outliers.length ? `, ${outliers.length} outlier(s) rejected` : ''}${skipped ? `, ${skipped} skipped` : ''}`);
+};
+
+// ---------- match ----------
+$('runMatch').onclick = () => {
+  const it = items[selectedIdx];
+  if (!it || !it.rec?.ok) return;
+  const models = loadModels();
+  const names = Object.keys(models);
+  if (!names.length) { $('matchOut').innerHTML = '<p class="err">no models stored yet.</p>'; return; }
+  const rows = rankModels(it.rec.ratios, models);
+  let html = `<table class="ratios"><thead><tr><th>rank</th><th>model</th><th>distance</th><th>ratios</th></tr></thead><tbody>`;
+  rows.forEach((r, i) => {
+    html += `<tr><td>${i + 1}</td><td>${r.person}</td><td>${r.distance === null ? 'n/a' : r.distance.toFixed(3)}</td><td>${r.n}</td></tr>`;
+  });
+  html += `</tbody></table>`;
+  const top = rows[0];
+  if (top && top.distance !== null) {
+    html += `<h3>per-ratio z-scores vs ${top.person} <span class="pill">|z|&gt;2 flagged</span></h3>`;
+    html += `<table class="ratios"><thead><tr><th>ratio</th><th>z</th><th>query</th><th>model μ</th><th>model σ</th></tr></thead><tbody>`;
+    const m = models[top.person];
+    for (const k of INVARIANT_KEYS) {
+      const z = top.perKey[k];
+      if (z === undefined) continue;
+      const cls = Math.abs(z) > 2 ? 'flag' : (z > 0 ? 'zpos' : '');
+      html += `<tr class="zrow"><td>${ratioLabel(k)}</td><td class="${cls}">${z >= 0 ? '+' : ''}${z.toFixed(2)}</td><td>${it.rec.ratios[k].toFixed(3)}</td><td>${m.mean[k].toFixed(3)}</td><td>${m.std[k].toFixed(3)}</td></tr>`;
+    }
+    html += `</tbody></table><p class="hint">auxiliary signal only — supports, never overrides, face matching.</p>`;
+  }
+  $('matchOut').innerHTML = html;
+};
+
+renderModels();
+renderThumbs();
+</script>
+</body>
+</html>

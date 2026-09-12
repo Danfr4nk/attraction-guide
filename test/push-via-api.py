@@ -22,6 +22,8 @@ FILES = [
     "telemetry.html",
     "face-book.html",
     "frame-describe.html",
+    "body-metrics.html",
+    "js/body.js",
     "README.md",
     ".gitignore",
     "test/push-via-api.py",
