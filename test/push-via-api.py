@@ -19,6 +19,7 @@ FILES = [
     "scenario-rate.html",
     "telemetry.html",
     "face-book.html",
+    "frame-describe.html",
     "README.md",
     ".gitignore",
     "test/push-via-api.py",

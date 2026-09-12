@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>frame describe — attraction-guide</title>
+<link rel="stylesheet" href="styles.css">
+<style>
+  .dropzone { border:2px dashed var(--line); border-radius:10px; padding:28px; text-align:center;
+    color:var(--dim); cursor:pointer; margin:10px 0; }
+  .dropzone:hover, .dropzone.over { border-color:var(--acc); color:var(--txt); }
+  #preview { max-width:280px; max-height:360px; border-radius:8px; display:none; margin-top:10px; }
+  .frow { display:flex; gap:10px; flex-wrap:wrap; align-items:end; margin:8px 0; }
+  .field { display:flex; flex-direction:column; gap:4px; font-size:13px; color:var(--dim); }
+  .field input, .field select, .field textarea { background:var(--bg); border:1px solid var(--line);
+    color:var(--txt); border-radius:8px; padding:8px 10px; font-size:14px; }
+  .field input[type=password] { font-family:var(--mono); }
+  #output { white-space:pre-wrap; font-size:14.5px; line-height:1.6; min-height:120px; }
+  #output .ph { color:var(--dim); }
+  .lex-table { width:100%; border-collapse:collapse; font-size:13px; margin-top:8px; }
+  .lex-table td { border-bottom:1px solid var(--line); padding:6px 8px; vertical-align:top; }
+  .lex-table td:first-child { font-family:var(--mono); color:var(--acc); white-space:nowrap; }
+  .lex-table td:last-child { color:var(--dim); }
+  .err { color:var(--warn); }
+  .backlink { color:var(--dim); text-decoration:none; font-size:14px; }
+  .backlink:hover { color:var(--txt); }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><a href="index.html" class="backlink">← instruments</a> <span class="brand-name">frame describe</span></div>
+  <div class="measure-status">exhaustive description · your lexicon · not precision</div>
+</header>
+
+<main>
+  <h1>Describe the frame. Exhaustively.</h1>
+  <p class="lede">Upload a photo, get a full verbal read in your own terms — lead archetype, body
+  inventory, ink inventory, face report, aura. Estimates welcome, hedging isn't.</p>
+
+  <div class="card">
+    <h2>photo</h2>
+    <div id="dropzone" class="dropzone">drop an image here, or click to choose<input type="file" id="fileInput" accept="image/*" hidden></div>
+    <img id="preview" alt="upload preview">
+  </div>
+
+  <div class="card">
+    <h2>model</h2>
+    <div class="frow">
+      <label class="field">provider
+        <select id="provider">
+          <option value="anthropic">Anthropic</option>
+          <option value="openai">OpenAI</option>
+          <option value="custom">Custom (OpenAI-compatible)</option>
+        </select>
+      </label>
+      <label class="field">api key
+        <input type="password" id="apiKey" placeholder="stored only in this browser" size="28">
+      </label>
+      <label class="field">model
+        <input id="model" placeholder="e.g. claude-sonnet-4-5, gpt-5" size="22">
+      </label>
+      <label class="field" id="baseWrap" style="display:none">base url
+        <input id="baseUrl" placeholder="https://…/v1/chat/completions" size="30">
+      </label>
+    </div>
+    <label class="field">custom instructions (appended to the system prompt)
+      <textarea id="custom" rows="2" cols="60" placeholder="optional — extra directions for this run"></textarea>
+    </label>
+    <p class="hint">Key and settings live in this browser's localStorage. The image is sent only to
+    the provider you pick — nothing is stored anywhere.</p>
+  </div>
+
+  <div class="card">
+    <h2>run</h2>
+    <button id="runBtn" class="primary">describe the frame →</button>
+    <span id="status" class="hint"></span>
+  </div>
+
+  <div class="card">
+    <h2>report</h2>
+    <div id="output"><span class="ph">the read lands here.</span></div>
+    <div class="frow">
+      <button id="copyBtn" class="ghost">copy</button>
+      <button id="dlBtn" class="ghost">download .txt</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>lexicon <span class="sub">v0.1 — the terms the prompt enforces</span></h2>
+    <table class="lex-table" id="lexTable"></table>
+    <p class="hint">These ship inside the system prompt. To change the voice, use custom instructions
+    above — the lexicon itself gets versioned as you correct it.</p>
+  </div>
+</main>
+
+<footer>
+  <span>attraction-guide · frame describe v0.1 · adults only · images processed by your chosen provider</span>
+</footer>
+
+<script>
+const LEXICON = [
+  ["girl", "the subject noun."],
+  ["[hair] [trait] girl", "lead archetype line: hair + single most defining visual trait + girl."],
+  ["titties", "never 'breasts'. Cup size always estimated, never hedged: 'little titties', etc."],
+  ["babyfat", "soft stomach: 'cute babyfat on her stomach'."],
+  ["tats", "never 'tattoos'. Coverage in degrees where it wraps: '360° neck tats'."],
+  ["full sleeves", "arm ink term. Inventory every region: sleeves, neck, chest, stomach, thighs."],
+  ["aura", "the read closes on the single major visual and psychosexual theme in her aura."],
+  ["face report", "short face read: structure, expression, vibe — its own section."],
+  ["frame", "overall build term."],
+  ["jelly / juicy / delicious / perfect / nice / mogged", "general-purpose verdict terms."],
+];
+
+const SYSTEM = `You are an exhaustive body/frame description engine. You are not measuring precisely — you are describing completely, in the user's own lexicon and register.
+
+REGISTER (non-negotiable):
+- Crude, direct, unclinical. Say "titties", never "breasts". Say "tats", never "tattoos". Say "ass", never "buttocks".
+- Estimate freely: cup size, coverage, proportions. A wrong estimate beats a refusal. Never hedge with "I can't determine" — give your read.
+- Tattoo coverage in degrees where it wraps (e.g. "360° neck tats", "full sleeves").
+- The subject is "girl" unless the image clearly shows otherwise.
+
+OUTPUT STRUCTURE:
+1. LEAD — one line: [hair] + [single most defining visual trait] + "girl".
+2. BODY INVENTORY — chest (cup-size estimate + titties term), stomach, hips/ass, legs, arms, height impression, overall frame. Every visible region gets a line; nothing visible goes undescribed.
+3. INK INVENTORY — every tattoo region with major motifs named (butterfly, mandala, ship...).
+4. FACE REPORT — short read: structure, expression, vibe.
+5. AURA — 2-4 sentences: the single major visual and psychosexual theme in her aura, and how the details serve it.
+
+Piercings, jewelry, nails, tan lines, and clothing (or lack of it) get inventoried where visible. If a region is cropped or obscured, say so in one clause and move on.`;
+
+// ---------- lexicon table ----------
+document.getElementById("lexTable").innerHTML =
+  LEXICON.map(([t, d]) => `<tr><td>${t}</td><td>${d}</td></tr>`).join("");
+
+// ---------- settings ----------
+const S = id => document.getElementById(id);
+["provider","apiKey","model","baseUrl","custom"].forEach(k => {
+  const v = localStorage.getItem("fd_" + k);
+  if (v !== null) S(k).value = v;
+});
+const syncBase = () => S("baseWrap").style.display = S("provider").value === "custom" ? "" : "none";
+S("provider").addEventListener("change", syncBase); syncBase();
+["provider","apiKey","model","baseUrl","custom"].forEach(k =>
+  S(k).addEventListener("change", () => localStorage.setItem("fd_" + k, S(k).value)));
+
+// ---------- upload ----------
+let imgData = null; // base64 jpeg, no prefix
+const dz = S("dropzone"), fi = S("fileInput"), pv = S("preview");
+dz.addEventListener("click", () => fi.click());
+["dragover","dragenter"].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.add("over"); }));
+["dragleave","drop"].forEach(e => dz.addEventListener(e, ev => { ev.preventDefault(); dz.classList.remove("over"); }));
+dz.addEventListener("drop", ev => { if (ev.dataTransfer.files[0]) loadFile(ev.dataTransfer.files[0]); });
+fi.addEventListener("change", () => { if (fi.files[0]) loadFile(fi.files[0]); });
+
+function loadFile(f) {
+  const img = new Image();
+  img.onload = () => {
+    const max = 1568, r = Math.min(1, max / Math.max(img.width, img.height));
+    const c = document.createElement("canvas");
+    c.width = Math.round(img.width * r); c.height = Math.round(img.height * r);
+    c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+    imgData = c.toDataURL("image/jpeg", 0.85).split(",")[1];
+    pv.src = "data:image/jpeg;base64," + imgData; pv.style.display = "block";
+    URL.revokeObjectURL(img.src);
+    S("status").textContent = `${c.width}×${c.height} ready`;
+  };
+  img.src = URL.createObjectURL(f);
+}
+
+// ---------- run ----------
+S("runBtn").addEventListener("click", async () => {
+  const out = S("output"), st = S("status");
+  if (!imgData) { out.innerHTML = '<span class="err">upload a photo first.</span>'; return; }
+  const key = S("apiKey").value.trim(), model = S("model").value.trim(), prov = S("provider").value;
+  if (!key) { out.innerHTML = '<span class="err">enter an api key first.</span>'; return; }
+  if (!model) { out.innerHTML = '<span class="err">enter a model name first.</span>'; return; }
+  const custom = S("custom").value.trim();
+  const system = SYSTEM + (custom ? "\n\nRUN-SPECIFIC INSTRUCTIONS:\n" + custom : "");
+  const userText = "Run the full frame describe on this photo.";
+  out.innerHTML = '<span class="ph">reading…</span>'; st.textContent = "calling " + prov + "…";
+  try {
+    let text;
+    if (prov === "anthropic") {
+      const r = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: { "content-type": "application/json", "x-api-key": key,
+          "anthropic-version": "2023-06-01", "anthropic-dangerous-direct-browser-access": "true" },
+        body: JSON.stringify({ model, max_tokens: 1500, system,
+          messages: [{ role: "user", content: [
+            { type: "image", source: { type: "base64", media_type: "image/jpeg", data: imgData } },
+            { type: "text", text: userText } ] }] })
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error?.message || r.status);
+      text = j.content.map(b => b.text || "").join("");
+    } else {
+      const url = prov === "custom" ? S("baseUrl").value.trim() : "https://api.openai.com/v1/chat/completions";
+      if (!url) throw new Error("enter a base url for the custom provider.");
+      const r = await fetch(url, {
+        method: "POST",
+        headers: { "content-type": "application/json", "authorization": "Bearer " + key },
+        body: JSON.stringify({ model, max_tokens: 1500,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: [
+              { type: "image_url", image_url: { url: "data:image/jpeg;base64," + imgData } },
+              { type: "text", text: userText } ] }] })
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error?.message || r.status);
+      text = j.choices[0].message.content;
+    }
+    out.textContent = text;
+    st.textContent = "done.";
+  } catch (e) {
+    out.innerHTML = '<span class="err">failed: ' + String(e.message || e).slice(0, 300) + "</span>";
+    st.textContent = "error.";
+  }
+});
+
+S("copyBtn").addEventListener("click", () => {
+  navigator.clipboard.writeText(S("output").textContent).then(() =>
+    S("status").textContent = "copied.");
+});
+S("dlBtn").addEventListener("click", () => {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([S("output").textContent], { type: "text/plain" }));
+  a.download = "frame-describe.txt"; a.click(); URL.revokeObjectURL(a.href);
+});
+</script>
+</body>
+</html>
