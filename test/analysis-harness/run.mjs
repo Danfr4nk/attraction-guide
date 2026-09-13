@@ -53,7 +53,7 @@ BSTATS.metrics.lip_fullness = { mean: 0.1, std: 0.02 };   // B z=+2.5
 BSTATS.metrics.gonial_angle_mean = { mean: 140, std: 3 };  // A z=+2.1, B z=-2.9
 
 // ---------- jsdom ----------
-const html = fs.readFileSync(APP + '/index.html', 'utf8');
+const html = fs.readFileSync(APP + '/game.html', 'utf8');
 const dom = new JSDOM(html, { url: 'http://localhost/' });
 for (const k of ['window', 'document', 'localStorage', 'Image', 'Blob', 'URL'])
   globalThis[k] = dom.window[k];
@@ -146,6 +146,7 @@ ok('trial1: uncalled rows recorded with zAbs (skipped, not threshold evidence)',
 {
   const axes = $('#profile-axes').innerHTML;
   ok('trial1: profile lips card shows 0/0 evidence', /<b>lips<\/b>[\s\S]*?0\/0 evidence/.test(axes), axes.slice(0, 300));
+  ok('trial1: 0/0 axis renders "no data", not 50%', axes.includes('no data') && !/<b>lips<\/b>[\s\S]{0,200}?50%/.test(axes), axes.slice(0, 300));
   ok('trial1: HUD chip for lips exists with no dots', $('#hud .hud-chip[data-axis="lips"]') && !$('#hud .hud-chip[data-axis="lips"] .dot'), $('#hud').innerHTML.slice(0, 300));
   ok('trial1: queue rationale says fewest evidence', $('#hud .hud-why').textContent.includes('fewest'), $('#hud .hud-why').textContent);
 }
@@ -193,8 +194,9 @@ ok('trial2: both picks on lipB', lipPick.winner === 'lipB' && gonPick.winner ===
 {
   const feat = $('#profile-features').innerHTML;
   ok('trial2: configurality 1/1', feat.includes('configurality') && feat.includes('1/1'), feat.slice(0, 300));
-  ok('trial2: marginal lip 1/1 higher with CI', feat.includes('1/1 · 60% [21%–100%]'), feat.slice(0, 800));
-  ok('trial2: marginal gonial 0/1 higher with CI', feat.includes('0/1 · 40% [0%–79%]'), feat.slice(0, 800));
+  ok('trial2: configurality n<4 shows insufficient data, no verdict', feat.includes('insufficient data') && !feat.includes('marginals compose cleanly') && !feat.includes('highly configural'), feat.slice(0, 300));
+  ok('trial2: marginal lip 1/1 higher with CI (observed p headline)', feat.includes('1/1 · 100% · 95% CI [21%–100%]'), feat.slice(0, 800));
+  ok('trial2: marginal gonial 0/1 higher with CI (observed p headline)', feat.includes('0/1 · 0% · 95% CI [0%–79%]'), feat.slice(0, 800));
   ok('trial2: lip shape monotonic up', feat.includes('monotonic ↑'), feat.slice(0, 1200));
   ok('trial2: gonial shape monotonic down', feat.includes('monotonic ↓'), feat.slice(0, 1200));
   ok('trial2: lip ideal +2.50σ', feat.includes('+2.50σ'), feat.slice(0, 1200));

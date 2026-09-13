@@ -1,4 +1,4 @@
-// telemetry v3 — decomposition metrics + bootstrap confidence intervals.
+// telemetry v3 — decomposition metrics + landmark-noise intervals.
 // Imports from measure.js only (no cycle with telemetry.js).
 
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
@@ -18,13 +18,16 @@ export function gauss() {
 }
 
 /**
- * Bootstrap confidence intervals for the full metric vector.
- * Jitters every landmark with Gaussian noise (σ in normalized image coords;
- * default 0.0005 ≈ subpixel detector noise on a ~1000px face) and recomputes.
- * Returns { key: { sd, n } } — sd is the bootstrap standard deviation;
- * the 95% CI half-width is 1.96 × sd.
+ * Landmark-noise 95% intervals for the full metric vector. NOT a bootstrap and
+ * NOT a population CI: there is no resampling of faces here. All landmarks are
+ * jittered with Gaussian noise (σ in normalized image coords; default 0.0005 ≈
+ * subpixel detector noise on a ~1000px face), the full vector is recomputed, and
+ * this is repeated 32 times. Returns { key: { sd, n } } — sd is the standard
+ * deviation across the 32 noise runs; the reported 95% half-width is 1.96 × sd.
+ * This captures detector/landmark noise ONLY — not pose distortion, expression,
+ * or lens effects. Never read it as statistical significance about people.
  */
-export function bootstrapCI(computeAll, lm, w, h, iters = 32, sigma = 0.0005) {
+export function landmarkNoiseCI(computeAll, lm, w, h, iters = 32, sigma = 0.0005) {
   let keys;
   try { keys = Object.keys(computeAll(lm, w, h)); }
   catch (e) { return {}; }
@@ -51,6 +54,8 @@ export function bootstrapCI(computeAll, lm, w, h, iters = 32, sigma = 0.0005) {
 }
 
 export function computeV3(lm, w, h) {
+  // pixel-correct geometry (aspect-safe): distances/angles in pixel space.
+  lm = lm.map(p => ({ x: p.x * w, y: p.y * h, z: p.z }));
   const g = (i) => lm[i];
   const x_mid = (g(10).x + g(152).x) / 2; // forehead ↔ chin midline
   const asymPair = (l, r) => {

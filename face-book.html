@@ -55,6 +55,9 @@
 <div id="controls">
   <div class="row" id="groupChips"></div>
   <div class="row" style="margin-top:8px">
+    <label for="fBackground" style="font-size:12px;color:var(--dim);align-self:center">background
+      <select id="fBackground" style="margin-left:6px;background:var(--panel);color:var(--ink);border:1px solid #2a3350;border-radius:8px;padding:5px 8px;font-size:12.5px"></select>
+    </label>
     <span class="chip on" data-phase="all">all phases</span>
     <span class="chip" data-phase="1">phase 1</span>
     <span class="chip" data-phase="2">phase 2</span>
@@ -122,7 +125,7 @@ function openLB(f) {
   document.getElementById('lbImg').src = FULL(f.id);
   document.getElementById('lbId').textContent = f.id;
   document.getElementById('lbLabel').textContent = f.label || '';
-  const rows = [['group', f.group], ['subgroup', f.subgroup], ['sex', f.sex],
+  const rows = [['background', f.group], ['subgroup', f.subgroup], ['sex', f.sex],
     ['phase', f.phase], ['archetype', f.archetype], ['label', f.label]]
     .filter(([,v]) => v !== undefined && v !== null && v !== '')
     .map(([k,v]) => `<tr><td class="k">${k}</td><td>${v}</td></tr>`).join('');
@@ -148,6 +151,12 @@ fetch('faces/faces.json').then(r => r.json()).then(d => {
     chipRow(document.getElementById('groupChips'),
       groups.map(g => [g, g === 'all' ? `all (${FACES.length})` : `${g} (${counts[g]})`]),
       fGroup, v => { fGroup = v; paintGroups(); render(); });
+    // the background <select> mirrors the same fGroup filter, both directions
+    const sel = document.getElementById('fBackground');
+    sel.innerHTML = groups.map(g =>
+      `<option value="${g}">${g === 'all' ? `all backgrounds (${FACES.length})` : `${g} (${counts[g]})`}</option>`).join('');
+    sel.value = fGroup;
+    sel.onchange = () => { fGroup = sel.value; paintGroups(); render(); };
   }
   paintGroups();
   render();

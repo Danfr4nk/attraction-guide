@@ -20,10 +20,11 @@ export async function load(url, context, next) {
       /export async function ensureLandmarker\(onStatus\) \{[\s\S]*?\n\}\n\nexport function measurementReady\(\)/,
       `export async function ensureLandmarker(onStatus) { ready = true; onStatus && onStatus('landmarks ready'); return {}; }\n\nexport function measurementReady()`
     );
-    // synthetic landmark injection point
+    // synthetic landmark injection point (measure.js now detects via detectFace,
+    // which returns { landmarks, matrix }; the hook supports img.__matrix too)
     src = src.replace(
-      'export function detectLandmarks(img) {\n  if (!landmarker) return null;',
-      'export function detectLandmarks(img) {\n  if (img && img.__landmarks) return img.__landmarks;\n  if (!landmarker) return null;'
+      'export function detectFace(img) {\n  if (!landmarker) return null;',
+      'export function detectFace(img) {\n  if (img && img.__landmarks) return { landmarks: img.__landmarks, matrix: img.__matrix || null };\n  if (!landmarker) return null;'
     );
     if (!src.includes('__landmarks') || !src.includes("return {}; }"))
       throw new Error('measure.js stub injection failed');

@@ -252,3 +252,4 @@ details.retired .ax-card { opacity: .72; }
   .ci-bar { width: 90px; }
   .sig-rail { width: 80px; }
 }
+.warn { color: #f87171; font-weight: 700; }

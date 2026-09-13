@@ -12,18 +12,19 @@ APP = "/home/hatch/workspace/attraction-guide"
 
 FILES = [
     "js/app.js",
+    "js/measure.js",
     "js/telemetry.js",
     "js/telemetry2.js",
+    "js/telemetry3.js",
     "index.html",
     "game.html",
     "styles.css",
     "scenario.html",
     "scenario-rate.html",
     "telemetry.html",
+    "telemetry.css",
     "face-book.html",
     "frame-describe.html",
-    "body-metrics.html",
-    "js/body.js",
     "README.md",
     ".gitignore",
     "test/push-via-api.py",
@@ -34,27 +35,24 @@ FILES = [
     "test/analysis-harness/stubs/mediapipe.mjs",
 ]
 
-DEFAULT_MESSAGE = """UX refresh + analysis fixes to complement the new system
+DEFAULT_MESSAGE = """Instrument-correctness pass: MediaPipe 3D pose, aspect-true geometry, honest statistics
 
-- Play HUD: per-axis evidence dots (filled=consistent, hollow=inconsistent,
-  ringed=direct pick), status pills, retirement progress, and a "queue:"
-  line explaining why the adaptive engine picked the current pair
-  (fewest evidence / max uncertainty).
-- Profile redesign: axis cards with Wilson CI bars, evidence dots and
-  retirement progress; configurality gauge with agreement-rate CI and an
-  n<4 provisional qualifier; per-metric cards with CI bars, discrimination
-  thresholds, shape badges, and a chosen-mean/revealed-ideal sigma rail
-  ("revealed ideal" only labeled when the shape is peaked with bracketing
-  evidence). Retired axes collapse into a details section.
-- Explicit "can't tell" (Ø) control on feature rows: genuine
-  discrimination failure, recorded as noTell. Untouched rows are now
-  skipped — missing, not evidence — so silence no longer feeds the
-  discrimination threshold. Log marks no-tell rows with Ø.
-- Cross-axis retirement: updateAxisStatus now runs for every axis after
-  each phase-2 lock, so direct cross-axis picks can confirm axes that
-  were never the trial axis.
-- Harness: 53/53 green, covering no-tell semantics, HUD dots/pills,
-  queue rationale, and cross-axis retirement."""
+- Telemetry Lab: MediaPipe facial-transformation-matrix 3D pose (roll/yaw/pitch,
+  lab-conformed sign conventions) with labeled 2D-proxy fallback; yaw/pitch/roll
+  metrics, pose_source in HUD/exports; matrix is a model fit, not ground truth.
+- All landmark geometry (telemetry, game) moved to pixel coordinates — fixes the
+  non-square aspect distortion on every distance/angle/ratio; canthal tilt shared
+  definition with roll correction, mirrored for selfies.
+- Statistics renamed honestly: landmark-noise 95% intervals (not bootstrap);
+  Wilson display shows observed p with Wilson bounds; n=0 renders "no data";
+  configurality n<4 shows "insufficient data", no verdict.
+- Telemetry Lab: optional background tag (bank taxonomy) preserved on items and
+  in JSON/CSV; face-book: labeled background selector synced with group chips.
+- Deploy manifest now includes js/measure.js, js/telemetry3.js, telemetry.css
+  (previously omitted; live telemetry3.js was corrupted). body-metrics excluded
+  from this push.
+"""
+
 
 MESSAGE = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_MESSAGE
 

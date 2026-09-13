@@ -232,14 +232,18 @@ function axisScore(axis) {
 // Wilson score interval for small-n proportions — error bars instead of raw counts.
 function wilson(x, n) {
   const z = 1.96;
-  if (!n) return { lo: 0, hi: 1, center: 0.5 };
+  // n=0: no evidence. p stays null so callers render "no data" instead of the
+  // Wilson center (0.5) — a shrinkage artifact, not a measurement.
+  if (!n) return { lo: 0, hi: 1, center: 0.5, p: null, n: 0 };
   const p = x / n, d = 1 + z * z / n;
   const center = (p + z * z / (2 * n)) / d;
   const h = z * Math.sqrt(p * (1 - p) / n + z * z / (4 * n * n)) / d;
-  return { lo: Math.max(0, center - h), hi: Math.min(1, center + h), center };
+  return { lo: Math.max(0, center - h), hi: Math.min(1, center + h), center, p, n };
 }
 const pct = (v) => Math.round(v * 100) + '%';
-const ciStr = (w) => `${pct(w.center)} [${pct(w.lo)}–${pct(w.hi)}]`;
+// Headline the OBSERVED proportion; the Wilson interval remains the CI.
+// n=0 renders as no-data — never as a 50% center masquerading as evidence.
+const ciStr = (w) => w.p == null ? `no data` : `${pct(w.p)} · 95% CI [${pct(w.lo)}–${pct(w.hi)}]`;
 
 // Per-metric marginal preference analysis from feature picks.
 // Threshold semantics: an explicit "can't tell" is genuine discrimination
@@ -687,8 +691,11 @@ function renderRoundStats(ranking) {
 const AXIS_STATUS_LABEL = { open: 'open', confirmed: 'confirmed', unresolved: 'unresolved', 'no-pairs': 'no valid pairs' };
 // small visual components for the profile
 function ciBar(w) {
+  // marker sits on the OBSERVED proportion, not the Wilson center.
+  const marker = w.p == null ? '' :
+    `<span class="ci-center" style="left:${(w.p * 100).toFixed(1)}%"></span>`;
   return `<span class="ci-bar"><span class="ci-fill" style="left:${(w.lo * 100).toFixed(1)}%;width:${((w.hi - w.lo) * 100).toFixed(1)}%"></span>` +
-    `<span class="ci-center" style="left:${(w.center * 100).toFixed(1)}%"></span></span>`;
+    marker + `</span>`;
 }
 function sigmaRail(ideal) {
   if (ideal == null) return '<span class="hint">—</span>';
@@ -743,10 +750,15 @@ function renderProfile() {
   let cfHtml;
   if (cf.total) {
     const wcf = wilson(cf.agree, cf.total);
-    let verdict = cf.rate >= 0.8 ? 'marginals compose cleanly'
-      : cf.rate >= 0.5 ? 'partially configural — some wholes beat their parts'
-      : 'highly configural — do not trust marginal sums';
-    if (cf.total < 4) verdict += ' <span class="hint">(n&lt;4 — provisional)</span>';
+    let verdict;
+    if (cf.total < 4) {
+      // below n=4 there is no verdict — only the warning and the exact state.
+      verdict = '<span class="warn">insufficient data</span> <span class="hint">(n&lt;4 — no configurality verdict below 4 trials)</span>';
+    } else {
+      verdict = cf.rate >= 0.8 ? 'marginals compose cleanly'
+        : cf.rate >= 0.5 ? 'partially configural — some wholes beat their parts'
+        : 'highly configural — do not trust marginal sums';
+    }
     cfHtml = `<div class="cf-card"><div class="cf-top"><b>configurality</b><span class="mono">${cf.agree}/${cf.total} · ${ciStr(wcf)}</span></div>` +
       `${ciBar(wcf)}<div class="cf-verdict">${verdict}</div>` +
       (cf.ties ? `<div class="hint">${cf.ties} split-decision round${cf.ties > 1 ? 's' : ''} excluded</div>` : '') + '</div>';

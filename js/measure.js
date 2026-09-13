@@ -36,6 +36,7 @@ export async function ensureLandmarker(onStatus) {
       baseOptions: { modelAssetPath: MODEL_URL, delegate: 'GPU' },
       runningMode: 'IMAGE',
       numFaces: 1,
+      outputFacialTransformationMatrixes: true,
     });
     ready = true;
     onStatus && onStatus('landmarks ready');
@@ -47,6 +48,7 @@ export async function ensureLandmarker(onStatus) {
         baseOptions: { modelAssetPath: MODEL_URL, delegate: 'CPU' },
         runningMode: 'IMAGE',
         numFaces: 1,
+        outputFacialTransformationMatrixes: true,
       });
       ready = true;
       onStatus && onStatus('landmarks ready');
@@ -65,11 +67,24 @@ export const LANDMARK_IDX = IDX;
 // Raw 468-landmark detection — the same detector the game uses.
 // The telemetry lab builds its extended metric set on top of this.
 export function detectLandmarks(img) {
+  const d = detectFace(img);
+  return d ? d.landmarks : null;
+}
+
+// Full detection: landmarks plus the detector's own 4x4 face pose matrix
+// (facialTransformationMatrixes — column-major, element (r,c) = data[c*4+r]).
+// matrix is null when the model/wasm predates the option or the field is
+// absent; callers must fall back to 2D proxies and label the source.
+export function detectFace(img) {
   if (!landmarker) return null;
   try {
     const res = landmarker.detect(img);
     if (!res.faceLandmarks || !res.faceLandmarks.length) return null;
-    return res.faceLandmarks[0];
+    const mx = res.facialTransformationMatrixes && res.facialTransformationMatrixes[0];
+    const matrix = (mx && mx.data && mx.data.length === 16)
+      ? { rows: mx.rows, columns: mx.columns, data: Array.from(mx.data) }
+      : null;
+    return { landmarks: res.faceLandmarks[0], matrix };
   } catch (e) {
     return null;
   }
@@ -84,7 +99,10 @@ const angleAt = (a, b, c) => {
   const cos = Math.min(1, Math.max(-1, (v1x * v2x + v1y * v2y) / m));
   return Math.acos(cos) * 180 / Math.PI;
 };
-// canthal tilt: signed elevation of outer corner above inner corner, |dx| convention (+ = outer higher)
+// canthal tilt: signed elevation of outer corner above inner corner, |dx| convention
+// (+ = outer higher). Takes PIXEL-space points (callers convert); |dx| puts both
+// eyes in one shared outward frame before any roll correction, so L/R can't respond
+// differently to head roll. Identical definition in telemetry.js.
 const tiltOf = (inner, outer) => Math.atan2(-(outer.y - inner.y), Math.abs(outer.x - inner.x)) * 180 / Math.PI;
 const perpDist = (p, a, b) => {
   const dx = b.x - a.x, dy = b.y - a.y, L = Math.hypot(dx, dy) || 1;
@@ -93,8 +111,12 @@ const perpDist = (p, a, b) => {
 
 // img: HTMLImageElement (must be loaded). Returns ratios or null.
 export function measureImage(img) {
-  const lm = detectLandmarks(img);
-  if (!lm) return null;
+  const lm0 = detectLandmarks(img);
+  if (!lm0) return null;
+  // pixel-correct geometry (aspect-safe): all distances/angles below run in pixel
+  // space. Unknown dims (e.g. headless tests) fall back to square = old behavior.
+  const W = img.naturalWidth || img.width || 1, H = img.naturalHeight || img.height || 1;
+  const lm = lm0.map(p => ({ x: p.x * W, y: p.y * H, z: p.z }));
   const P = {};
   for (const [k, i] of Object.entries(IDX)) P[k] = lm[i];
 
