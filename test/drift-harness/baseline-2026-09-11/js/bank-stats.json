@@ -1,0 +1,107 @@
+{
+ "metrics": {
+  "gonial_angle_mean": {
+   "mean": 138.2089,
+   "std": 1.9636
+  },
+  "jaw_to_cheek": {
+   "mean": 0.781,
+   "std": 0.012
+  },
+  "width_height_ratio": {
+   "mean": 0.8137,
+   "std": 0.0185
+  },
+  "fwhr_proxy": {
+   "mean": 1.9263,
+   "std": 0.0672
+  },
+  "ipd_to_cheek": {
+   "mean": 0.4682,
+   "std": 0.0084
+  },
+  "eye_spacing_widths": {
+   "mean": 2.2166,
+   "std": 0.0476
+  },
+  "eye_w_to_h": {
+   "mean": 2.8936,
+   "std": 0.1612
+  },
+  "canthal_tilt_mean": {
+   "mean": 6.2,
+   "std": 0.8656
+  },
+  "fifths": {
+   "mean": 4.7349,
+   "std": 0.1016
+  },
+  "nose_to_cheek": {
+   "mean": 0.2448,
+   "std": 0.0104
+  },
+  "nose_w_to_intercanthal": {
+   "mean": 0.9484,
+   "std": 0.0352
+  },
+  "mouth_to_cheek": {
+   "mean": 0.3895,
+   "std": 0.0167
+  },
+  "mouth_to_nose": {
+   "mean": 1.5913,
+   "std": 0.0463
+  },
+  "lip_fullness": {
+   "mean": 0.3543,
+   "std": 0.0444
+  },
+  "upper_lower_lip": {
+   "mean": 0.6378,
+   "std": 0.0436
+  },
+  "brow_arch_mean": {
+   "mean": 0.2424,
+   "std": 0.0153
+  },
+  "brow_eye_dist_pct": {
+   "mean": 10.6242,
+   "std": 0.803
+  },
+  "mean_asymmetry": {
+   "mean": 0.0405,
+   "std": 0.0161
+  },
+  "asymmetry_9": {
+   "mean": 0.0549,
+   "std": 0.0177
+  },
+  "third_upper_pct": {
+   "mean": 19.6827,
+   "std": 0.831
+  },
+  "third_mid_pct": {
+   "mean": 42.2605,
+   "std": 0.7507
+  },
+  "third_lower_pct": {
+   "mean": 38.0568,
+   "std": 0.9948
+  },
+  "chin_to_lower_third": {
+   "mean": 0.4801,
+   "std": 0.0327
+  },
+  "philtrum_to_nose": {
+   "mean": 0.307,
+   "std": 0.0313
+  }
+ },
+ "axis_dir": {
+  "jaw": -1,
+  "lips": 1,
+  "eyes": 1,
+  "brow": 0,
+  "nose": -1
+ }
+}

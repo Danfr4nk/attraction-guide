@@ -1,9 +1,9 @@
 // telemetry lab — standalone precision facial measurement.
 // Uses the SAME detector + landmark indices as the game (js/measure.js),
 // but lives outside the game flow: upload → full telemetry vector → overlay.
-import { ensureLandmarker, detectFace, LANDMARK_IDX } from './measure.js';
-import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING, IRIS } from './telemetry2.js';
-import { computeV3, V3_METRIC_DEFS, V3_GROUPS, landmarkNoiseCI } from './telemetry3.js';
+import { ensureLandmarker, detectLandmarks, LANDMARK_IDX } from './measure.js';
+import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING } from './telemetry2.js';
+import { computeV3, V3_METRIC_DEFS, V3_GROUPS, bootstrapCI } from './telemetry3.js';
 // NOTE: V2 defs are appended AFTER the METRIC_DEFS / GROUPS declarations below
 // (const arrays are in the temporal dead zone until their declaration executes).
 
@@ -16,8 +16,9 @@ const EXTRA = {
   mouth_inner_top: 13, mouth_inner_bot: 14,
 };
 
-// ---- math helpers (all geometry runs in PIXEL space; see computeTelemetry) ----
+// ---- math helpers (normalized landmark space; px variants multiply by dims) ----
 const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const distPx = (a, b, w, h) => Math.hypot((a.x - b.x) * w, (a.y - b.y) * h);
 const mid = (a, b) => ({ x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 });
 const mean = (pts) => ({ x: pts.reduce((s, p) => s + p.x, 0) / pts.length, y: pts.reduce((s, p) => s + p.y, 0) / pts.length });
 const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
@@ -36,8 +37,6 @@ function perpDist(p, a, b) {
 // ---- metric catalogue ----
 const f3 = (v) => v.toFixed(3), f1 = (v) => v.toFixed(1);
 const deg = (v) => v.toFixed(1) + '°', pct1 = (v) => v.toFixed(1) + '%', pp = (v) => v.toFixed(1) + ' pp';
-// nullable degrees (3D-only metrics render '—' on the 2D-proxy fallback path)
-const degN = (v) => (v == null || !isFinite(v)) ? '—' : v.toFixed(1) + '°';
 const px0 = (v) => Math.round(v) + ' px', i0 = (v) => String(Math.round(v));
 
 export const GROUPS = [
@@ -70,9 +69,9 @@ export const METRIC_DEFS = [
   { key: 'ipd_to_cheek', group: 'eyes', label: 'IPD : cheek', fmt: f3, game: true },
   { key: 'eye_spacing_widths', group: 'eyes', label: 'spacing (eye-widths)', fmt: f3, hint: 'IPD ÷ eye width · canon 2.0' },
   { key: 'eye_w_to_h', group: 'eyes', label: 'eye width : height', fmt: f3, game: true },
-  { key: 'canthal_tilt_mean', group: 'eyes', label: 'canthal tilt', fmt: deg, hint: '+ = outer corner higher · face-frame (roll-corrected)' },
-  { key: 'canthal_tilt_L', group: 'eyes', label: 'canthal tilt L', fmt: deg, hint: 'face-frame (roll-corrected)' },
-  { key: 'canthal_tilt_R', group: 'eyes', label: 'canthal tilt R', fmt: deg, hint: 'face-frame (roll-corrected)' },
+  { key: 'canthal_tilt_mean', group: 'eyes', label: 'canthal tilt', fmt: deg, hint: '+ = outer corner higher' },
+  { key: 'canthal_tilt_L', group: 'eyes', label: 'canthal tilt L', fmt: deg },
+  { key: 'canthal_tilt_R', group: 'eyes', label: 'canthal tilt R', fmt: deg },
   { key: 'fifths', group: 'eyes', label: 'facial fifths', fmt: f3, hint: 'face width ÷ eye width · canon 5' },
   // nose
   { key: 'nose_w_px', group: 'nose', label: 'nose width', fmt: px0, hint: 'alar 98↔327' },
@@ -95,10 +94,8 @@ export const METRIC_DEFS = [
   { key: 'asymmetry_9', group: 'pose', label: 'asymmetry (9-pair)', fmt: f3, hint: '+ brow inner/outer, eye-top' },
   { key: 'canthal_tilt_diff', group: 'pose', label: 'canthal tilt |L−R|', fmt: deg },
   { key: 'gonial_diff', group: 'pose', label: 'gonial angle |L−R|', fmt: deg },
-  { key: 'roll_deg', group: 'pose', label: 'head roll', fmt: deg, hint: '3D matrix; eye-axis proxy when matrix absent (see pose source)' },
-  { key: 'yaw_deg', group: 'pose', label: 'head yaw', fmt: deg, hint: '3D matrix; cheek-foreshortening proxy when absent · + = turned image-left' },
-  { key: 'pitch_deg', group: 'pose', label: 'head pitch', fmt: degN, hint: '3D only (— on 2D fallback) · + = chin down' },
-  { key: 'yaw_proxy_deg', group: 'pose', label: 'head yaw (2D proxy)', fmt: deg, hint: 'cheek↔nose-tip foreshortening — kept for comparison; yaw_deg is the used value' },
+  { key: 'roll_deg', group: 'pose', label: 'head roll', fmt: deg, hint: 'eye-axis vs horizontal' },
+  { key: 'yaw_proxy_deg', group: 'pose', label: 'head yaw (proxy)', fmt: deg, hint: 'from cheek foreshortening' },
   { key: 'frontality', group: 'pose', label: 'frontality score', fmt: i0, hint: '0–100 composite' },
   // classical canons (deviation from ideal)
   { key: 'canon_thirds', group: 'canons', label: 'thirds equality', fmt: pp, hint: 'max |third − 33.3%|' },
@@ -114,46 +111,8 @@ GROUPS.push(...V2_GROUPS, ...V3_GROUPS);
 
 export const DEF_BY_KEY = Object.fromEntries(METRIC_DEFS.map(d => [d.key, d]));
 
-// ---- 3D head pose from the detector's own 4x4 face matrix ----
-// facialTransformationMatrixes is column-major: rotation element (r,c) =
-// data[c*4+r]. YXZ intrinsic decomposition R = Ry(yaw)·Rx(pitch)·Rz(roll),
-// then conformed to the lab's legacy sign conventions (NOT the matrix's native
-// ones) so 3D and 2D-proxy values stay directly comparable:
-//   yaw   = -atan2(R02, R22), + = face turned toward image-left (matches the old proxy)
-//   pitch = asin(-R12),       + = chin down / looking down (3D-only metric, no legacy)
-//   roll  = -atan2(R10, R11), + = image-right side lower (matches the eye-axis proxy)
-// Sign anchors, verified empirically 2026-09-13 on real detector output:
-// - roll: negated matrix roll agrees with the aspect-corrected eye axis to 0.2°.
-// - yaw: the test face is turned image-left by three independent cues (nose closer
-//   to the image-left cheek in px, image-left eye/cheek deeper in z, proxy +9.5°),
-//   so the matrix value is negated to keep +yaw = image-left like the proxy.
-// - pitch: forehead z nearer camera than chin z ⇒ looking slightly down, and the
-//   unnegated decomposition reads +3.2° ⇒ +pitch = chin down. No negation.
-// This is a MODEL FIT (Procrustes alignment of the canonical mesh to the
-// detected landmarks), not ground truth — no anatomical-accuracy claims.
-// Returns null when the matrix is absent; callers fall back to 2D proxies.
-export function poseFromMatrix(mx) {
-  if (!mx || !mx.data || mx.data.length < 16) return null;
-  const d = mx.data, R = (r, c) => d[c * 4 + r];
-  const s = Math.hypot(R(0, 0), R(1, 0), R(2, 0)) || 1; // strip uniform scale
-  const r02 = R(0, 2) / s, r12 = R(1, 2) / s, r22 = R(2, 2) / s;
-  const r10 = R(1, 0) / s, r11 = R(1, 1) / s;
-  const yaw = -Math.atan2(r02, r22) * 180 / Math.PI;
-  const pitch = Math.asin(Math.max(-1, Math.min(1, -r12))) * 180 / Math.PI;
-  const roll = -Math.atan2(r10, r11) * 180 / Math.PI;
-  if (![yaw, pitch, roll].every(Number.isFinite)) return null;
-  return { yaw, pitch, roll, source: '3D' };
-}
-
 // ---- the full telemetry computation ----
-export function computeTelemetry(lm, w, h, poseMatrix = null) {
-  // pixel-correct geometry: every distance/angle below runs in pixel space, so
-  // non-square images stop distorting ratios and angles (the old normalized-coord
-  // math under-read roll ~2× on portrait images and skewed all mixed-axis ratios).
-  // `norm` keeps the normalized copy — anchors stay normalized because the
-  // overlay maps normalized → canvas.
-  const norm = lm;
-  lm = lm.map(p => ({ x: p.x * w, y: p.y * h, z: p.z }));
+export function computeTelemetry(lm, w, h) {
   const P = {};
   for (const [k, i] of Object.entries(LANDMARK_IDX)) P[k] = lm[i];
   const browL = EXTRA.brow_L.map(i => lm[i]);
@@ -168,15 +127,6 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const face_h = dist(P.forehead, P.chin);
   const jaw_w = dist(P.jaw_L, P.jaw_R);
   const eyeCL = mid(P.eye_outer_L, P.eye_inner_L), eyeCR = mid(P.eye_outer_R, P.eye_inner_R);
-  // head pose: the detector's own 3D fit when available, else 2D proxies.
-  // yaw proxy (cheek↔nose-tip foreshortening) is always computed — it stays a
-  // reported metric for comparison. All geometry here is pixel-space (see top).
-  const dYawL = dist(P.cheek_L, P.nose_tip), dYawR = dist(P.nose_tip, P.cheek_R);
-  const yawProxy = Math.atan2(dYawR - dYawL, dYawR + dYawL) * 180 / Math.PI;
-  const rollProxy = Math.atan2(eyeCR.y - eyeCL.y, eyeCR.x - eyeCL.x) * 180 / Math.PI; // + = image-right side lower
-  const pose3d = poseFromMatrix(poseMatrix);
-  const pose = pose3d || { roll: rollProxy, yaw: yawProxy, pitch: null, source: '2D proxy' };
-  const roll = pose.roll, yaw = pose.yaw, pitchDeg = pose.pitch; // fed to tilt correction, frontality, scale warning
   const ipd = dist(eyeCL, eyeCR);
   const eye_w = (dist(P.eye_outer_L, P.eye_inner_L) + dist(P.eye_outer_R, P.eye_inner_R)) / 2;
   const eye_h = (dist(P.eye_top_L, P.eye_bot_L) + dist(P.eye_top_R, P.eye_bot_R)) / 2;
@@ -191,11 +141,9 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const philtrum = dist(subnasale, P.lip_top), noseLen = dist(nasion, P.nose_tip);
 
   // eyes — canthal tilt: signed elevation of the outer corner above the inner
-  // corner, in the FACE frame. Uses |dx| so both eyes share one convention
-  // (+ = outer higher); adding roll removes head-roll contamination, so two
-  // photos of one face at different rolls report the same anatomy.
+  // corner. Uses |dx| so both eyes share one convention (+ = outer higher).
   const tilt = (inner, outer) => Math.atan2(-(outer.y - inner.y), Math.abs(outer.x - inner.x)) * 180 / Math.PI;
-  const tiltL = tilt(P.eye_inner_L, P.eye_outer_L) + roll, tiltR = tilt(P.eye_inner_R, P.eye_outer_R) + roll;
+  const tiltL = tilt(P.eye_inner_L, P.eye_outer_L), tiltR = tilt(P.eye_inner_R, P.eye_outer_R);
 
   // brows
   const arch = (pts, outer, inner) => Math.max(...pts.map(p => perpDist(p, outer, inner))) / eye_w;
@@ -218,8 +166,9 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   ]);
   const asym6 = pairs6.reduce((s, [l, r]) => s + asymPair(l, r), 0) / pairs6.length;
   const asym9 = pairs9.reduce((s, [l, r]) => s + asymPair(l, r), 0) / pairs9.length;
-  // NOTE: asymmetry_9 is deliberately NOT pose-corrected — yaw foreshortening
-  // dominates extreme values and a cosmetic correction would be bullshit.
+  const roll = Math.atan2(eyeCR.y - eyeCL.y, eyeCR.x - eyeCL.x) * 180 / Math.PI;
+  const dYawL = dist(P.cheek_L, P.nose_tip), dYawR = dist(P.nose_tip, P.cheek_R);
+  const yaw = Math.atan2(dYawR - dYawL, dYawR + dYawL) * 180 / Math.PI;
   const frontality = clamp(100 - (Math.abs(roll) * 5 + Math.abs(yaw) * 4 + asym9 * 150), 0, 100);
 
   const thirds = [tU / tTot * 100, tM / tTot * 100, tL / tTot * 100];
@@ -230,10 +179,8 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const spacing = ipd / eye_w;
 
   const m = {
-    // _px metrics are plain pixel-space distances (P.* were converted to pixels
-    // at the top of this function).
-    face_width_px: dist(P.cheek_L, P.cheek_R),
-    face_height_px: dist(P.forehead, P.chin),
+    face_width_px: distPx(P.cheek_L, P.cheek_R, w, h),
+    face_height_px: distPx(P.forehead, P.chin, w, h),
     width_height_ratio: r3(cheek_w / face_h),
     fwhr_proxy: r3(cheek_w / dist(glabella, subnasale)),
     jaw_to_cheek: r3(jaw_w / cheek_w),
@@ -241,17 +188,17 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     third_upper_pct: r3(thirds[0]), third_mid_pct: r3(thirds[1]), third_lower_pct: r3(thirds[2]),
     chin_to_lower_third: r3(dist(P.lip_bot, P.chin) / tL),
     philtrum_to_nose: r3(philtrum / noseLen),
-    ipd_px: dist(eyeCL, eyeCR),
+    ipd_px: distPx(eyeCL, eyeCR, w, h),
     ipd_to_cheek: r3(ipd / cheek_w),
     eye_spacing_widths: r3(spacing),
     eye_w_to_h: r3(eye_w / eye_h),
     canthal_tilt_L: r3(tiltL), canthal_tilt_R: r3(tiltR), canthal_tilt_mean: r3((tiltL + tiltR) / 2),
     fifths: r3(fifths),
-    nose_w_px: dist(P.nostril_L, P.nostril_R),
-    nose_len_px: dist(nasion, P.nose_tip),
+    nose_w_px: distPx(P.nostril_L, P.nostril_R, w, h),
+    nose_len_px: distPx(nasion, P.nose_tip, w, h),
     nose_to_cheek: r3(nose_w / cheek_w),
     nose_w_to_intercanthal: r3(noseIC),
-    mouth_w_px: dist(P.mouth_L, P.mouth_R),
+    mouth_w_px: distPx(P.mouth_L, P.mouth_R, w, h),
     mouth_to_cheek: r3(mouth_w / cheek_w),
     mouth_to_nose: r3(mouthNose),
     lip_fullness: r3(lip_h / mouth_w),
@@ -265,9 +212,7 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     canthal_tilt_diff: r3(Math.abs(tiltL - tiltR)),
     gonial_diff: r3(Math.abs(gonL - gonR)),
     roll_deg: r3(roll),
-    yaw_deg: r3(yaw),
-    pitch_deg: pose3d ? r3(pitchDeg) : null,
-    yaw_proxy_deg: r3(yawProxy),
+    yaw_proxy_deg: r3(yaw),
     frontality: Math.round(frontality * 10) / 10,
     canon_thirds: r3(canonThirds),
     canon_fifths: r3(Math.abs(fifths - 5) / 5 * 100),
@@ -278,15 +223,7 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   return {
     metrics: m,
     quality: frontality >= 85 ? 'high' : frontality >= 60 ? 'medium' : 'low',
-    // anchors stay in NORMALIZED coords — the overlay maps normalized → canvas.
-    anchors: {
-      glabella: mid(norm[EXTRA.brow_inner_L], norm[EXTRA.brow_inner_R]),
-      nasion: norm[EXTRA.nasion], subnasale: norm[EXTRA.subnasale],
-      eyeCL: mid(norm[LANDMARK_IDX.eye_outer_L], norm[LANDMARK_IDX.eye_inner_L]),
-      eyeCR: mid(norm[LANDMARK_IDX.eye_outer_R], norm[LANDMARK_IDX.eye_inner_R]),
-      browInnerL: norm[EXTRA.brow_inner_L], browInnerR: norm[EXTRA.brow_inner_R],
-    },
-    poseSource: pose.source, // '3D' | '2D proxy' — which pose estimate fed roll/yaw
+    anchors: { glabella, nasion, subnasale, eyeCL, eyeCR, browInnerL, browInnerR },
   };
 }
 
@@ -305,9 +242,9 @@ function setStatus(t, ready) {
   statusEl.classList.toggle('ready', !!ready);
 }
 
-// ---- full metric vector (v1 + v2 + v3) — the unit the noise runs resample ----
-function computeAllMetrics(lm, w, h, calib, poseMatrix = null) {
-  const tel = computeTelemetry(lm, w, h, poseMatrix);
+// ---- full metric vector (v1 + v2 + v3) — the unit the bootstrap resamples ----
+function computeAllMetrics(lm, w, h, calib) {
+  const tel = computeTelemetry(lm, w, h);
   return { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h) };
 }
 
@@ -334,38 +271,15 @@ function makeThumb(img) {
 async function analyzeFile(file) {
   const { img, url } = await loadImageFromFile(file);
   const w = img.naturalWidth, h = img.naturalHeight;
-  const det = detectFace(img);
-  if (!det) { URL.revokeObjectURL(url); throw new Error('no face detected'); }
-  const lm = det.landmarks;
+  const lm = detectLandmarks(img);
+  if (!lm) { URL.revokeObjectURL(url); throw new Error('no face detected'); }
   const calibRaw = parseFloat(($('calibIpd') || {}).value);
   const calib = Number.isFinite(calibRaw) && calibRaw > 0 ? calibRaw : null;
-  const bgTag = (($('bgTag') || {}).value || '').trim() || null; // optional background tag, per analysis
-  const tel = computeTelemetry(lm, w, h, det.matrix);
+  const tel = computeTelemetry(lm, w, h);
   const metrics = { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h) };
-  // Landmark-noise interval: jitter landmarks, resample the full vector. The pose
-  // matrix is held fixed across iterations — jitter models landmark noise, not
-  // pose-estimation noise. This is NOT a bootstrap and NOT a population CI.
-  const ci = landmarkNoiseCI((jl, jw, jh) => computeAllMetrics(jl, jw, jh, calib, det.matrix), lm, w, h);
-  // 3D-sourced pose metrics get NO landmark-noise interval: the matrix is held
-  // fixed across jitter iterations, so their interval would be exactly zero —
-  // a fake precision. Suppress rather than display ±0. (2D-proxy pose keeps
-  // its interval: landmark jitter genuinely moves it.)
-  if (tel.poseSource === '3D' && ci)
-    for (const k of ['roll_deg', 'yaw_deg', 'pitch_deg']) delete ci[k];
+  // bootstrap confidence: jitter landmarks, resample the full vector
+  const ci = bootstrapCI((jl, jw, jh) => computeAllMetrics(jl, jw, jh, calib), lm, w, h);
   const v2src = metrics.scale_source;
-  // scale-robustness notes: the iris anchor is the weakest link in the mm chain
-  const scaleNotes = [];
-  if (metrics.scale_source === 'iris' && metrics.iris_diam_L_px && metrics.iris_diam_R_px) {
-    const iMean = (metrics.iris_diam_L_px + metrics.iris_diam_R_px) / 2;
-    const iRel = Math.abs(metrics.iris_diam_L_px - metrics.iris_diam_R_px) / (iMean || 1);
-    if (iRel > 0.15) scaleNotes.push(`iris L/R disagree ${(iRel * 100).toFixed(0)}% — mm scale suspect`);
-  }
-  // |yaw| > 15° flags the mm scale as suspect — now fed TRUE yaw from the
-  // detector's 3D fit when available (strictly better than the foreshortening
-  // proxy, which swung ±4° under ±10° in-plane rotation in testing).
-  const yawForScale = metrics.yaw_deg; // = 3D yaw, else the 2D proxy
-  if (metrics.scale_source === 'iris' && Math.abs(yawForScale) > 15)
-    scaleNotes.push(`yaw ${Math.abs(yawForScale).toFixed(0)}° (${tel.poseSource}) foreshortens far iris — mm values carry extra error`);
   const quality = analyzeQuality(img, lm);
   // composite measurement confidence: pose quality × image quality
   const qScore = quality.verdict === 'pass' ? 100 : quality.verdict === 'warn' ? 65 : 25;
@@ -375,8 +289,7 @@ async function analyzeFile(file) {
     url, thumb: makeThumb(img), img, w, h, lm,
     metrics, ci, confidence,
     quality: metrics.frontality >= 85 ? 'high' : metrics.frontality >= 60 ? 'medium' : 'low',
-    anchors: tel.anchors, scaleNotes, poseSource: tel.poseSource,
-    background: bgTag,
+    anchors: tel.anchors,
     qv: quality, scaleSource: v2src,
   };
   state.items.push(item);
@@ -425,7 +338,7 @@ function renderHistory() {
   for (const it of state.items) {
     const d = document.createElement('div');
     d.className = 'hist-item' + (it.id === state.activeId ? ' active' : '');
-    d.innerHTML = `<img src="${it.thumb}" alt=""><span class="q ${it.qv.verdict}" title="image quality: ${it.qv.verdict} · frontality ${it.metrics.frontality.toFixed(0)}">c${it.confidence}</span><div class="nm">${it.name}${it.background ? ` <span class="posetag" title="background tag">${it.background}</span>` : ''}</div>`;
+    d.innerHTML = `<img src="${it.thumb}" alt=""><span class="q ${it.qv.verdict}" title="image quality: ${it.qv.verdict} · frontality ${it.metrics.frontality.toFixed(0)}">c${it.confidence}</span><div class="nm">${it.name}</div>`;
     const cb = document.createElement('input');
     cb.type = 'checkbox'; cb.className = 'cmp'; cb.title = 'select for a/b compare';
     cb.checked = state.compare.includes(it.id);
@@ -494,152 +407,20 @@ function renderViewer() {
     }
   }
   if ($('layerThirds').checked) {
-    // dividers run perpendicular to the facial midline: rotate each by the
-    // head roll around its own anchor, so tilted heads get anatomical thirds
-    // instead of horizontal slices (the old horizontal lines mis-cut on roll).
-    const rollRad = it.metrics.roll_deg * Math.PI / 180;
-    const dx = Math.cos(rollRad), dy = Math.sin(rollRad);
-    const halfSpan = Math.abs(X(lm[I.cheek_R]).x - X(lm[I.cheek_L]).x) / 2 + 20;
+    const x0 = X(lm[I.cheek_L]).x, x1 = X(lm[I.cheek_R]).x;
     const rows = [
-      [X(lm[I.forehead]), '#f472b6', `U ${it.metrics.third_upper_pct.toFixed(1)}%`],
-      [X(A.glabella), '#f472b6', ''],
-      [X(A.subnasale), '#f472b6', `M ${it.metrics.third_mid_pct.toFixed(1)}%`],
-      [X(lm[I.chin]), '#f472b6', `L ${it.metrics.third_lower_pct.toFixed(1)}%`],
+      [X(lm[I.forehead]).y, '#f472b6', `U ${it.metrics.third_upper_pct.toFixed(1)}%`],
+      [X(A.glabella).y, '#f472b6', ''],
+      [X(A.subnasale).y, '#f472b6', `M ${it.metrics.third_mid_pct.toFixed(1)}%`],
+      [X(lm[I.chin]).y, '#f472b6', `L ${it.metrics.third_lower_pct.toFixed(1)}%`],
     ];
     octx.font = '11px ui-monospace, monospace';
-    for (const [a, c, lab] of rows) {
+    for (const [y, c, lab] of rows) {
       octx.strokeStyle = c; octx.lineWidth = 1.5; octx.setLineDash([6, 4]);
-      octx.beginPath();
-      octx.moveTo(a.x - dx * halfSpan, a.y - dy * halfSpan);
-      octx.lineTo(a.x + dx * halfSpan, a.y + dy * halfSpan);
-      octx.stroke();
+      octx.beginPath(); octx.moveTo(x0 - 20, y); octx.lineTo(x1 + 20, y); octx.stroke();
       octx.setLineDash([]);
-      if (lab) { octx.fillStyle = c; octx.fillText(lab, a.x + dx * halfSpan + 6, a.y + dy * halfSpan + 4); }
+      if (lab) { octx.fillStyle = c; octx.fillText(lab, x1 + 26, y + 4); }
     }
-  }
-
-  // ---- technical overlay suite (visual only — no metric changes) ----
-  const rollR = it.metrics.roll_deg * Math.PI / 180;
-  const rdx = Math.cos(rollR), rdy = Math.sin(rollR); // facial horizontal (eye axis)
-  octx.font = '10px ui-monospace, monospace';
-
-  if ($('layerMidline').checked) {
-    const f = X(lm[I.forehead]), c = X(lm[I.chin]);
-    const ex = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
-    const a = ex(f, c, -0.3), b = ex(f, c, 1.3);
-    octx.strokeStyle = 'rgba(45,212,191,.55)'; octx.lineWidth = 1; octx.setLineDash([4, 4]);
-    octx.beginPath(); octx.moveTo(a.x, a.y); octx.lineTo(b.x, b.y); octx.stroke();
-    octx.setLineDash([]);
-    octx.fillStyle = 'rgba(45,212,191,.85)';
-    octx.fillText('MIDLINE', b.x + 6, b.y + 3);
-  }
-
-  if ($('layerFifths').checked) {
-    const cL = X(lm[I.cheek_L]), cR = X(lm[I.cheek_R]);
-    const f = X(lm[I.forehead]), ch = X(lm[I.chin]);
-    const vlen = Math.hypot(ch.x - f.x, ch.y - f.y) * 0.7;
-    octx.strokeStyle = 'rgba(196,141,255,.4)'; octx.lineWidth = 1; octx.setLineDash([3, 5]);
-    octx.beginPath();
-    for (let k = 1; k < 5; k++) {
-      const px = cL.x + (cR.x - cL.x) * k / 5, py = cL.y + (cR.y - cL.y) * k / 5;
-      octx.moveTo(px + rdy * vlen, py - rdx * vlen);
-      octx.lineTo(px - rdy * vlen, py + rdx * vlen);
-    }
-    octx.stroke();
-    octx.setLineDash([]);
-    octx.fillStyle = 'rgba(196,141,255,.75)';
-    const top5 = { x: cL.x + (cR.x - cL.x) / 5, y: cL.y + (cR.y - cL.y) / 5 };
-    octx.fillText('FIFTHS', top5.x + rdy * vlen + 4, top5.y - rdx * vlen);
-  }
-
-  if ($('layerIris').checked && it.metrics.iris_diam_px) {
-    const s = overlay.width / it.w;
-    const r = Math.max(3, it.metrics.iris_diam_px * s / 2);
-    octx.strokeStyle = 'rgba(125,211,252,.9)'; octx.lineWidth = 1.5;
-    for (const idx of [IRIS.center_L, IRIS.center_R]) {
-      const p = X(lm[idx]);
-      octx.beginPath(); octx.arc(p.x, p.y, r, 0, 7); octx.stroke();
-      octx.beginPath();
-      octx.moveTo(p.x - r - 6, p.y); octx.lineTo(p.x - r + 4, p.y);
-      octx.moveTo(p.x + r - 4, p.y); octx.lineTo(p.x + r + 6, p.y);
-      octx.moveTo(p.x, p.y - r - 6); octx.lineTo(p.x, p.y - r + 4);
-      octx.moveTo(p.x, p.y + r - 4); octx.lineTo(p.x, p.y + r + 6);
-      octx.stroke();
-    }
-    octx.fillStyle = 'rgba(125,211,252,.9)';
-    const pc = X(lm[IRIS.center_R]);
-    octx.fillText(`IRIS Ø${it.metrics.iris_diam_px.toFixed(0)}px`, pc.x + r + 8, pc.y - r - 6);
-  }
-
-  if ($('layerDims').checked) {
-    const a = X(A.eyeCL), b = X(A.eyeCR);
-    const ang = Math.atan2(b.y - a.y, b.x - a.x);
-    const nx = -Math.sin(ang), ny = Math.cos(ang), off = 30;
-    const a2 = { x: a.x + nx * off, y: a.y + ny * off }, b2 = { x: b.x + nx * off, y: b.y + ny * off };
-    octx.strokeStyle = 'rgba(252,211,77,.9)'; octx.lineWidth = 1.5;
-    octx.beginPath();
-    octx.moveTo(a.x + nx * 8, a.y + ny * 8); octx.lineTo(a2.x + nx * 8, a2.y + ny * 8);
-    octx.moveTo(b.x + nx * 8, b.y + ny * 8); octx.lineTo(b2.x + nx * 8, b2.y + ny * 8);
-    octx.moveTo(a2.x, a2.y); octx.lineTo(b2.x, b2.y);
-    for (const p of [a2, b2]) {
-      octx.moveTo(p.x - nx * 5 - Math.cos(ang) * 5, p.y - ny * 5 - Math.sin(ang) * 5);
-      octx.lineTo(p.x + nx * 5 + Math.cos(ang) * 5, p.y + ny * 5 + Math.sin(ang) * 5);
-    }
-    octx.stroke();
-    octx.fillStyle = 'rgba(252,211,77,.95)';
-    const ipdTxt = it.metrics.ipd_mm ? `IPD ${it.metrics.ipd_mm.toFixed(1)}mm` : `IPD ${it.metrics.ipd_px.toFixed(0)}px`;
-    octx.fillText(ipdTxt, (a2.x + b2.x) / 2 + 10, (a2.y + b2.y) / 2 - 6);
-    const tiltArc = (innerLm, outerLm, tiltDeg) => {
-      const o = X(outerLm), inn = X(innerLm);
-      const s = Math.sign(o.x - inn.x) || 1; // outward, away from the nose
-      const aRef = Math.atan2(s * rdy, s * rdx);
-      const aAct = Math.atan2(inn.y - o.y, inn.x - o.x);
-      let d = aAct - aRef;
-      while (d > Math.PI) d -= 2 * Math.PI;
-      while (d < -Math.PI) d += 2 * Math.PI;
-      octx.strokeStyle = 'rgba(248,113,113,.9)'; octx.lineWidth = 1.5;
-      octx.beginPath(); octx.arc(o.x, o.y, 17, aRef, aRef + d, d < 0); octx.stroke();
-      octx.setLineDash([2, 3]);
-      octx.beginPath();
-      octx.moveTo(o.x, o.y); octx.lineTo(o.x + Math.cos(aRef) * 28, o.y + Math.sin(aRef) * 28);
-      octx.stroke(); octx.setLineDash([]);
-      octx.fillStyle = 'rgba(248,113,113,.9)';
-      octx.fillText(tiltDeg.toFixed(1) + '°', o.x + Math.cos(aRef) * 32 - 10, o.y + Math.sin(aRef) * 32 + 3);
-    };
-    tiltArc(lm[I.eye_inner_L], lm[I.eye_outer_L], it.metrics.canthal_tilt_L);
-    tiltArc(lm[I.eye_inner_R], lm[I.eye_outer_R], it.metrics.canthal_tilt_R);
-  }
-
-  if ($('layerGrid').checked) {
-    const W = overlay.width, H = overlay.height, cx = W / 2, cy = H / 2;
-    const step = 36, diag = Math.hypot(W, H);
-    octx.strokeStyle = 'rgba(148,163,184,.12)'; octx.lineWidth = 1;
-    octx.beginPath();
-    for (let t = -diag; t <= diag; t += step) {
-      octx.moveTo(cx - rdy * t - rdx * diag, cy + rdx * t - rdy * diag);
-      octx.lineTo(cx - rdy * t + rdx * diag, cy + rdx * t + rdy * diag);
-      octx.moveTo(cx + rdx * t + rdy * diag, cy + rdy * t - rdx * diag);
-      octx.lineTo(cx + rdx * t - rdy * diag, cy + rdy * t + rdx * diag);
-    }
-    octx.stroke();
-  }
-
-  // ---- HUD frame: corner brackets + data block (always on) ----
-  {
-    const W = overlay.width, H = overlay.height, B = 16, L = 42;
-    octx.strokeStyle = 'rgba(45,212,191,.8)'; octx.lineWidth = 2;
-    octx.beginPath();
-    for (const [cx, cy, sx, sy] of [[B, B, 1, 1], [W - B, B, -1, 1], [B, H - B, 1, -1], [W - B, H - B, -1, -1]]) {
-      octx.moveTo(cx + sx * L, cy); octx.lineTo(cx, cy); octx.lineTo(cx, cy + sy * L);
-    }
-    octx.stroke();
-    octx.fillStyle = 'rgba(45,212,191,.9)';
-    const hud = [
-      `FACELANDMARKER-${it.lm.length} · ${it.w}×${it.h}px · ${it.name.slice(0, 26)}`,
-      `FRONT ${it.metrics.frontality.toFixed(0)} · ROLL ${it.metrics.roll_deg.toFixed(1)}° · YAW ${it.metrics.yaw_deg.toFixed(1)}° · PITCH ${it.metrics.pitch_deg == null ? '—' : it.metrics.pitch_deg.toFixed(1) + '°'} · POSE ${it.poseSource || '2D proxy'}`,
-      `CONF ${it.confidence}/100 · ${it.qv.verdict.toUpperCase()} · ${it.scaleSource}${it.metrics.mm_per_px ? ' ' + it.metrics.mm_per_px.toFixed(4) + 'mm/px' : ''}`,
-    ];
-    hud.forEach((t, i) => octx.fillText(t, B + 10, B + 18 + i * 13));
   }
 
   const q = $('qualityBox');
@@ -650,23 +431,14 @@ function renderViewer() {
     ` &nbsp; light-bal ${qv.illum_balance.toFixed(2)}` +
     (qv.notes.length ? `<br>notes: ${qv.notes.join(' · ')}` : '') +
     `<br>scale: ${it.scaleSource}${it.metrics.mm_per_px ? ` (${it.metrics.mm_per_px.toFixed(4)} mm/px)` : ' — mm values unavailable'}` +
-    (it.scaleNotes && it.scaleNotes.length ? `<br><span class="low">scale notes: ${it.scaleNotes.join(' · ')}</span>` : '') +
     `<br>frontality <b class="${it.quality}">${it.metrics.frontality.toFixed(0)} · ${it.quality}</b>` +
-    ` &nbsp; roll ${it.metrics.roll_deg.toFixed(1)}° &nbsp; yaw ${it.metrics.yaw_deg.toFixed(1)}°` +
-    ` &nbsp; pitch ${it.metrics.pitch_deg == null ? '—' : it.metrics.pitch_deg.toFixed(1) + '°'}` +
-    ` &nbsp; <span class="posetag" title="pose source — 3D: detector's own face-matrix fit; 2D proxy: eye-axis / foreshortening fallback">pose ${it.poseSource || '2D proxy'}</span>` +
+    ` &nbsp; roll ${it.metrics.roll_deg.toFixed(1)}° &nbsp; yaw≈ ${it.metrics.yaw_proxy_deg.toFixed(1)}°` +
     ` &nbsp; asym(9) ${it.metrics.asymmetry_9.toFixed(3)}` +
-    `<br>measurement confidence <b>${it.confidence}</b>/100 <span class="conf" style="font-size:12px;color:var(--dim)">(pose 55% · image quality 45% · landmark-noise intervals, n=32)</span>` +
+    `<br>measurement confidence <b>${it.confidence}</b>/100 <span class="conf" style="font-size:12px;color:var(--dim)">(pose 55% · image quality 45% · CIs bootstrapped, n=32)</span>` +
     (it.quality === 'low' ? ` &nbsp; <b class="low">⚠ pose may distort ratios</b>` : '');
 }
 
 // ---- metric tables ----
-function relBar(v, sd) {
-  // visual encoding of relative 95% CI width; bar half-width ∝ 1.96·sd/|v|, capped
-  if (sd == null || !isFinite(sd) || typeof v !== 'number' || !isFinite(v) || v === 0) return '';
-  const half = Math.max(2, Math.min(30, (1.96 * sd / Math.abs(v)) * 160));
-  return `<div class="cibar" title="relative 95% CI width"><div class="ciw" style="left:${(32 - half).toFixed(1)}px;width:${(half * 2).toFixed(1)}px"></div><div class="cic"></div></div>`;
-}
 function renderMetrics() {
   const it = activeItem();
   metricsCard.hidden = !it;
@@ -684,14 +456,14 @@ function renderMetrics() {
     det.appendChild(sum);
     const tbl = document.createElement('table');
     const hr = document.createElement('tr');
-    hr.innerHTML = `<th>metric</th><th>value</th><th>±95%</th><th>rel σ</th><th></th>`;
+    hr.innerHTML = `<th>metric</th><th>value</th><th>±95%</th><th></th>`;
     tbl.appendChild(hr);
     for (const d of defs) {
       const tr = document.createElement('tr');
       const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
       const ciTxt = d.noCI || sd == null ? '—' : '±' + d.fmt(1.96 * sd);
       tr.innerHTML = `<td class="k">${d.label}${d.game ? '<span class="gametag">game</span>' : ''}</td>` +
-        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="ci">${ciTxt}</td><td class="bar">${relBar(it.metrics[d.key], sd)}</td><td class="n">${d.hint || ''}</td>`;
+        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="ci">${ciTxt}</td><td class="n">${d.hint || ''}</td>`;
       tbl.appendChild(tr);
     }
     det.appendChild(tbl);
@@ -707,7 +479,7 @@ function renderCompare() {
   if (!(a && b)) return;
   $('colA').textContent = 'a · ' + a.name;
   $('colB').textContent = 'b · ' + b.name;
-  $('compareNames').textContent = `Δ = b − a, with landmark-noise 95% intervals. violet rows exceed the combined landmark-noise interval (|Δ| > combined 95% half-width) — a measurement-noise statement, not population significance.`;
+  $('compareNames').textContent = `Δ = b − a, with bootstrap 95% CI. violet rows are statistically significant (|Δ| exceeds combined CI).`;
   const tb = $('deltaTable').querySelector('tbody');
   tb.innerHTML = '';
   for (const d of METRIC_DEFS) {
@@ -725,11 +497,9 @@ function renderCompare() {
     const sig = se != null && Math.abs(dv) > se;
     if (sig) tr.className = 'hot';
     const dvTxt = `${dv >= 0 ? '+' : '-'}${d.fmt(Math.abs(dv))}${se != null ? ' ± ' + d.fmt(se) : ''}`;
-    const bw = Math.min(60, Math.abs(pct) / 25 * 60); // ±25% fills the bar
-    const dbar = `<span class="dbar ${pct >= 0 ? 'pos' : 'neg'}"><i style="width:${bw.toFixed(1)}px"></i></span>`;
     tr.innerHTML = `<td>${d.label}</td><td>${d.fmt(va)}</td><td>${d.fmt(vb)}</td>` +
       `<td class="dv">${dvTxt}</td>` +
-      `<td class="dv">${dbar}${dv >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>`;
+      `<td class="dv">${dv >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>`;
     tb.appendChild(tr);
   }
 }
@@ -746,12 +516,9 @@ function download(name, text, type) {
 function exportPayload() {
   return {
     generated: new Date().toISOString(),
-    tool: 'telemetry lab v3 · MediaPipe FaceLandmarker (same detector as the game) · landmark-noise 95% intervals, n=32',
+    tool: 'telemetry lab v3 · MediaPipe FaceLandmarker (same detector as the game) · bootstrap CI n=32',
     images: state.items.map(it => ({
       name: it.name, quality: it.quality, confidence: it.confidence,
-      pose_source: it.poseSource || '2D proxy',
-      background: it.background || null,
-      scale_notes: it.scaleNotes || [],
       metrics: it.metrics,
       ci95: Object.fromEntries(Object.entries(it.ci || {}).map(([k, v]) => [k, v.sd == null ? null : Math.round(v.sd * 1.96 * 1e6) / 1e6])),
     })),
@@ -762,12 +529,11 @@ $('btnJson').addEventListener('click', () => {
   download('telemetry.json', JSON.stringify(exportPayload(), null, 2), 'application/json');
 });
 $('btnCsv').addEventListener('click', () => {
-  const rows = [['image', 'quality', 'confidence', 'pose_source', 'background', 'metric', 'label', 'group', 'value', 'landmark_noise_95_hw']];
+  const rows = [['image', 'quality', 'confidence', 'metric', 'label', 'group', 'value', 'ci95_halfwidth']];
   for (const it of state.items)
     for (const d of METRIC_DEFS) {
       const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
-      rows.push([it.name, it.quality, String(it.confidence), it.poseSource || '2D proxy', it.background || '',
-        d.key, d.label, d.group,
+      rows.push([it.name, it.quality, String(it.confidence), d.key, d.label, d.group,
         String(it.metrics[d.key]), sd == null ? '' : String(Math.round(sd * 1.96 * 1e6) / 1e6)]);
     }
   download('telemetry.csv', rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
@@ -802,29 +568,9 @@ function renderMethod() {
     the identical model, weights, and running mode the game uses. Landmarks are subpixel floats;
     ratios are computed in normalized image space, px values in image pixels. Angles in degrees.</p>
     <h3>pose &amp; quality</h3>
-    <p>pose comes from the detector's own 4×4 face matrix (<b>pose 3D</b> in the readouts):
-    facialTransformationMatrixes, column-major, decomposed YXZ →
-    yaw = atan2(R02,R22), pitch = asin(−R12), roll = −atan2(R10,R11).
-    Sign conventions (+yaw = turned image-left, +pitch = chin down, +roll = image-right
-    side lower) verified 2026-09-13 against real detector output on a test selfie:
-    ±10° in-plane image rotations moved the matrix roll ∓9.7°/±9.8°, tracking the
-    aspect-corrected eye axis to ≤0.4° in all three; matrix yaw stayed +7.1°→+7.7°
-    (Δ0.6°) where the foreshortening proxy moved 12.7°→14.0° (Δ1.4°); three depth cues
-    (nose nearer the image-left cheek in px, image-left eye/cheek deeper in z) confirm
-    the face is turned image-left, matching +yaw — hence the yaw/roll negations that
-    conform the matrix to the lab's legacy proxy conventions. The matrix is a
-    <i>model fit</i> (Procrustes alignment of the canonical mesh to the landmarks), not
-    ground truth — no anatomical-accuracy claims. When the matrix is absent (older
-    model/wasm) the lab falls back to 2D proxies — aspect-corrected eye-axis roll and
-    cheek↔nose-tip yaw foreshortening — labeled <b>pose 2D proxy</b>, never silently
-    passed off as a measurement. frontality = 100 − (|roll|·5 + |yaw|·4 + asym₉·150),
-    clamped 0–100: the formula is unchanged, the inputs got honest (true angles replace
-    the proxies). high ≥ 85 · medium ≥ 60 · low &lt; 60 (flagged: pose may distort ratios).
-    asymmetry_9 is deliberately <b>not</b> pose-corrected — yaw foreshortening dominates
-    extreme values and a cosmetic correction would be bullshit. Canthal tilt is reported in
-    the face frame (image-frame tilt + roll), so head roll can't contaminate it; |L−R|
-    remains the landmark-noise indicator. Telestrator thirds dividers are drawn
-    perpendicular to the facial midline (roll-rotated), not horizontal.</p>
+    <p>roll = eye-axis angle vs horizontal. yaw = proxy from cheek↔nose-tip foreshortening
+    (approximate — true yaw needs a 3D head model). frontality = 100 − (|roll|·5 + |yaw|·4 + asym₉·150),
+    clamped 0–100. high ≥ 85 · medium ≥ 60 · low &lt; 60 (flagged: pose may distort ratios).</p>
     <h3>game landmark indices (shared)</h3>
     <table>${gameIdx}</table>
     <h3>lab-only landmark indices</h3>
@@ -842,8 +588,7 @@ function renderMethod() {
     mm/px = 11.7 ÷ iris px. Human iris ≈ 11.7mm ±5% biological variation, so mm
     values are estimates. Entering a known IPD overrides the anchor (scale source
     shows iris | calibrated | none). If the detector returns only 468 points, mm
-    values are unavailable. Per-eye iris diameters are reported; L/R disagreement
-    &gt;15% or |yaw| &gt;15° (true 3D yaw when available, else the proxy) flags the mm scale as suspect in the quality box and export.</p>
+    values are unavailable.</p>
     <h3>v2 — contour areas</h3>
     <p>shoelace area of full landmark rings: eye fissure 16-pt rings
     (L: 33,7,163,144,145,153,154,155,133,173,157,158,159,160,161,246;
@@ -851,18 +596,15 @@ function renderMethod() {
     lip vermilion 20-pt ring
     (61,146,91,181,84,17,314,405,321,375,291,409,270,269,267,0,37,39,40,185).
     Rings are drawn on the overlay — verify them visually.</p>
-    <h3>v3 — landmark-noise 95% intervals</h3>
-    <p>Every metric ships with a 95% interval — but it is <b>not</b> a bootstrap and
-    <b>not</b> a population confidence interval. There is no resampling of faces here.
-    Procedure: all 468/478 landmarks are jittered with Gaussian noise
-    (σ = 0.0005 in normalized image coords ≈ subpixel detector noise on a ~1000px face),
-    the <b>entire</b> metric vector is recomputed, and this is repeated 32 times.
-    The reported ± is 1.96 × the standard deviation across the 32 noise runs.
-    This captures <i>detector/landmark noise only</i> — not pose distortion, expression,
-    or lens effects. In the a/b table, a row is violet when |Δ| exceeds the combined
-    landmark-noise interval, i.e. |Δ| &gt; √((1.96σ<sub>a</sub>)² + (1.96σ<sub>b</sub>)²) —
-    replacing the old &gt;5% heuristic. Read it as "the difference survives measurement
-    noise," never as statistical significance about people.</p>
+    <h3>v3 — bootstrap confidence intervals</h3>
+    <p>Every metric ships with a 95% confidence interval. Procedure: all 468/478 landmarks
+    are jittered with Gaussian noise (σ = 0.0005 in normalized image coords ≈ subpixel
+    detector noise on a ~1000px face), the <b>entire</b> metric vector is recomputed, and
+    this is repeated 32 times. The reported ± is 1.96 × the bootstrap standard deviation
+    per metric. This captures <i>detector/landmark noise only</i> — not pose distortion,
+    expression, or lens effects. In the a/b table, a row is violet (significant) when
+    |Δ| exceeds the combined 95% CI, i.e. |Δ| &gt; √((1.96σ<sub>a</sub>)² + (1.96σ<sub>b</sub>)²) —
+    replacing the old &gt;5% heuristic.</p>
     <h3>v3 — asymmetry decomposition &amp; fine detail</h3>
     <p>asymmetry is now decomposed by facial region (upper: brows+eyes 5 pairs; mid: nostrils+cheeks;
     lower: mouth+jaw) so a single number can't hide a lopsided jaw behind symmetric eyes.
@@ -877,11 +619,10 @@ function renderMethod() {
     had been scoring deviation from 1.0. It now scores |ratio−2| ÷ 2. Historical exports
     using the old formula will read ~2× too deviant on this canon.</p>
     <h3>browser vs offline</h3>
-    <p>This page implements everything above, including true 3D head pose from the
-    detector's own face matrix — no OpenCV needed. The offline pipeline
-    (<span style="color:var(--txt)">facial-preference-runs/telemetry_v2.py</span>)
-    additionally fits solvePnP yaw/pitch/roll with reprojection error as an independent
-    cross-check of the matrix decomposition.</p>
+    <p>This page implements everything above. True 3D head pose (solvePnP,
+    yaw/pitch/roll + reprojection error) needs OpenCV and lives in the offline
+    pipeline (<span style="color:var(--txt)">facial-preference-runs/telemetry_v2.py</span>);
+    the page keeps the 2D roll/yaw proxies and the frontality score instead.</p>
     <h3>every metric</h3>
     <table>${formulas}</table>
     <p>◆ = also computed inside the game with the identical definition. canon deviations are
@@ -896,7 +637,7 @@ dropzone.addEventListener('drop', (e) => {
   handleFiles(e.dataTransfer.files);
 });
 fileInput.addEventListener('change', () => handleFiles(fileInput.files));
-for (const id of ['layerMesh', 'layerMetrics', 'layerThirds', 'layerMidline', 'layerFifths', 'layerIris', 'layerDims', 'layerGrid'])
+for (const id of ['layerMesh', 'layerMetrics', 'layerThirds'])
   $(id).addEventListener('change', renderViewer);
 
 renderMethod();
