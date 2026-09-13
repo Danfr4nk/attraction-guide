@@ -345,6 +345,12 @@ async function analyzeFile(file) {
   // matrix is held fixed across iterations — jitter models landmark noise, not
   // pose-estimation noise. This is NOT a bootstrap and NOT a population CI.
   const ci = landmarkNoiseCI((jl, jw, jh) => computeAllMetrics(jl, jw, jh, calib, det.matrix), lm, w, h);
+  // 3D-sourced pose metrics get NO landmark-noise interval: the matrix is held
+  // fixed across jitter iterations, so their interval would be exactly zero —
+  // a fake precision. Suppress rather than display ±0. (2D-proxy pose keeps
+  // its interval: landmark jitter genuinely moves it.)
+  if (tel.poseSource === '3D' && ci)
+    for (const k of ['roll_deg', 'yaw_deg', 'pitch_deg']) delete ci[k];
   const v2src = metrics.scale_source;
   // scale-robustness notes: the iris anchor is the weakest link in the mm chain
   const scaleNotes = [];
