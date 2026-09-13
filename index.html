@@ -4,110 +4,135 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>attraction-guide — instrument index</title>
-<link rel="stylesheet" href="styles.css">
 <style>
-  .inst-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:14px; margin-top:20px; }
-  .inst { background:var(--panel); border:1px solid var(--line); border-radius:12px;
-    padding:18px; display:flex; flex-direction:column; gap:9px; }
-  a.inst { text-decoration:none; color:inherit; }
-  a.inst:hover { border-color:var(--acc); }
-  a.inst:hover .go { text-decoration:underline; }
-  .inst h2 { margin:0; font-size:17px; }
-  .inst p { margin:0; color:var(--dim); font-size:13.5px; flex:1; }
-  .inst .meta { font-family:var(--mono); font-size:11.5px; color:var(--dim); }
-  .inst .go { color:var(--acc); font-weight:600; font-size:14px; }
-  .inst.soon { opacity:.6; }
-  .badges { display:flex; gap:6px; }
-  .badge { display:inline-block; font-size:11px; font-family:var(--mono);
-    border:1px solid var(--line); border-radius:999px; padding:2px 10px; color:var(--dim); }
-  .badge.live { color:var(--good); border-color:var(--good); }
-  .badge.soon { color:var(--warn); border-color:var(--warn); }
-  .hero-note { margin-top:26px; }
+  :root{
+    --bg:#06090d; --panel:#0a0f15; --line:#1b2836; --txt:#c7d4e0; --dim:#5c7080;
+    --acc:#2dd4bf; --warn:#e8b62a; --hot:#b48cf2;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+    font-size:14px;line-height:1.5;min-height:100vh}
+  body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;
+    background:repeating-linear-gradient(0deg,rgba(255,255,255,.016) 0 1px,transparent 1px 3px)}
+  .wrap{max-width:1000px;margin:0 auto;padding:30px 22px 70px}
+  /* HUD header */
+  .hud{position:relative;border:1px solid var(--line);background:var(--panel);padding:18px 20px 14px}
+  .hud .cnr{position:absolute;width:14px;height:14px;border:2px solid var(--acc);opacity:.85}
+  .cnr.tl{top:-2px;left:-2px;border-right:0;border-bottom:0}
+  .cnr.tr{top:-2px;right:-2px;border-left:0;border-bottom:0}
+  .cnr.bl{bottom:-2px;left:-2px;border-right:0;border-top:0}
+  .cnr.br{bottom:-2px;right:-2px;border-left:0;border-top:0}
+  .hud h1{margin:0 0 4px;font-size:20px;letter-spacing:.12em;color:#fff;font-weight:700}
+  .hud h1 .dim{color:var(--dim);font-weight:400}
+  .hud .sub{color:var(--dim);font-size:12.5px}
+  .hud .sub b{color:var(--acc);font-weight:400}
+  .statline{margin-top:12px;padding-top:10px;border-top:1px dashed var(--line);
+    font-size:12px;color:var(--dim);display:flex;gap:18px;flex-wrap:wrap}
+  .statline .ok{color:var(--acc)}
+  /* instrument list */
+  .idx{margin:26px 0 8px;font-size:12px;letter-spacing:.2em;color:var(--dim)}
+  a.inst{display:grid;grid-template-columns:64px 1fr auto;gap:4px 18px;align-items:baseline;
+    border:1px solid var(--line);background:var(--panel);padding:15px 18px;margin-bottom:10px;
+    text-decoration:none;color:inherit;position:relative;transition:border-color .12s}
+  a.inst:hover{border-color:var(--acc);background:#0c141c}
+  a.inst:hover .go{color:var(--acc)}
+  .inst .no{color:var(--dim);font-size:12px}
+  .inst .nm{font-size:16px;font-weight:700;color:#fff;letter-spacing:.02em}
+  .inst .nm .go{color:var(--dim);font-weight:400;font-size:13px;margin-left:8px}
+  .inst .ds{grid-column:2;color:var(--dim);font-size:13px;margin-top:2px}
+  .inst .ds b{color:var(--txt);font-weight:400}
+  .inst .meta{grid-column:2;font-size:11.5px;color:var(--dim);opacity:.85;margin-top:4px}
+  .inst .bdg{grid-row:1;grid-column:3;font-size:10.5px;letter-spacing:.14em;color:var(--acc);
+    border:1px solid var(--acc);padding:3px 10px;border-radius:2px;white-space:nowrap}
+  .inst .bdg.w{color:var(--warn);border-color:var(--warn)}
+  .inst .bdg.v{color:var(--hot);border-color:var(--hot)}
+  footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
+    font-size:11.5px;color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  footer a{color:var(--dim)}
+  @media(max-width:640px){a.inst{grid-template-columns:1fr}.inst .bdg{grid-column:1;justify-self:start;margin-top:8px}.inst .ds,.inst .meta{grid-column:1}}
 </style>
 </head>
 <body>
-<header>
-  <div class="brand">attraction-guide <span class="ver">instrument index</span></div>
-</header>
+<div class="wrap">
 
-<main>
-  <h1>Every instrument, one page.</h1>
-  <p class="lede">The full diagnostic battery: facial preference mapping, precision measurement,
-  scenario instruments, and the face library. Everything runs in-browser; nothing leaves the device.</p>
+  <header class="hud">
+    <span class="cnr tl"></span><span class="cnr tr"></span>
+    <span class="cnr bl"></span><span class="cnr br"></span>
+    <h1>ATTRACTION-GUIDE <span class="dim">// INSTRUMENT INDEX</span></h1>
+    <div class="sub">diagnostic battery for facial preference mapping · every instrument runs in-browser · <b>nothing leaves the device</b></div>
+    <div class="statline">
+      <span><span class="ok">●</span> 7 instruments online</span>
+      <span>detector: mediapipe facelandmarker</span>
+      <span>bank: 155 synthetic faces</span>
+      <span>rule: 1 pick = weak · 2 = leaning · 3+ = confirmed</span>
+    </div>
+  </header>
 
-  <div class="inst-grid">
-    <a class="inst" href="game.html">
-      <div class="badges"><span class="badge live">live</span><span class="badge">flagship</span></div>
-      <h2>Preference Diagnostic</h2>
-      <p>Iterative A/B mapping of what you find attractive in a face. Phase 1: structural
-      archetypes. Phase 2: adaptive single-variable drill-down — jaw, lips, eyes, brows, nose —
-      every pick scored on <i>measured</i> metric deltas, z-scored against the bank.</p>
-      <span class="meta">155-face bank · eye color pinned · 1 pick = weak · 3+ = confirmed</span>
-      <span class="go">play →</span>
-    </a>
+  <div class="idx">SELECT INSTRUMENT —</div>
 
-    <a class="inst" href="telemetry.html">
-      <div class="badges"><span class="badge live">live</span></div>
-      <h2>Telemetry Lab</h2>
-      <p>Standalone precision measurement instrument. Upload portraits, get a ~40-metric facial
-      vector — gonial angles, thirds, fWHR, canthal tilt, asymmetry, pose quality — with
-      telestrator overlays and JSON/CSV export.</p>
-      <span class="meta">same detector as the game · runs fully in-browser</span>
-      <span class="go">measure →</span>
-    </a>
+  <a class="inst" href="game.html">
+    <span class="no">01</span>
+    <span class="nm">PREFERENCE DIAGNOSTIC <span class="go">→</span></span>
+    <span class="bdg">FLAGSHIP</span>
+    <span class="ds"><b>Iterative A/B mapping of what you find attractive in a face.</b> Phase 1 sweeps structural archetypes; Phase 2 adaptively isolates one variable — jaw, lips, eyes, brows, nose. Every pick is scored on <b>measured metric deltas</b>, z-scored against the bank.</span>
+    <span class="meta">eye color pinned · reveal the variable, conceal the score</span>
+  </a>
 
-    <a class="inst" href="scenario-rate.html">
-      <div class="badges"><span class="badge live">live</span><span class="badge">v2</span></div>
-      <h2>Scenario Ratings</h2>
-      <p>196 rated situations: 28 bases × single-knob modifiers. Each modifier changes exactly
-      one thing, so the readout is causal — what that one change does to your 1–10.</p>
-      <span class="meta">export: scenario-ratings-v2.json</span>
-      <span class="go">rate →</span>
-    </a>
+  <a class="inst" href="telemetry.html">
+    <span class="no">02</span>
+    <span class="nm">TELEMETRY LAB <span class="go">→</span></span>
+    <span class="bdg">MEASURE</span>
+    <span class="ds"><b>Standalone precision facial measurement.</b> Upload portraits → ~40-metric vector: gonial angles, facial thirds, fWHR, canthal tilt, regional asymmetry, head pose (roll / yaw / pitch). Telestrator overlays, bootstrap 95% CIs, JSON/CSV export.</span>
+    <span class="meta">same detector as the game · roll-corrected canons · scale via iris anchor or calibrated IPD</span>
+  </a>
 
-    <a class="inst" href="scenario.html">
-      <div class="badges"><span class="badge live">live</span><span class="badge">v6</span></div>
-      <h2>Scenario Telemetry</h2>
-      <p>Named-preset scenario bouts (foursome, her ex, she watches…) then metric isolation:
-      every trial shows only what's different between A and B. Veto both, reluctant, or pick a side.</p>
-      <span class="meta">all scenarios presume consenting adults</span>
-      <span class="go">run →</span>
-    </a>
+  <a class="inst" href="body-metrics.html">
+    <span class="no">03</span>
+    <span class="nm">BODY METRICS <span class="go">→</span></span>
+    <span class="bdg">MEASURE</span>
+    <span class="ds"><b>Precision full-body measurement in-browser.</b> MediaPipe Pose → 16 scale-invariant body ratios, skeleton overlays, per-person models with outlier rejection, z-scored matching with per-ratio breakdowns. Quantitative sibling to Frame Describe.</span>
+    <span class="meta">models in localStorage · auxiliary signal — supports, never overrides, face matching</span>
+  </a>
 
-    <a class="inst" href="face-book.html">
-      <div class="badges"><span class="badge live">live</span></div>
-      <h2>Face Book</h2>
-      <p>The browsable catalog of the whole face library — every synthetic face in the bank,
-      filterable by phase, axis, and group, with lightbox inspection.</p>
-      <span class="meta">155 entries · synthetic, every one judged</span>
-      <span class="go">browse →</span>
-    </a>
+  <a class="inst" href="frame-describe.html">
+    <span class="no">04</span>
+    <span class="nm">FRAME DESCRIBE <span class="go">→</span></span>
+    <span class="bdg v">v0.1</span>
+    <span class="ds"><b>Open-ended body/frame analysis in your own lexicon.</b> Upload a photo, get an exhaustive qualitative read — lead, body inventory, ink inventory, face report, aura. Not precision measurement; a full verbal description.</span>
+    <span class="meta">bring your own vision api key · estimates welcome, hedging isn't</span>
+  </a>
 
-    <a class="inst" href="frame-describe.html">
-      <div class="badges"><span class="badge live">live</span><span class="badge">v0.1</span></div>
-      <h2>Frame Describe</h2>
-      <p>Open-ended body/frame analysis: upload a photo, get an exhaustive qualitative read in
-      your own lexicon — not precision measurement, a full verbal description.</p>
-      <span class="meta">bring your own vision api key · estimates welcome, hedging isn't</span>
-      <span class="go">describe →</span>
-    </a>
+  <a class="inst" href="scenario-rate.html">
+    <span class="no">05</span>
+    <span class="nm">SCENARIO RATINGS <span class="go">→</span></span>
+    <span class="bdg v">v2</span>
+    <span class="ds"><b>196 rated situations: 28 bases × single-knob modifiers.</b> Each modifier changes exactly one thing, so the readout is causal — what that one change does to your 1–10.</span>
+    <span class="meta">export: scenario-ratings-v2.json</span>
+  </a>
 
-    <a class="inst" href="body-metrics.html">
-      <div class="badges"><span class="badge live">live</span><span class="badge">new</span></div>
-      <h2>Body Metrics</h2>
-      <p>Precision full-body measurement in-browser: MediaPipe Pose → 16 scale-invariant body
-      ratios, skeleton overlays, per-person models with outlier rejection, and z-scored
-      matching with per-ratio breakdowns. The quantitative sibling to Frame Describe.</p>
-      <span class="meta">models in localStorage · nothing uploaded · auxiliary to face matching</span>
-      <span class="go">measure →</span>
-    </a>
-  </div>
+  <a class="inst" href="scenario.html">
+    <span class="no">06</span>
+    <span class="nm">SCENARIO TELEMETRY <span class="go">→</span></span>
+    <span class="bdg v">v6</span>
+    <span class="ds"><b>Named-preset scenario bouts, then metric isolation.</b> Run the bout (foursome, her ex, she watches…), then every trial shows only what's different between A and B. Veto both, reluctant, or pick a side.</span>
+    <span class="meta">all scenarios presume consenting adults</span>
+  </a>
 
-  <p class="lede hero-note">Reveal the variable, conceal the score.</p>
-</main>
+  <a class="inst" href="face-book.html">
+    <span class="no">07</span>
+    <span class="nm">FACE BOOK <span class="go">→</span></span>
+    <span class="bdg">BANK</span>
+    <span class="ds"><b>The browsable catalog of the whole face library.</b> Every synthetic face in the bank, filterable by phase, axis, and group, with lightbox inspection.</span>
+    <span class="meta">155 entries · synthetic, every one judged</span>
+  </a>
 
-<footer>
-  <span>attraction-guide · synthetic faces only · measurements: MediaPipe FaceMesh ratios, computed locally</span>
-</footer>
+  <footer>
+    <span>attraction-guide · synthetic faces only · measurements computed locally (MediaPipe)</span>
+    <span>no accounts · no uploads · no tracking</span>
+  </footer>
+
+</div>
 </body>
 </html>
