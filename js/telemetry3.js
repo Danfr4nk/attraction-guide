@@ -58,9 +58,22 @@ export function computeV3(lm, w, h) {
   lm = lm.map(p => ({ x: p.x * w, y: p.y * h, z: p.z }));
   const g = (i) => lm[i];
   const x_mid = (g(10).x + g(152).x) / 2; // forehead ↔ chin midline
+  // flags annotate, never hide (same contract as computeTelemetry's
+  // metricFlags): 'denominator-collapse' when a ratio's denominator falls
+  // below a bank-calibrated floor (0.5 × bank minimum as a fraction of
+  // cheek_w — see js/telemetry.js), 'non-finite' as a safety net.
+  const flags = {};
+  const flag = (key, f) => { (flags[key] ||= []).push(f); };
+  const cheek_w = dist(g(234), g(454));
+  const gdiv = (key, num, den, floorFrac) => {
+    if (!(Math.abs(den) >= floorFrac * cheek_w)) flag(key, 'denominator-collapse');
+    return num / den;
+  };
   const asymPair = (l, r) => {
     const dL = Math.abs(l.x - x_mid), dR = Math.abs(r.x - x_mid);
-    return Math.abs(dL - dR) / (((dL + dR) / 2) || 1);
+    const den = (dL + dR) / 2;
+    if (!(den > 0)) return 0; // both on the midline: symmetric, not unmeasurable
+    return Math.abs(dL - dR) / den;
   };
   const eye_w = (dist(g(33), g(133)) + dist(g(362), g(263))) / 2;
   const face_h = dist(g(10), g(152));
@@ -83,14 +96,16 @@ export function computeV3(lm, w, h) {
   const browLen = (arcLen(BROW_L) + arcLen(BROW_R)) / 2 / eye_w;
 
   // scleral show: iris-center height within the fissure (needs refined 478-pt landmarks)
+  // The fissure-height denominators collapse on blink/extreme yaw — the old
+  // `|| 1` silently fabricated a finite value; now flagged instead.
   let scL = null, scR = null;
   if (lm.length >= 478) {
-    const fL = (g(468).y - g(159).y) / ((g(145).y - g(159).y) || 1);
-    const fR = (g(473).y - g(386).y) / ((g(374).y - g(386).y) || 1);
+    const fL = gdiv('scleral_show_L', g(468).y - g(159).y, g(145).y - g(159).y, 0.03);
+    const fR = gdiv('scleral_show_R', g(473).y - g(386).y, g(374).y - g(386).y, 0.03);
     scL = r3(fL); scR = r3(fR);
   }
 
-  return {
+  const metrics = {
     asym_upper: r3(avg(upperPairs)),
     asym_mid: r3(avg(midPairs)),
     asym_lower: r3(avg(lowerPairs)),
@@ -102,6 +117,9 @@ export function computeV3(lm, w, h) {
     nose_tip_deviation: r3(Math.abs(g(1).x - x_mid) / (nose_w || 1)),
     lip_corner_asym: r3(Math.abs(g(61).y - g(291).y) / (mouth_w || 1)),
   };
+  for (const [k, v] of Object.entries(metrics))
+    if (typeof v === 'number' && !isFinite(v)) flag(k, 'non-finite');
+  return { metrics, flags };
 }
 
 const f3 = (v) => v.toFixed(3);

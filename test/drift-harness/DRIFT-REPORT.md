@@ -55,6 +55,20 @@ the `+ roll` decontamination term. `yaw_proxy_deg`: zero drift (formula
 unchanged). `asymmetry_9` / `mean_asymmetry`: zero drift (deliberately
 untouched, per the standing rule).
 
+### Addendum 2026-09-14 — tilt sign bug found and fixed
+The robustness synthetic-rotation battery caught a sign error in the
+roll correction: the old code added `+roll` to BOTH eyes, which corrected R
+but DOUBLE-contaminated L (tiltL moved +10° per +10° imposed roll). Fixed:
+image-left eye `tilt − roll`, image-right eye `tilt + roll` (the `|dx|`
+convention moves the two eyes' image tilts in opposite directions under
+roll — verified both eyes bit-invariant under ±10° imposed roll).
+drift-report.json was re-run against the fixed code; the tilt rows now read:
+tiltL drift = −roll (maxSigned −2.23°), tiltR drift = +roll (+2.23°),
+tilt_mean drift mean 0.012° (the correction is now symmetric — the mean
+reduces to the uncorrected image mean, roll canceling exactly), tilt_diff
+drift = −2·roll (mean 1.94°). The game's `measure.js` tilt is uncorrected
+(pre-existing, not a bug — out of scope for the lab hardening).
+
 **Pixel-space aspect fix (A only, C == 0.000 everywhere):** every other drifting
 metric moves *only* on real (non-square) dims and is bit-identical on square
 dims — it is the aspect correction, not a bug. Notable magnitudes, because

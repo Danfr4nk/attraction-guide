@@ -83,6 +83,11 @@
 .dbar.pos i { left: 50%; background: var(--good); }
 .dbar.neg i { right: 50%; background: var(--warn); }
 .gametag { color: var(--acc); font-size: 10px; border: 1px solid var(--acc); border-radius: 3px; padding: 0 4px; margin-left: 6px; }
+/* per-metric reliability flags: annotate, never conceal */
+.flag { font-size: 10px; border-radius: 8px; padding: 1px 7px; margin-left: 6px; white-space: nowrap; cursor: help; }
+.flag-warn { background: rgba(251,191,36,.12); color: #fbbf24; border: 1px solid rgba(251,191,36,.45); }
+.flag-bad { background: rgba(248,113,113,.12); color: #f87171; border: 1px solid rgba(248,113,113,.45); }
+.unmeas { color: #f87171; font-style: italic; }
 .vec-count { color: var(--dim); font-weight: 400; font-size: 12px; font-family: var(--mono); }
 
 .table-wrap { overflow-x: auto; }

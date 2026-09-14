@@ -4,6 +4,7 @@
 import { ensureLandmarker, detectFace, LANDMARK_IDX } from './measure.js';
 import { analyzeQuality, computeV2, V2_METRIC_DEFS, V2_GROUPS, EYE_RING_L, EYE_RING_R, LIP_RING, IRIS } from './telemetry2.js';
 import { computeV3, V3_METRIC_DEFS, V3_GROUPS, landmarkNoiseCI } from './telemetry3.js';
+import { POSE_SLOPE, ROBUSTNESS_TIER, poseFlagFor } from './robustness.js';
 // NOTE: V2 defs are appended AFTER the METRIC_DEFS / GROUPS declarations below
 // (const arrays are in the temporal dead zone until their declaration executes).
 
@@ -195,6 +196,26 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const mouth_w = dist(P.mouth_L, P.mouth_R);
   const lip_h = dist(P.lip_top, P.lip_bot);
 
+  // ---- denominator guards ----
+  // metricFlags: { key: [flag, ...] }. Flags annotate, never hide: the measured
+  // value is always preserved (even Infinity/NaN) and the flag says why it
+  // can't be trusted.
+  // 'denominator-collapse': |denominator| below a bank-calibrated floor —
+  // floors are 0.5 × the bank minimum as a fraction of cheek_w (n=155 frozen
+  // synthetic neutral faces: eye_h min 0.0627, lower-lip min 0.0626, fissure
+  // min ~0.061 → floor 0.03). Below the floor the ratio is geometrically
+  // unmeasurable: blink, extreme yaw foreshortening, or detector
+  // hallucination (the 2026-09-14 capture with eye_w_to_h = 23.695).
+  // 'non-finite': the arithmetic itself produced Infinity/NaN (safety net).
+  // The old `|| 1` fallbacks are gone — they silently fabricated finite values
+  // where nothing was measurable.
+  const metricFlags = {};
+  const flag = (key, f) => { (metricFlags[key] ||= []).push(f); };
+  const gdiv = (key, num, den, floorFrac) => {
+    if (!(Math.abs(den) >= floorFrac * cheek_w)) flag(key, 'denominator-collapse');
+    return num / den;
+  };
+
   // structure
   const tU = dist(P.forehead, glabella), tM = dist(glabella, subnasale), tL = dist(subnasale, P.chin);
   const tTot = tU + tM + tL;
@@ -202,11 +223,17 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const philtrum = dist(subnasale, P.lip_top), noseLen = dist(nasion, P.nose_tip);
 
   // eyes — canthal tilt: signed elevation of the outer corner above the inner
-  // corner, in the FACE frame. Uses |dx| so both eyes share one convention
-  // (+ = outer higher); adding roll removes head-roll contamination, so two
-  // photos of one face at different rolls report the same anatomy.
+  // corner, in the FACE frame. |dx| gives both eyes the + = outer-higher
+  // convention at zero roll — but it also means image-frame roll moves the two
+  // eyes' image tilts in OPPOSITE directions (the inner→outer vectors point
+  // opposite ways on the two eyes), so the roll correction takes opposite
+  // signs: −roll for the image-left eye, +roll for the image-right eye.
+  // CORRECTED 2026-09-14: the old code added +roll to both, which corrected R
+  // and DOUBLE-contaminated L (verified on synthetic in-plane rotations:
+  // tiltL moved +10° per +10° imposed roll, tiltR held). Purely image-frame,
+  // so selfie mirroring can't break it.
   const tilt = (inner, outer) => Math.atan2(-(outer.y - inner.y), Math.abs(outer.x - inner.x)) * 180 / Math.PI;
-  const tiltL = tilt(P.eye_inner_L, P.eye_outer_L) + roll, tiltR = tilt(P.eye_inner_R, P.eye_outer_R) + roll;
+  const tiltL = tilt(P.eye_inner_L, P.eye_outer_L) - roll, tiltR = tilt(P.eye_inner_R, P.eye_outer_R) + roll;
 
   // brows
   const arch = (pts, outer, inner) => Math.max(...pts.map(p => perpDist(p, outer, inner))) / eye_w;
@@ -217,7 +244,12 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const x_mid = (P.forehead.x + P.chin.x) / 2;
   const asymPair = (l, r) => {
     const dL = Math.abs(l.x - x_mid), dR = Math.abs(r.x - x_mid);
-    return Math.abs(dL - dR) / (((dL + dR) / 2) || 1);
+    const den = (dL + dR) / 2;
+    // explicit midline case (was `|| 1`): both landmarks on the midline means
+    // perfectly symmetric — 0, not 0/1. den > 0 but microscopic keeps the
+    // honest ratio; only the exact-degenerate case short-circuits.
+    if (!(den > 0)) return 0;
+    return Math.abs(dL - dR) / den;
   };
   const pairs6 = [
     [P.eye_outer_L, P.eye_outer_R], [P.eye_inner_L, P.eye_inner_R],
@@ -255,7 +287,7 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     ipd_px: dist(eyeCL, eyeCR),
     ipd_to_cheek: r3(ipd / cheek_w),
     eye_spacing_widths: r3(spacing),
-    eye_w_to_h: r3(eye_w / eye_h),
+    eye_w_to_h: r3(gdiv('eye_w_to_h', eye_w, eye_h, 0.03)),
     canthal_tilt_L: r3(tiltL), canthal_tilt_R: r3(tiltR), canthal_tilt_mean: r3((tiltL + tiltR) / 2),
     fifths: r3(fifths),
     nose_w_px: dist(P.nostril_L, P.nostril_R),
@@ -266,7 +298,7 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     mouth_to_cheek: r3(mouth_w / cheek_w),
     mouth_to_nose: r3(mouthNose),
     lip_fullness: r3(lip_h / mouth_w),
-    upper_lower_lip: r3(dist(P.lip_top, innerTop) / (dist(innerBot, P.lip_bot) || 1)),
+    upper_lower_lip: r3(gdiv('upper_lower_lip', dist(P.lip_top, innerTop), dist(innerBot, P.lip_bot), 0.03)),
     brow_eye_dist_pct: r3(browEye),
     brow_arch_L: r3(arch(browL, browOuterL, browInnerL)),
     brow_arch_R: r3(arch(browR, browOuterR, browInnerR)),
@@ -286,8 +318,13 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     canon_mouth: r3(Math.abs(mouthNose - 1.5) / 1.5 * 100),
     canon_spacing: r3(Math.abs(spacing - 2) / 2 * 100),
   };
+  // safety net: any ratio the guards above didn't anticipate that still blew
+  // up gets flagged rather than rendered as a bare Infinity/NaN.
+  for (const [k, v] of Object.entries(m))
+    if (typeof v === 'number' && !isFinite(v)) flag(k, 'non-finite');
   return {
     metrics: m,
+    metricFlags, // { key: [flag, ...] } — denominator/arithmetic annotations; values preserved
     quality: frontality >= 85 ? 'high' : frontality >= 60 ? 'medium' : 'low',
     // anchors stay in NORMALIZED coords — the overlay maps normalized → canvas.
     anchors: {
@@ -319,7 +356,23 @@ function setStatus(t, ready) {
 // ---- full metric vector (v1 + v2 + v3) — the unit the noise runs resample ----
 function computeAllMetrics(lm, w, h, calib, poseMatrix = null) {
   const tel = computeTelemetry(lm, w, h, poseMatrix);
-  return { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h) };
+  return { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h).metrics };
+}
+
+// Merge per-metric flags: denominator/arithmetic flags from V1+V3 plus
+// geometric pose-contamination flags (synthetic slopes, js/robustness.js).
+// Pose flags are a LOWER bound on the doubt — detector breakdown at extreme
+// pose adds unmodeled error on top; the quality gate owns that regime.
+function computeMetricFlags(tel, v3flags) {
+  const out = {};
+  for (const [k, arr] of Object.entries(tel.metricFlags || {})) out[k] = [...arr];
+  for (const [k, arr] of Object.entries(v3flags || {})) out[k] = [...(out[k] || []), ...arr];
+  const { yaw_deg, roll_deg, pitch_deg } = tel.metrics;
+  for (const k of Object.keys(POSE_SLOPE)) {
+    const f = poseFlagFor(k, yaw_deg, roll_deg, pitch_deg);
+    if (f !== 'ok') (out[k] ||= []).push(f);
+  }
+  return out;
 }
 
 // ---- upload + analysis ----
@@ -352,7 +405,9 @@ async function analyzeFile(file) {
   const calib = Number.isFinite(calibRaw) && calibRaw > 0 ? calibRaw : null;
   const bgTag = (($('bgTag') || {}).value || '').trim() || null; // optional background tag, per analysis
   const tel = computeTelemetry(lm, w, h, det.matrix);
-  const metrics = { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h) };
+  const v3 = computeV3(lm, w, h);
+  const metrics = { ...tel.metrics, ...computeV2(lm, w, h, calib), ...v3.metrics };
+  const metricFlags = computeMetricFlags(tel, v3.flags);
   // Landmark-noise interval: jitter landmarks, resample the full vector. The pose
   // matrix is held fixed across iterations — jitter models landmark noise, not
   // pose-estimation noise. This is NOT a bootstrap and NOT a population CI.
@@ -384,7 +439,7 @@ async function analyzeFile(file) {
   const item = {
     id: 't' + (++seq), name: file.name || ('upload ' + seq),
     url, thumb: makeThumb(img), img, w, h, lm,
-    metrics, ci, confidence,
+    metrics, ci, confidence, metricFlags,
     quality: metrics.frontality >= 85 ? 'high' : metrics.frontality >= 60 ? 'medium' : 'low',
     anchors: tel.anchors, scaleNotes, poseSource: tel.poseSource,
     background: bgTag,
@@ -645,16 +700,20 @@ function renderViewer() {
     }
     octx.stroke();
     octx.fillStyle = 'rgba(45,212,191,.9)';
+    const fc = flagCounts(it);
     const hud = [
       `FACELANDMARKER-${it.lm.length} · ${it.w}×${it.h}px · ${it.name.slice(0, 26)}`,
       `FRONT ${it.metrics.frontality.toFixed(0)} · ROLL ${it.metrics.roll_deg.toFixed(1)}° · YAW ${it.metrics.yaw_deg.toFixed(1)}° · PITCH ${it.metrics.pitch_deg == null ? '—' : it.metrics.pitch_deg.toFixed(1) + '°'} · POSE ${it.poseSource || '2D proxy'}`,
       `CONF ${it.confidence}/100 · ${it.qv.verdict.toUpperCase()} · ${it.scaleSource}${it.metrics.mm_per_px ? ' ' + it.metrics.mm_per_px.toFixed(4) + 'mm/px' : ''}`,
     ];
+    if (fc.unreliable || fc.suspect || fc.denom)
+      hud.push(`FLAGS ${fc.unreliable} pose-unreliable · ${fc.suspect} pose-suspect · ${fc.denom} denominator-collapse — values kept, see table`);
     hud.forEach((t, i) => octx.fillText(t, B + 10, B + 18 + i * 13));
   }
 
   const q = $('qualityBox');
   const qv = it.qv;
+  const fcq = flagCounts(it);
   q.innerHTML = `image quality <b class="${qv.verdict}">${qv.verdict}</b>` +
     ` &nbsp; sharp ${qv.sharpness.toFixed(0)} &nbsp; expos ${qv.exposure.toFixed(0)}` +
     ` &nbsp; clip ${qv.clipping_pct.toFixed(1)}% &nbsp; iid ${qv.iid_px.toFixed(0)}px` +
@@ -668,7 +727,9 @@ function renderViewer() {
     ` &nbsp; <span class="posetag" title="pose source — 3D: detector's own face-matrix fit; 2D proxy: eye-axis / foreshortening fallback">pose ${it.poseSource || '2D proxy'}</span>` +
     ` &nbsp; asym(9) ${it.metrics.asymmetry_9.toFixed(3)}` +
     `<br>measurement confidence <b>${it.confidence}</b>/100 <span class="conf" style="font-size:12px;color:var(--dim)">(pose 55% · image quality 45% · landmark-noise intervals, n=32)</span>` +
-    (it.quality === 'low' ? ` &nbsp; <b class="low">⚠ pose may distort ratios</b>` : '');
+    (it.quality === 'low' ? ` &nbsp; <b class="low">⚠ pose may distort ratios</b>` : '') +
+    (fcq.unreliable ? `<br><b class="low">⚠ ${fcq.unreliable} metric(s) pose-unreliable at this pose${fcq.suspect ? `, ${fcq.suspect} suspect` : ''}</b> — values kept and flagged in the table, not suppressed` : '') +
+    (fcq.denom ? `<br><b class="low">⚠ ${fcq.denom} metric(s) denominator-collapse (unmeasurable geometry — blink, foreshortening, or detector error)</b>` : '');
 }
 
 // ---- metric tables ----
@@ -678,6 +739,32 @@ function relBar(v, sd) {
   const half = Math.max(2, Math.min(30, (1.96 * sd / Math.abs(v)) * 160));
   return `<div class="cibar" title="relative 95% CI width"><div class="ciw" style="left:${(32 - half).toFixed(1)}px;width:${(half * 2).toFixed(1)}px"></div><div class="cic"></div></div>`;
 }
+// ---- per-metric flags (denominator / pose-contamination annotations) ----
+const FLAG_TITLES = {
+  'denominator-collapse': 'denominator below measurable floor — the ratio is geometrically unmeasurable here (blink, extreme foreshortening, or detector error). Value shown raw; do not trust.',
+  'non-finite': 'the arithmetic produced Infinity/NaN — unmeasurable.',
+  'pose-suspect': 'pose alone is expected to move this metric ≥0.5 bank SD (synthetic geometric probe) — treat as suspect.',
+  'pose-unreliable': 'pose alone is expected to move this metric ≥1 bank SD (synthetic geometric probe) — do not trust this value at this pose.',
+};
+const flagClass = (f) => (f === 'pose-unreliable' || f === 'non-finite') ? 'flag-bad' : 'flag-warn';
+function fmtVal(d, v) {
+  if (typeof v === 'number' && !isFinite(v)) return '<span class="unmeas">unmeasurable</span>';
+  return d.fmt(v);
+}
+function flagChips(flags) {
+  if (!flags || !flags.length) return '';
+  return ' ' + flags.map(f => `<span class="flag ${flagClass(f)}" title="${FLAG_TITLES[f] || f}">${f}</span>`).join('');
+}
+function flagCounts(it) {
+  let suspect = 0, unreliable = 0, denom = 0;
+  for (const arr of Object.values(it.metricFlags || {})) {
+    if (arr.includes('pose-unreliable')) unreliable++;
+    else if (arr.includes('pose-suspect')) suspect++;
+    if (arr.includes('denominator-collapse') || arr.includes('non-finite')) denom++;
+  }
+  return { suspect, unreliable, denom };
+}
+
 function renderMetrics() {
   const it = activeItem();
   metricsCard.hidden = !it;
@@ -702,7 +789,7 @@ function renderMetrics() {
       const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
       const ciTxt = d.noCI || sd == null ? '—' : '±' + d.fmt(1.96 * sd);
       tr.innerHTML = `<td class="k">${d.label}${d.game ? '<span class="gametag">game</span>' : ''}</td>` +
-        `<td class="v">${d.fmt(it.metrics[d.key])}</td><td class="ci">${ciTxt}</td><td class="bar">${relBar(it.metrics[d.key], sd)}</td><td class="n">${d.hint || ''}</td>`;
+        `<td class="v">${fmtVal(d, it.metrics[d.key])}${flagChips(it.metricFlags && it.metricFlags[d.key])}</td><td class="ci">${ciTxt}</td><td class="bar">${relBar(it.metrics[d.key], sd)}</td><td class="n">${d.hint || ''}</td>`;
       tbl.appendChild(tr);
     }
     det.appendChild(tbl);
@@ -724,8 +811,9 @@ function renderCompare() {
   for (const d of METRIC_DEFS) {
     const va = a.metrics[d.key], vb = b.metrics[d.key];
     const tr = document.createElement('tr');
+    const fa = a.metricFlags && a.metricFlags[d.key], fb = b.metricFlags && b.metricFlags[d.key];
     if (typeof va !== 'number' || typeof vb !== 'number' || !isFinite(va) || !isFinite(vb)) {
-      tr.innerHTML = `<td>${d.label}</td><td>${d.fmt(va)}</td><td>${d.fmt(vb)}</td><td class="dv">—</td><td class="dv">—</td>`;
+      tr.innerHTML = `<td>${d.label}</td><td>${fmtVal(d, va)}${flagChips(fa)}</td><td>${fmtVal(d, vb)}${flagChips(fb)}</td><td class="dv">—</td><td class="dv">—</td>`;
       tb.appendChild(tr);
       continue;
     }
@@ -738,7 +826,7 @@ function renderCompare() {
     const dvTxt = `${dv >= 0 ? '+' : '-'}${d.fmt(Math.abs(dv))}${se != null ? ' ± ' + d.fmt(se) : ''}`;
     const bw = Math.min(60, Math.abs(pct) / 25 * 60); // ±25% fills the bar
     const dbar = `<span class="dbar ${pct >= 0 ? 'pos' : 'neg'}"><i style="width:${bw.toFixed(1)}px"></i></span>`;
-    tr.innerHTML = `<td>${d.label}</td><td>${d.fmt(va)}</td><td>${d.fmt(vb)}</td>` +
+    tr.innerHTML = `<td>${d.label}</td><td>${fmtVal(d, va)}${flagChips(fa)}</td><td>${fmtVal(d, vb)}${flagChips(fb)}</td>` +
       `<td class="dv">${dvTxt}</td>` +
       `<td class="dv">${dbar}${dv >= 0 ? '+' : ''}${pct.toFixed(1)}%</td>`;
     tb.appendChild(tr);
@@ -758,12 +846,19 @@ function exportPayload() {
   return {
     generated: new Date().toISOString(),
     tool: 'telemetry lab v3 · MediaPipe FaceLandmarker (same detector as the game) · landmark-noise 95% intervals, n=32',
+    flags_legend: {
+      'denominator-collapse': 'ratio denominator below measurable floor — value kept raw, do not trust',
+      'non-finite': 'arithmetic produced Infinity/NaN (JSON null) — unmeasurable',
+      'pose-suspect': 'pose alone expected to move this metric ≥0.5 bank SD (synthetic geometric probe)',
+      'pose-unreliable': 'pose alone expected to move this metric ≥1 bank SD (synthetic geometric probe)',
+    },
     images: state.items.map(it => ({
       name: it.name, quality: it.quality, confidence: it.confidence,
       pose_source: it.poseSource || '2D proxy',
       background: it.background || null,
       scale_notes: it.scaleNotes || [],
       metrics: it.metrics,
+      metric_flags: it.metricFlags || {},
       ci95: Object.fromEntries(Object.entries(it.ci || {}).map(([k, v]) => [k, v.sd == null ? null : Math.round(v.sd * 1.96 * 1e6) / 1e6])),
     })),
   };
@@ -773,13 +868,15 @@ $('btnJson').addEventListener('click', () => {
   download('telemetry.json', JSON.stringify(exportPayload(), null, 2), 'application/json');
 });
 $('btnCsv').addEventListener('click', () => {
-  const rows = [['image', 'quality', 'confidence', 'pose_source', 'background', 'metric', 'label', 'group', 'value', 'landmark_noise_95_hw']];
+  const rows = [['image', 'quality', 'confidence', 'pose_source', 'background', 'metric', 'label', 'group', 'value', 'landmark_noise_95_hw', 'flags']];
   for (const it of state.items)
     for (const d of METRIC_DEFS) {
       const sd = it.ci && it.ci[d.key] ? it.ci[d.key].sd : null;
+      const v = it.metrics[d.key];
       rows.push([it.name, it.quality, String(it.confidence), it.poseSource || '2D proxy', it.background || '',
         d.key, d.label, d.group,
-        String(it.metrics[d.key]), sd == null ? '' : String(Math.round(sd * 1.96 * 1e6) / 1e6)]);
+        String(v), sd == null ? '' : String(Math.round(sd * 1.96 * 1e6) / 1e6),
+        ((it.metricFlags && it.metricFlags[d.key]) || []).join(';')]);
     }
   download('telemetry.csv', rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n'), 'text/csv');
 });
@@ -789,8 +886,11 @@ $('btnCopy').addEventListener('click', async () => {
   const lines = [`telemetry · ${it.name} · confidence ${it.confidence}/100 · frontality ${it.metrics.frontality.toFixed(0)} (${it.quality})`];
   for (const [gkey, gname] of GROUPS) {
     lines.push(`[${gname}]`);
-    for (const d of METRIC_DEFS.filter(x => x.group === gkey))
-      lines.push(`  ${d.label}: ${d.fmt(it.metrics[d.key])}`);
+    for (const d of METRIC_DEFS.filter(x => x.group === gkey)) {
+      const v = it.metrics[d.key];
+      const fl = (it.metricFlags && it.metricFlags[d.key] || []).join(',');
+      lines.push(`  ${d.label}: ${typeof v === 'number' && !isFinite(v) ? 'unmeasurable' : d.fmt(v)}${fl ? ` [${fl}]` : ''}`);
+    }
   }
   try { await navigator.clipboard.writeText(lines.join('\n')); setStatus('summary copied', true); }
   catch (e) { setStatus('copy blocked by browser', true); }
@@ -833,8 +933,11 @@ function renderMethod() {
     the proxies). high ≥ 85 · medium ≥ 60 · low &lt; 60 (flagged: pose may distort ratios).
     asymmetry_9 is deliberately <b>not</b> pose-corrected — yaw foreshortening dominates
     extreme values and a cosmetic correction would be bullshit. Canthal tilt is reported in
-    the face frame (image-frame tilt + roll), so head roll can't contaminate it; |L−R|
-    remains the landmark-noise indicator. Telestrator thirds dividers are drawn
+    the face frame (image-left eye: image tilt − roll; image-right eye: image tilt + roll —
+    the |dx| convention moves the two eyes' image tilts in opposite directions under roll,
+    so the correction takes opposite signs; corrected 2026-09-14 after a synthetic
+    rotation battery caught the old +roll-on-both-eyes doubling L's contamination).
+    |L−R| remains the landmark-noise indicator. Telestrator thirds dividers are drawn
     perpendicular to the facial midline (roll-rotated), not horizontal.</p>
     <h3>game landmark indices (shared)</h3>
     <table>${gameIdx}</table>
@@ -846,7 +949,14 @@ function renderMethod() {
     clipping = % of bbox pixels near black/white (fail &gt; 25%, warn &gt; 10%).
     face size = interpupillary px (fail &lt; 40, warn &lt; 90).
     illumination balance = |left-half − right-half| ÷ mean (warn &gt; 0.25, harsh side light).
-    verdict <b>fail</b> means the instrument will not stand behind the numbers.</p>
+    verdict <b>fail</b> means the instrument does not stand behind the numbers —
+    they are still shown, flagged, and exported (confidence 25/100), because
+    weak values are labeled, never silently suppressed.</p>
+    <h3>v2 — per-metric flags</h3>
+    <p><span class="flag flag-bad">denominator-collapse</span> denominator below the measurable floor (0.03 × cheek width) — the ratio is geometrically unmeasurable here (blink, extreme foreshortening, detector error). The raw value is shown, not clamped; do not trust it.
+    <span class="flag flag-bad">non-finite</span> the arithmetic produced Infinity/NaN — unmeasurable.
+    <span class="flag flag-warn">pose-suspect</span> pose alone is expected to move this metric ≥0.5 bank SD (synthetic geometric rotation probe) — treat as suspect.
+    <span class="flag flag-bad">pose-unreliable</span> pose alone is expected to move this metric ≥1 bank SD — do not trust this value at this pose. Pose metrics themselves are never pose-flagged (flagging pose for pose would be circular); <span class="flag flag-warn">pose-suspect</span>/<span class="flag flag-bad">pose-unreliable</span> never hide a value, they annotate it.</p>
     <h3>v2 — physical scale</h3>
     <p>iris diameter = mean of horizontal/vertical axes across both irises
     (landmarks 469↔471, 470↔472, 474↔476, 475↔477; centers 468/473).
