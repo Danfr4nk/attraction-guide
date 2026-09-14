@@ -120,15 +120,26 @@ export const DEF_BY_KEY = Object.fromEntries(METRIC_DEFS.map(d => [d.key, d]));
 // then conformed to the lab's legacy sign conventions (NOT the matrix's native
 // ones) so 3D and 2D-proxy values stay directly comparable:
 //   yaw   = -atan2(R02, R22), + = face turned toward image-left (matches the old proxy)
-//   pitch = asin(-R12),       + = chin down / looking down (3D-only metric, no legacy)
+//   pitch = -asin(-R12),     + = chin down / looking down (3D-only metric, no legacy)
 //   roll  = -atan2(R10, R11), + = image-right side lower (matches the eye-axis proxy)
-// Sign anchors, verified empirically 2026-09-13 on real detector output:
-// - roll: negated matrix roll agrees with the aspect-corrected eye axis to 0.2°.
+// Sign anchors:
+// - roll: negated matrix roll agrees with the aspect-corrected eye axis to 0.2°
+//   (rotation battery, 2026-09-13).
 // - yaw: the test face is turned image-left by three independent cues (nose closer
 //   to the image-left cheek in px, image-left eye/cheek deeper in z, proxy +9.5°),
 //   so the matrix value is negated to keep +yaw = image-left like the proxy.
-// - pitch: forehead z nearer camera than chin z ⇒ looking slightly down, and the
-//   unnegated decomposition reads +3.2° ⇒ +pitch = chin down. No negation.
+// - pitch: CORRECTED 2026-09-14 — the 2026-09-13 one-face anchor ("forehead z nearer
+//   camera ⇒ chin down, decomposition reads +3.2° ⇒ +pitch = chin down") FAILED
+//   replication: on the 155-face frozen bank, forehead z < chin z (forehead nearer;
+//   z convention verified via nose-tip = smallest z = nearest) in 155/155 faces —
+//   the same chin-down depth configuration — while the unnegated decomposition
+//   reads NEGATIVE pitch throughout (-3.4°..-11.1°). The anchor's sign call was
+//   wrong; pitch is negated like yaw/roll so +pitch = chin down as documented.
+//   Residual caution: within-identity pitch varies 4°+ across jaw/brow morphs
+//   (p2a07: 4.3°..8.4°) while true head pose is constant by construction — the
+//   Procrustes fit absorbs vertical-proportion differences as pitch. Treat the
+//   magnitude as shape-contaminated; do NOT feed it into frontality (evaluated
+//   2026-09-14, rejected).
 // This is a MODEL FIT (Procrustes alignment of the canonical mesh to the
 // detected landmarks), not ground truth — no anatomical-accuracy claims.
 // Returns null when the matrix is absent; callers fall back to 2D proxies.
@@ -139,7 +150,7 @@ export function poseFromMatrix(mx) {
   const r02 = R(0, 2) / s, r12 = R(1, 2) / s, r22 = R(2, 2) / s;
   const r10 = R(1, 0) / s, r11 = R(1, 1) / s;
   const yaw = -Math.atan2(r02, r22) * 180 / Math.PI;
-  const pitch = Math.asin(Math.max(-1, Math.min(1, -r12))) * 180 / Math.PI;
+  const pitch = -Math.asin(Math.max(-1, Math.min(1, -r12))) * 180 / Math.PI;
   const roll = -Math.atan2(r10, r11) * 180 / Math.PI;
   if (![yaw, pitch, roll].every(Number.isFinite)) return null;
   return { yaw, pitch, roll, source: '3D' };

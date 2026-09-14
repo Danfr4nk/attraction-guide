@@ -1,0 +1,372 @@
+{
+ "sweeps": {
+  "S1_eccentricity": {
+   "param": "face_height (WHR target)",
+   "targets": [
+    0.7,
+    0.78,
+    0.86,
+    0.94,
+    1.02,
+    1.1,
+    1.18
+   ],
+   "width_height_ratio": {
+    "values": [
+     0.7,
+     0.78,
+     0.86,
+     0.94,
+     1.02,
+     1.1,
+     1.18
+    ],
+    "slope_vs_WHRtarget": 1,
+    "monotonic_inc": true,
+    "monotonic_dec": false
+   },
+   "fwhr_proxy": {
+    "values": [
+     2.909,
+     2.909,
+     2.909,
+     2.909,
+     2.909,
+     2.909,
+     2.909
+    ],
+    "slope_vs_WHRtarget": 0,
+    "monotonic_inc": true,
+    "monotonic_dec": true
+   },
+   "jaw_to_cheek": {
+    "values": [
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75
+    ],
+    "slope_vs_WHRtarget": 0,
+    "monotonic_inc": true,
+    "monotonic_dec": true
+   }
+  },
+  "S2_jaw": {
+   "param": "jaw_w/cheek_w",
+   "targets": [
+    0.55,
+    0.65,
+    0.75,
+    0.85,
+    0.95
+   ],
+   "width_height_ratio": {
+    "values": [
+     0.94,
+     0.94,
+     0.94,
+     0.94,
+     0.94
+    ],
+    "slope_vs_J": 0,
+    "monotonic_inc": true,
+    "monotonic_dec": true
+   },
+   "fwhr_proxy": {
+    "values": [
+     2.909,
+     2.909,
+     2.909,
+     2.909,
+     2.909
+    ],
+    "slope_vs_J": 0,
+    "monotonic_inc": true,
+    "monotonic_dec": true
+   },
+   "jaw_to_cheek": {
+    "values": [
+     0.55,
+     0.65,
+     0.75,
+     0.85,
+     0.95
+    ],
+    "slope_vs_J": 1,
+    "monotonic_inc": true,
+    "monotonic_dec": false
+   }
+  },
+  "S3_cheek": {
+   "param": "cheek_halfwidth",
+   "targets": [
+    0.12,
+    0.14,
+    0.16,
+    0.18,
+    0.2
+   ],
+   "width_height_ratio": {
+    "values": [
+     0.705,
+     0.822,
+     0.94,
+     1.057,
+     1.175
+    ],
+    "slope_vs_C": 5.88,
+    "monotonic_inc": true,
+    "monotonic_dec": false
+   },
+   "fwhr_proxy": {
+    "values": [
+     2.182,
+     2.545,
+     2.909,
+     3.273,
+     3.636
+    ],
+    "slope_vs_C": 18.18,
+    "monotonic_inc": true,
+    "monotonic_dec": false
+   },
+   "jaw_to_cheek": {
+    "values": [
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75
+    ],
+    "slope_vs_C": 0,
+    "monotonic_inc": true,
+    "monotonic_dec": true
+   }
+  }
+ },
+ "verdicts": [
+  "S1: width_height_ratio tracks the WHR target monotonically (slope 1/WHR-unit; identity would be 1.0).",
+  "S1: fwhr_proxy vs face height: slope 0 — FLAT: blind to the height dimension of roundness by construction (denominator is mid-third length).",
+  "S1: jaw_to_cheek vs face height: slope 0 — flat as designed (width/width).",
+  "S2: jaw_to_cheek tracks J monotonically (slope 1; identity = 1.0).",
+  "S2: width_height_ratio & fwhr_proxy vs jaw width: flat — jaw width is invisible to them.",
+  "S3: width_height_ratio slope vs cheek half-width 5.88 (theory 2/H = 5.87); fwhr_proxy slope 18.18 (theory 2/M = 18.18); jaw_to_cheek falls as 1/C.",
+  "bank: jaw-soft vs base on width_height_ratio: 0/12 positive, mean Δ -0.0072.",
+  "bank: jaw-soft vs base on fwhr_proxy: 3/12 positive, mean Δ -0.0112.",
+  "bank: jaw-soft vs base on jaw_to_cheek: 12/12 positive, mean Δ 0.0043."
+ ],
+ "bank_controls": {
+  "trios": [
+   {
+    "lineage": "p2a04",
+    "soft": {
+     "width_height_ratio": 0.827,
+     "fwhr_proxy": 1.98,
+     "jaw_to_cheek": 0.785
+    },
+    "base": {
+     "width_height_ratio": 0.829,
+     "fwhr_proxy": 1.993,
+     "jaw_to_cheek": 0.778
+    },
+    "sharp": {
+     "width_height_ratio": 0.818,
+     "fwhr_proxy": 1.981,
+     "jaw_to_cheek": 0.789
+    }
+   },
+   {
+    "lineage": "p2a05",
+    "soft": {
+     "width_height_ratio": 0.794,
+     "fwhr_proxy": 1.874,
+     "jaw_to_cheek": 0.806
+    },
+    "base": {
+     "width_height_ratio": 0.814,
+     "fwhr_proxy": 1.91,
+     "jaw_to_cheek": 0.792
+    },
+    "sharp": {
+     "width_height_ratio": 0.809,
+     "fwhr_proxy": 1.926,
+     "jaw_to_cheek": 0.797
+    }
+   },
+   {
+    "lineage": "p2a07",
+    "soft": {
+     "width_height_ratio": 0.799,
+     "fwhr_proxy": 1.853,
+     "jaw_to_cheek": 0.776
+    },
+    "base": {
+     "width_height_ratio": 0.802,
+     "fwhr_proxy": 1.868,
+     "jaw_to_cheek": 0.774
+    },
+    "sharp": {
+     "width_height_ratio": 0.787,
+     "fwhr_proxy": 1.867,
+     "jaw_to_cheek": 0.788
+    }
+   },
+   {
+    "lineage": "p2a09",
+    "soft": {
+     "width_height_ratio": 0.818,
+     "fwhr_proxy": 1.923,
+     "jaw_to_cheek": 0.785
+    },
+    "base": {
+     "width_height_ratio": 0.823,
+     "fwhr_proxy": 1.917,
+     "jaw_to_cheek": 0.781
+    },
+    "sharp": {
+     "width_height_ratio": 0.814,
+     "fwhr_proxy": 1.93,
+     "jaw_to_cheek": 0.778
+    }
+   }
+  ],
+  "soft_vs_base": [
+   {
+    "id": "p2a03-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.011,
+     "fwhr_proxy": -0.03,
+     "jaw_to_cheek": 0.001
+    }
+   },
+   {
+    "id": "p2a04-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.002,
+     "fwhr_proxy": -0.013,
+     "jaw_to_cheek": 0.007
+    }
+   },
+   {
+    "id": "p2a05-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.02,
+     "fwhr_proxy": -0.036,
+     "jaw_to_cheek": 0.014
+    }
+   },
+   {
+    "id": "p2a06-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.005,
+     "fwhr_proxy": -0.002,
+     "jaw_to_cheek": 0.002
+    }
+   },
+   {
+    "id": "p2a07-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.003,
+     "fwhr_proxy": -0.015,
+     "jaw_to_cheek": 0.002
+    }
+   },
+   {
+    "id": "p2a08-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.007,
+     "fwhr_proxy": 0.006,
+     "jaw_to_cheek": 0.005
+    }
+   },
+   {
+    "id": "p2a09-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.005,
+     "fwhr_proxy": 0.006,
+     "jaw_to_cheek": 0.004
+    }
+   },
+   {
+    "id": "p2a10-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.004,
+     "fwhr_proxy": -0.012,
+     "jaw_to_cheek": 0.003
+    }
+   },
+   {
+    "id": "p2a11-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.003,
+     "fwhr_proxy": -0.008,
+     "jaw_to_cheek": 0.003
+    }
+   },
+   {
+    "id": "p2a12-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.013,
+     "fwhr_proxy": -0.023,
+     "jaw_to_cheek": 0.002
+    }
+   },
+   {
+    "id": "p2a01-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.004,
+     "fwhr_proxy": 0.001,
+     "jaw_to_cheek": 0.008
+    }
+   },
+   {
+    "id": "p2a02-jaw-soft",
+    "d": {
+     "width_height_ratio": -0.009,
+     "fwhr_proxy": -0.009,
+     "jaw_to_cheek": 0.001
+    }
+   }
+  ]
+ },
+ "convergent_validity": {
+  "n": 155,
+  "spearman": -0.371,
+  "pearson": -0.341,
+  "top_disagreements": [
+   {
+    "id": "p1-heart-2",
+    "cf": 0.8022,
+    "whr": 0.87,
+    "d": 150
+   },
+   {
+    "id": "p2a12-jaw-soft",
+    "cf": 0.8592,
+    "whr": 0.782,
+    "d": 150
+   },
+   {
+    "id": "p2-brow-thick",
+    "cf": 0.803,
+    "whr": 0.857,
+    "d": 144
+   },
+   {
+    "id": "p2a05-jaw-soft",
+    "cf": 0.8785,
+    "whr": 0.794,
+    "d": 143
+   },
+   {
+    "id": "p1-wide-1",
+    "cf": 0.8096,
+    "whr": 0.859,
+    "d": 139
+   }
+  ]
+ }
+}

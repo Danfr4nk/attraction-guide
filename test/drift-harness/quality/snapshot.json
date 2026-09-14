@@ -1,0 +1,1950 @@
+{
+ "date": "2026-09-14",
+ "n": 155,
+ "faces": [
+  {
+   "id": "p1-wide-1",
+   "sharpness": 307.293,
+   "exposure": 118.609,
+   "clipping_pct": 4.483,
+   "iid_px": 325.908,
+   "illum_balance": 0.041,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-2",
+   "sharpness": 333.851,
+   "exposure": 117.66,
+   "clipping_pct": 3.458,
+   "iid_px": 301.427,
+   "illum_balance": 0.043,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-1",
+   "sharpness": 297.769,
+   "exposure": 118.008,
+   "clipping_pct": 4.098,
+   "iid_px": 285.784,
+   "illum_balance": 0.063,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-2",
+   "sharpness": 316.005,
+   "exposure": 117.979,
+   "clipping_pct": 5.531,
+   "iid_px": 323.093,
+   "illum_balance": 0.086,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-1",
+   "sharpness": 299.758,
+   "exposure": 119.733,
+   "clipping_pct": 5.01,
+   "iid_px": 311.973,
+   "illum_balance": 0.048,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-2",
+   "sharpness": 332.986,
+   "exposure": 129.552,
+   "clipping_pct": 1.801,
+   "iid_px": 288.899,
+   "illum_balance": 0.071,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-1",
+   "sharpness": 291.877,
+   "exposure": 122.562,
+   "clipping_pct": 3.641,
+   "iid_px": 330.777,
+   "illum_balance": 0.039,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-2",
+   "sharpness": 240.041,
+   "exposure": 119.458,
+   "clipping_pct": 4.45,
+   "iid_px": 295.499,
+   "illum_balance": 0.05,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-jaw-sharp",
+   "sharpness": 337.624,
+   "exposure": 120.309,
+   "clipping_pct": 5.457,
+   "iid_px": 381.672,
+   "illum_balance": 0.047,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-jaw-soft",
+   "sharpness": 297.388,
+   "exposure": 120.338,
+   "clipping_pct": 4.059,
+   "iid_px": 327.313,
+   "illum_balance": 0.085,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-lips-full",
+   "sharpness": 291.145,
+   "exposure": 123.692,
+   "clipping_pct": 2.546,
+   "iid_px": 321.621,
+   "illum_balance": 0.009,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-lips-thin",
+   "sharpness": 334.16,
+   "exposure": 118.411,
+   "clipping_pct": 4.385,
+   "iid_px": 304.48,
+   "illum_balance": 0.042,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-eyes-wide",
+   "sharpness": 359.491,
+   "exposure": 123.117,
+   "clipping_pct": 4.731,
+   "iid_px": 343.099,
+   "illum_balance": 0.039,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-eyes-close",
+   "sharpness": 327.331,
+   "exposure": 121.938,
+   "clipping_pct": 4.392,
+   "iid_px": 357.405,
+   "illum_balance": 0.073,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-brow-thick",
+   "sharpness": 337.835,
+   "exposure": 122.096,
+   "clipping_pct": 3.045,
+   "iid_px": 341.419,
+   "illum_balance": 0.044,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-brow-thin",
+   "sharpness": 282.982,
+   "exposure": 126.006,
+   "clipping_pct": 3.005,
+   "iid_px": 310.989,
+   "illum_balance": 0.116,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-nose-narrow",
+   "sharpness": 284.042,
+   "exposure": 118.473,
+   "clipping_pct": 2.741,
+   "iid_px": 324.614,
+   "illum_balance": 0.018,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2-nose-wide",
+   "sharpness": 178.052,
+   "exposure": 118.522,
+   "clipping_pct": 3.67,
+   "iid_px": 368.946,
+   "illum_balance": 0.039,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1280,
+   "imgH": 1920
+  },
+  {
+   "id": "p2a03",
+   "sharpness": 682.173,
+   "exposure": 106.122,
+   "clipping_pct": 12.555,
+   "iid_px": 278.375,
+   "illum_balance": 0.044,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.6% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-jaw-soft",
+   "sharpness": 740.963,
+   "exposure": 106.361,
+   "clipping_pct": 12.528,
+   "iid_px": 275.347,
+   "illum_balance": 0.059,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.5% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-lips-full",
+   "sharpness": 754.727,
+   "exposure": 105.871,
+   "clipping_pct": 11.805,
+   "iid_px": 274.717,
+   "illum_balance": 0.06,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.8% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-lips-thin",
+   "sharpness": 752.399,
+   "exposure": 106.961,
+   "clipping_pct": 12.028,
+   "iid_px": 275.282,
+   "illum_balance": 0.054,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.0% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-brow-thick",
+   "sharpness": 725.948,
+   "exposure": 104.768,
+   "clipping_pct": 12.256,
+   "iid_px": 276.953,
+   "illum_balance": 0.052,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.3% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-brow-thin",
+   "sharpness": 757.015,
+   "exposure": 107.778,
+   "clipping_pct": 12.137,
+   "iid_px": 273.929,
+   "illum_balance": 0.044,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.1% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-nose-narrow",
+   "sharpness": 714.627,
+   "exposure": 107.019,
+   "clipping_pct": 12.177,
+   "iid_px": 274.251,
+   "illum_balance": 0.045,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.2% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a03-nose-wide",
+   "sharpness": 762.282,
+   "exposure": 105.853,
+   "clipping_pct": 11.962,
+   "iid_px": 280.311,
+   "illum_balance": 0.055,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.0% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04",
+   "sharpness": 457.353,
+   "exposure": 79.756,
+   "clipping_pct": 1.824,
+   "iid_px": 309.563,
+   "illum_balance": 0.066,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-jaw-sharp",
+   "sharpness": 482.807,
+   "exposure": 79.817,
+   "clipping_pct": 2.014,
+   "iid_px": 306.841,
+   "illum_balance": 0.066,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-jaw-soft",
+   "sharpness": 461.979,
+   "exposure": 81.361,
+   "clipping_pct": 2.083,
+   "iid_px": 306.852,
+   "illum_balance": 0.071,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-lips-full",
+   "sharpness": 454.662,
+   "exposure": 79.524,
+   "clipping_pct": 1.971,
+   "iid_px": 305.366,
+   "illum_balance": 0.062,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-lips-thin",
+   "sharpness": 450.852,
+   "exposure": 79.473,
+   "clipping_pct": 2.031,
+   "iid_px": 307.223,
+   "illum_balance": 0.061,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-brow-thick",
+   "sharpness": 442.619,
+   "exposure": 79.184,
+   "clipping_pct": 1.909,
+   "iid_px": 306.524,
+   "illum_balance": 0.066,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-brow-thin",
+   "sharpness": 464.522,
+   "exposure": 80.148,
+   "clipping_pct": 1.848,
+   "iid_px": 307.004,
+   "illum_balance": 0.065,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-nose-narrow",
+   "sharpness": 469.388,
+   "exposure": 80.155,
+   "clipping_pct": 1.931,
+   "iid_px": 305.415,
+   "illum_balance": 0.066,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a04-nose-wide",
+   "sharpness": 459.828,
+   "exposure": 79.541,
+   "clipping_pct": 2,
+   "iid_px": 309.211,
+   "illum_balance": 0.062,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05",
+   "sharpness": 546.858,
+   "exposure": 147.133,
+   "clipping_pct": 0.536,
+   "iid_px": 255.184,
+   "illum_balance": 0.144,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-jaw-sharp",
+   "sharpness": 611.762,
+   "exposure": 147.573,
+   "clipping_pct": 0.483,
+   "iid_px": 251.43,
+   "illum_balance": 0.147,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-jaw-soft",
+   "sharpness": 587.769,
+   "exposure": 148.089,
+   "clipping_pct": 0.535,
+   "iid_px": 250.161,
+   "illum_balance": 0.141,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-lips-full",
+   "sharpness": 593.332,
+   "exposure": 147.194,
+   "clipping_pct": 0.563,
+   "iid_px": 253.503,
+   "illum_balance": 0.146,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-lips-thin",
+   "sharpness": 582.337,
+   "exposure": 147.754,
+   "clipping_pct": 0.587,
+   "iid_px": 251.514,
+   "illum_balance": 0.13,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-eyes-wide",
+   "sharpness": 577.192,
+   "exposure": 147.574,
+   "clipping_pct": 0.574,
+   "iid_px": 253.045,
+   "illum_balance": 0.142,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-eyes-close",
+   "sharpness": 592.746,
+   "exposure": 147.792,
+   "clipping_pct": 0.549,
+   "iid_px": 253.799,
+   "illum_balance": 0.145,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-nose-narrow",
+   "sharpness": 583.498,
+   "exposure": 148.192,
+   "clipping_pct": 0.513,
+   "iid_px": 251.749,
+   "illum_balance": 0.142,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-nose-wide",
+   "sharpness": 585.703,
+   "exposure": 146.698,
+   "clipping_pct": 0.549,
+   "iid_px": 255.653,
+   "illum_balance": 0.132,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-brow-thick",
+   "sharpness": 580.175,
+   "exposure": 146.332,
+   "clipping_pct": 0.536,
+   "iid_px": 254.403,
+   "illum_balance": 0.145,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a05-brow-thin",
+   "sharpness": 603.048,
+   "exposure": 148.008,
+   "clipping_pct": 0.511,
+   "iid_px": 255.235,
+   "illum_balance": 0.144,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06",
+   "sharpness": 347.416,
+   "exposure": 128.919,
+   "clipping_pct": 1.317,
+   "iid_px": 304.189,
+   "illum_balance": 0.164,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-jaw-soft",
+   "sharpness": 375.859,
+   "exposure": 129.679,
+   "clipping_pct": 1.25,
+   "iid_px": 303.05,
+   "illum_balance": 0.164,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-lips-full",
+   "sharpness": 371.966,
+   "exposure": 128.852,
+   "clipping_pct": 1.286,
+   "iid_px": 302.179,
+   "illum_balance": 0.162,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-lips-thin",
+   "sharpness": 379.758,
+   "exposure": 128.884,
+   "clipping_pct": 1.407,
+   "iid_px": 302.014,
+   "illum_balance": 0.158,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-eyes-close",
+   "sharpness": 384.145,
+   "exposure": 129.81,
+   "clipping_pct": 1.32,
+   "iid_px": 303.064,
+   "illum_balance": 0.165,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-nose-narrow",
+   "sharpness": 373.729,
+   "exposure": 129.671,
+   "clipping_pct": 1.225,
+   "iid_px": 300.28,
+   "illum_balance": 0.16,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-nose-wide",
+   "sharpness": 384.614,
+   "exposure": 128.135,
+   "clipping_pct": 1.397,
+   "iid_px": 309.86,
+   "illum_balance": 0.161,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-brow-thick",
+   "sharpness": 387.04,
+   "exposure": 128.169,
+   "clipping_pct": 1.244,
+   "iid_px": 304.312,
+   "illum_balance": 0.149,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a06-brow-thin",
+   "sharpness": 377.654,
+   "exposure": 129.997,
+   "clipping_pct": 1.281,
+   "iid_px": 304.626,
+   "illum_balance": 0.166,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07",
+   "sharpness": 720.655,
+   "exposure": 64.977,
+   "clipping_pct": 12.78,
+   "iid_px": 290.439,
+   "illum_balance": 0.048,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.8% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-jaw-sharp",
+   "sharpness": 743.796,
+   "exposure": 67.317,
+   "clipping_pct": 11.69,
+   "iid_px": 282.299,
+   "illum_balance": 0.086,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.7% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-jaw-soft",
+   "sharpness": 748.529,
+   "exposure": 66.091,
+   "clipping_pct": 12.386,
+   "iid_px": 288.101,
+   "illum_balance": 0.058,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-lips-full",
+   "sharpness": 767.271,
+   "exposure": 65.32,
+   "clipping_pct": 12.369,
+   "iid_px": 287.88,
+   "illum_balance": 0.035,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-lips-thin",
+   "sharpness": 744.416,
+   "exposure": 65.352,
+   "clipping_pct": 12.708,
+   "iid_px": 289.003,
+   "illum_balance": 0.055,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.7% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-eyes-close",
+   "sharpness": 746.863,
+   "exposure": 65.891,
+   "clipping_pct": 12.256,
+   "iid_px": 287.467,
+   "illum_balance": 0.032,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.3% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-brow-thick",
+   "sharpness": 754.96,
+   "exposure": 64.222,
+   "clipping_pct": 12.866,
+   "iid_px": 289.291,
+   "illum_balance": 0.055,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.9% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-brow-thin",
+   "sharpness": 752.118,
+   "exposure": 66.714,
+   "clipping_pct": 12.44,
+   "iid_px": 288.269,
+   "illum_balance": 0.04,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-nose-narrow",
+   "sharpness": 749.076,
+   "exposure": 65.319,
+   "clipping_pct": 12.9,
+   "iid_px": 286.382,
+   "illum_balance": 0.045,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.9% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a07-nose-wide",
+   "sharpness": 769.433,
+   "exposure": 64.86,
+   "clipping_pct": 13.071,
+   "iid_px": 294.859,
+   "illum_balance": 0.04,
+   "verdict": "warn",
+   "notes": [
+    "clipping 13.1% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08",
+   "sharpness": 516.007,
+   "exposure": 126.35,
+   "clipping_pct": 1.219,
+   "iid_px": 308.185,
+   "illum_balance": 0.117,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-jaw-soft",
+   "sharpness": 567.086,
+   "exposure": 128.324,
+   "clipping_pct": 0.94,
+   "iid_px": 308.567,
+   "illum_balance": 0.113,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-lips-full",
+   "sharpness": 534.02,
+   "exposure": 126.586,
+   "clipping_pct": 0.964,
+   "iid_px": 306.069,
+   "illum_balance": 0.11,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-lips-thin",
+   "sharpness": 565.23,
+   "exposure": 126.728,
+   "clipping_pct": 1.124,
+   "iid_px": 307.165,
+   "illum_balance": 0.118,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-eyes-wide",
+   "sharpness": 574.402,
+   "exposure": 127.237,
+   "clipping_pct": 1.108,
+   "iid_px": 309.797,
+   "illum_balance": 0.109,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-eyes-close",
+   "sharpness": 548.122,
+   "exposure": 127.462,
+   "clipping_pct": 1.164,
+   "iid_px": 306.089,
+   "illum_balance": 0.117,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-brow-thick",
+   "sharpness": 569.836,
+   "exposure": 125.821,
+   "clipping_pct": 0.981,
+   "iid_px": 307.536,
+   "illum_balance": 0.108,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-brow-thin",
+   "sharpness": 548.317,
+   "exposure": 127.077,
+   "clipping_pct": 1.003,
+   "iid_px": 305.919,
+   "illum_balance": 0.122,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-nose-narrow",
+   "sharpness": 552.423,
+   "exposure": 127.023,
+   "clipping_pct": 1.18,
+   "iid_px": 305.878,
+   "illum_balance": 0.112,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a08-nose-wide",
+   "sharpness": 550.719,
+   "exposure": 125.527,
+   "clipping_pct": 1.11,
+   "iid_px": 308.9,
+   "illum_balance": 0.117,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09",
+   "sharpness": 313.78,
+   "exposure": 129.031,
+   "clipping_pct": 0.011,
+   "iid_px": 309.62,
+   "illum_balance": 0.051,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-jaw-sharp",
+   "sharpness": 315.363,
+   "exposure": 128.87,
+   "clipping_pct": 0.017,
+   "iid_px": 304.476,
+   "illum_balance": 0.051,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-jaw-soft",
+   "sharpness": 315.929,
+   "exposure": 129.179,
+   "clipping_pct": 0.006,
+   "iid_px": 307.412,
+   "illum_balance": 0.045,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-lips-full",
+   "sharpness": 318.232,
+   "exposure": 129.32,
+   "clipping_pct": 0.012,
+   "iid_px": 303.906,
+   "illum_balance": 0.047,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-lips-thin",
+   "sharpness": 317.242,
+   "exposure": 129.671,
+   "clipping_pct": 0.006,
+   "iid_px": 308.605,
+   "illum_balance": 0.051,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-eyes-wide",
+   "sharpness": 313.087,
+   "exposure": 129.096,
+   "clipping_pct": 0.017,
+   "iid_px": 305.321,
+   "illum_balance": 0.049,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-eyes-close",
+   "sharpness": 315.633,
+   "exposure": 129.415,
+   "clipping_pct": 0.012,
+   "iid_px": 303.914,
+   "illum_balance": 0.048,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-brow-thick",
+   "sharpness": 321.111,
+   "exposure": 127.91,
+   "clipping_pct": 0.006,
+   "iid_px": 307.694,
+   "illum_balance": 0.051,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-brow-thin",
+   "sharpness": 313.716,
+   "exposure": 129.973,
+   "clipping_pct": 0.017,
+   "iid_px": 307.886,
+   "illum_balance": 0.052,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a09-nose-narrow",
+   "sharpness": 316.378,
+   "exposure": 129.025,
+   "clipping_pct": 0.006,
+   "iid_px": 302.602,
+   "illum_balance": 0.05,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10",
+   "sharpness": 646.099,
+   "exposure": 98.225,
+   "clipping_pct": 11.357,
+   "iid_px": 302.641,
+   "illum_balance": 0.067,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-jaw-soft",
+   "sharpness": 714.942,
+   "exposure": 100.814,
+   "clipping_pct": 10.533,
+   "iid_px": 297.834,
+   "illum_balance": 0.08,
+   "verdict": "warn",
+   "notes": [
+    "clipping 10.5% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-lips-full",
+   "sharpness": 700.576,
+   "exposure": 99.208,
+   "clipping_pct": 11.505,
+   "iid_px": 296.384,
+   "illum_balance": 0.08,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.5% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-lips-thin",
+   "sharpness": 689.725,
+   "exposure": 98.912,
+   "clipping_pct": 11.314,
+   "iid_px": 299.947,
+   "illum_balance": 0.115,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.3% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-eyes-wide",
+   "sharpness": 675.114,
+   "exposure": 98.701,
+   "clipping_pct": 11.95,
+   "iid_px": 299.228,
+   "illum_balance": 0.088,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.9% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-eyes-close",
+   "sharpness": 697.243,
+   "exposure": 98.42,
+   "clipping_pct": 11.807,
+   "iid_px": 297.765,
+   "illum_balance": 0.117,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.8% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-brow-thick",
+   "sharpness": 705.448,
+   "exposure": 97.109,
+   "clipping_pct": 11.633,
+   "iid_px": 301.145,
+   "illum_balance": 0.074,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.6% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-brow-thin",
+   "sharpness": 689.87,
+   "exposure": 98.55,
+   "clipping_pct": 11.423,
+   "iid_px": 299.167,
+   "illum_balance": 0.08,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-nose-narrow",
+   "sharpness": 684.637,
+   "exposure": 99.398,
+   "clipping_pct": 11.199,
+   "iid_px": 298.193,
+   "illum_balance": 0.078,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.2% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a10-nose-wide",
+   "sharpness": 710.047,
+   "exposure": 98.137,
+   "clipping_pct": 11.455,
+   "iid_px": 298.75,
+   "illum_balance": 0.072,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.5% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-3",
+   "sharpness": 282.786,
+   "exposure": 103.639,
+   "clipping_pct": 8.035,
+   "iid_px": 303.553,
+   "illum_balance": 0.078,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-4",
+   "sharpness": 687.22,
+   "exposure": 99.737,
+   "clipping_pct": 7.692,
+   "iid_px": 306.557,
+   "illum_balance": 0.015,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-5",
+   "sharpness": 795.707,
+   "exposure": 96.126,
+   "clipping_pct": 7.371,
+   "iid_px": 306.823,
+   "illum_balance": 0.05,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-6",
+   "sharpness": 551.72,
+   "exposure": 63.009,
+   "clipping_pct": 11.249,
+   "iid_px": 345.014,
+   "illum_balance": 0.096,
+   "verdict": "warn",
+   "notes": [
+    "clipping 11.2% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-7",
+   "sharpness": 371.985,
+   "exposure": 139.186,
+   "clipping_pct": 0,
+   "iid_px": 320.112,
+   "illum_balance": 0.061,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-wide-8",
+   "sharpness": 476.54,
+   "exposure": 118.038,
+   "clipping_pct": 1.642,
+   "iid_px": 288.794,
+   "illum_balance": 0.102,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-3",
+   "sharpness": 328.507,
+   "exposure": 108.963,
+   "clipping_pct": 4.165,
+   "iid_px": 313.968,
+   "illum_balance": 0.003,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-4",
+   "sharpness": 296.903,
+   "exposure": 97.77,
+   "clipping_pct": 0.904,
+   "iid_px": 319.705,
+   "illum_balance": 0.016,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-5",
+   "sharpness": 307.115,
+   "exposure": 98.503,
+   "clipping_pct": 3.404,
+   "iid_px": 257.211,
+   "illum_balance": 0.069,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-6",
+   "sharpness": 779.514,
+   "exposure": 133.923,
+   "clipping_pct": 0.507,
+   "iid_px": 274.168,
+   "illum_balance": 0.087,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-7",
+   "sharpness": 926.571,
+   "exposure": 97.781,
+   "clipping_pct": 14.778,
+   "iid_px": 285.573,
+   "illum_balance": 0.11,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.8% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-long-8",
+   "sharpness": 370.212,
+   "exposure": 108.762,
+   "clipping_pct": 3.715,
+   "iid_px": 301.692,
+   "illum_balance": 0.007,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-3",
+   "sharpness": 555.217,
+   "exposure": 109.785,
+   "clipping_pct": 3.868,
+   "iid_px": 285.277,
+   "illum_balance": 0.043,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-4",
+   "sharpness": 371.432,
+   "exposure": 88.986,
+   "clipping_pct": 2.437,
+   "iid_px": 321.26,
+   "illum_balance": 0.036,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-5",
+   "sharpness": 397.298,
+   "exposure": 134.607,
+   "clipping_pct": 0.45,
+   "iid_px": 320.132,
+   "illum_balance": 0.018,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-6",
+   "sharpness": 304.117,
+   "exposure": 121.431,
+   "clipping_pct": 1.999,
+   "iid_px": 323.029,
+   "illum_balance": 0.136,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-7",
+   "sharpness": 680.104,
+   "exposure": 112.991,
+   "clipping_pct": 3.541,
+   "iid_px": 296.143,
+   "illum_balance": 0.102,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-heart-8",
+   "sharpness": 229.544,
+   "exposure": 148.792,
+   "clipping_pct": 1.576,
+   "iid_px": 303.518,
+   "illum_balance": 0.034,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-3",
+   "sharpness": 329.674,
+   "exposure": 102.478,
+   "clipping_pct": 9.43,
+   "iid_px": 302.571,
+   "illum_balance": 0.07,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-4",
+   "sharpness": 491.605,
+   "exposure": 68.323,
+   "clipping_pct": 12.048,
+   "iid_px": 328.758,
+   "illum_balance": 0.041,
+   "verdict": "warn",
+   "notes": [
+    "clipping 12.0% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-5",
+   "sharpness": 519.81,
+   "exposure": 115.888,
+   "clipping_pct": 2.518,
+   "iid_px": 253.484,
+   "illum_balance": 0.089,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-6",
+   "sharpness": 686.681,
+   "exposure": 136.481,
+   "clipping_pct": 0.085,
+   "iid_px": 271.539,
+   "illum_balance": 0.015,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-7",
+   "sharpness": 325.439,
+   "exposure": 119.861,
+   "clipping_pct": 3.219,
+   "iid_px": 276.355,
+   "illum_balance": 0.093,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p1-round-8",
+   "sharpness": 816.808,
+   "exposure": 60.068,
+   "clipping_pct": 17.057,
+   "iid_px": 335.327,
+   "illum_balance": 0.074,
+   "verdict": "warn",
+   "notes": [
+    "clipping 17.1% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11",
+   "sharpness": 318.341,
+   "exposure": 102.882,
+   "clipping_pct": 5.982,
+   "iid_px": 288.499,
+   "illum_balance": 0.071,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-jaw-soft",
+   "sharpness": 334.328,
+   "exposure": 104.668,
+   "clipping_pct": 5.533,
+   "iid_px": 289.371,
+   "illum_balance": 0.088,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-lips-full",
+   "sharpness": 337.833,
+   "exposure": 102.924,
+   "clipping_pct": 5.976,
+   "iid_px": 286.199,
+   "illum_balance": 0.088,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-lips-thin",
+   "sharpness": 333.703,
+   "exposure": 103.444,
+   "clipping_pct": 5.712,
+   "iid_px": 287.39,
+   "illum_balance": 0.091,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-eyes-wide",
+   "sharpness": 346.041,
+   "exposure": 103.771,
+   "clipping_pct": 5.725,
+   "iid_px": 286.274,
+   "illum_balance": 0.099,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-eyes-close",
+   "sharpness": 337.422,
+   "exposure": 103.674,
+   "clipping_pct": 5.8,
+   "iid_px": 287.76,
+   "illum_balance": 0.094,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-brow-thick",
+   "sharpness": 333.16,
+   "exposure": 103.269,
+   "clipping_pct": 5.546,
+   "iid_px": 287.309,
+   "illum_balance": 0.09,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-brow-thin",
+   "sharpness": 327.408,
+   "exposure": 105.255,
+   "clipping_pct": 5.69,
+   "iid_px": 287.688,
+   "illum_balance": 0.087,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-nose-narrow",
+   "sharpness": 328.064,
+   "exposure": 103.788,
+   "clipping_pct": 5.787,
+   "iid_px": 285.304,
+   "illum_balance": 0.089,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a11-nose-wide",
+   "sharpness": 337.158,
+   "exposure": 102.588,
+   "clipping_pct": 5.82,
+   "iid_px": 289.62,
+   "illum_balance": 0.074,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12",
+   "sharpness": 615.227,
+   "exposure": 88.06,
+   "clipping_pct": 14.484,
+   "iid_px": 277.441,
+   "illum_balance": 0.082,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.5% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-jaw-soft",
+   "sharpness": 650.87,
+   "exposure": 89.469,
+   "clipping_pct": 14.275,
+   "iid_px": 275.365,
+   "illum_balance": 0.061,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.3% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-lips-full",
+   "sharpness": 644.994,
+   "exposure": 86.482,
+   "clipping_pct": 14.955,
+   "iid_px": 276.868,
+   "illum_balance": 0.047,
+   "verdict": "warn",
+   "notes": [
+    "clipping 15.0% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-lips-thin",
+   "sharpness": 656.469,
+   "exposure": 88.259,
+   "clipping_pct": 14.434,
+   "iid_px": 274.479,
+   "illum_balance": 0.086,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-eyes-wide",
+   "sharpness": 655.822,
+   "exposure": 87.478,
+   "clipping_pct": 14.825,
+   "iid_px": 275.406,
+   "illum_balance": 0.099,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.8% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-eyes-close",
+   "sharpness": 670.064,
+   "exposure": 88.016,
+   "clipping_pct": 14.962,
+   "iid_px": 274.989,
+   "illum_balance": 0.087,
+   "verdict": "warn",
+   "notes": [
+    "clipping 15.0% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-brow-thick",
+   "sharpness": 650.214,
+   "exposure": 85.777,
+   "clipping_pct": 14.846,
+   "iid_px": 277.92,
+   "illum_balance": 0.049,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.8% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-brow-thin",
+   "sharpness": 647.198,
+   "exposure": 88.681,
+   "clipping_pct": 14.422,
+   "iid_px": 277.125,
+   "illum_balance": 0.088,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-nose-narrow",
+   "sharpness": 662.413,
+   "exposure": 88.147,
+   "clipping_pct": 14.498,
+   "iid_px": 274.779,
+   "illum_balance": 0.085,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.5% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a12-nose-wide",
+   "sharpness": 629.522,
+   "exposure": 87.604,
+   "clipping_pct": 14.387,
+   "iid_px": 277.503,
+   "illum_balance": 0.091,
+   "verdict": "warn",
+   "notes": [
+    "clipping 14.4% > 10%"
+   ],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01",
+   "sharpness": 559.277,
+   "exposure": 121.39,
+   "clipping_pct": 3.941,
+   "iid_px": 308.208,
+   "illum_balance": 0.106,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-jaw-soft",
+   "sharpness": 622.09,
+   "exposure": 122.259,
+   "clipping_pct": 3.52,
+   "iid_px": 308.536,
+   "illum_balance": 0.09,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-lips-full",
+   "sharpness": 604.02,
+   "exposure": 121.296,
+   "clipping_pct": 3.411,
+   "iid_px": 312.026,
+   "illum_balance": 0.098,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-lips-thin",
+   "sharpness": 584.411,
+   "exposure": 121.133,
+   "clipping_pct": 3.875,
+   "iid_px": 309.789,
+   "illum_balance": 0.101,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-brow-thick",
+   "sharpness": 584.981,
+   "exposure": 120.211,
+   "clipping_pct": 3.476,
+   "iid_px": 309.575,
+   "illum_balance": 0.102,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-brow-thin",
+   "sharpness": 618.788,
+   "exposure": 122.965,
+   "clipping_pct": 3.818,
+   "iid_px": 308.907,
+   "illum_balance": 0.101,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-nose-narrow",
+   "sharpness": 604.568,
+   "exposure": 121.889,
+   "clipping_pct": 3.645,
+   "iid_px": 307.437,
+   "illum_balance": 0.099,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a01-nose-wide",
+   "sharpness": 599.544,
+   "exposure": 120.926,
+   "clipping_pct": 3.686,
+   "iid_px": 312.691,
+   "illum_balance": 0.104,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02",
+   "sharpness": 356.785,
+   "exposure": 102.512,
+   "clipping_pct": 5.442,
+   "iid_px": 257.564,
+   "illum_balance": 0.09,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-jaw-soft",
+   "sharpness": 369.151,
+   "exposure": 103.659,
+   "clipping_pct": 5.297,
+   "iid_px": 256.145,
+   "illum_balance": 0.062,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-lips-full",
+   "sharpness": 375.677,
+   "exposure": 102.702,
+   "clipping_pct": 5.421,
+   "iid_px": 258.193,
+   "illum_balance": 0.089,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-lips-thin",
+   "sharpness": 381.607,
+   "exposure": 103.663,
+   "clipping_pct": 5.412,
+   "iid_px": 256.37,
+   "illum_balance": 0.062,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-brow-thick",
+   "sharpness": 359.894,
+   "exposure": 102.16,
+   "clipping_pct": 4.549,
+   "iid_px": 256.825,
+   "illum_balance": 0.06,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-brow-thin",
+   "sharpness": 365.472,
+   "exposure": 103.375,
+   "clipping_pct": 5.41,
+   "iid_px": 258.529,
+   "illum_balance": 0.089,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-nose-narrow",
+   "sharpness": 367.44,
+   "exposure": 103.273,
+   "clipping_pct": 5.448,
+   "iid_px": 256.027,
+   "illum_balance": 0.064,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  },
+  {
+   "id": "p2a02-nose-wide",
+   "sharpness": 372.048,
+   "exposure": 103.507,
+   "clipping_pct": 5.329,
+   "iid_px": 260.656,
+   "illum_balance": 0.062,
+   "verdict": "pass",
+   "notes": [],
+   "imgW": 1600,
+   "imgH": 1600
+  }
+ ]
+}

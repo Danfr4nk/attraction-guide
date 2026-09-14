@@ -2,6 +2,21 @@
 
 Headless drift audit for the Telemetry Lab's JS metric math.
 
+## Run order (one command each, from this dir)
+
+```bash
+python3 roundness-proof-py.py        # 1. Python adiposity proof (cheek/jaw fullness)
+node --import ./register.mjs roundness-proof.mjs   # 2. JS roundness proof (real computeTelemetry, synthetic landmarks)
+node --import ./register.mjs pitch-eval.mjs        # 3. pitch-in-frontality evaluation
+node --import ./register.mjs run.js                # 4. metric drift audit (baseline 2026-09-11 vs working copy)
+CHROMIUM_EXE=/opt/meta-chromium/chrome node quality/run-quality.mjs snapshot  # 5a. quality snapshot (headless Chromium, real pixels)
+CHROMIUM_EXE=/opt/meta-chromium/chrome node quality/run-quality.mjs regress   # 5b. quality regression vs snapshot
+```
+
+Quality (5) needs `npm i playwright-core` once inside `quality/`. All five are
+deterministic: 4 compares frozen landmark inputs, 5 re-ran 155/155 faces
+bit-identical across two independent Chromium launches.
+
 ## What it does
 
 Compares the lab's metric computation at two code snapshots on **identical

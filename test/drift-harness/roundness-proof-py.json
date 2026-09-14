@@ -1,0 +1,318 @@
+{
+ "sweeps": {
+  "G1_eccentricity_H": {
+   "param_values": [
+    0.3,
+    0.34,
+    0.38,
+    0.42,
+    0.46
+   ],
+   "cheek_fullness": {
+    "values": [
+     0.8574,
+     0.8574,
+     0.8574,
+     0.8574,
+     0.8574
+    ],
+    "slope": 0.0,
+    "mono_inc": true,
+    "mono_dec": true
+   },
+   "jaw_fullness": {
+    "values": [
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75
+    ],
+    "slope": 0.0,
+    "mono_inc": true,
+    "mono_dec": true
+   },
+   "jaw_to_cheek": {
+    "values": [
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75
+    ],
+    "slope": 0.0,
+    "mono_inc": true,
+    "mono_dec": true
+   }
+  },
+  "G2_jaw_J": {
+   "param_values": [
+    0.55,
+    0.65,
+    0.75,
+    0.85,
+    0.95
+   ],
+   "cheek_fullness": {
+    "values": [
+     0.848,
+     0.8527,
+     0.8574,
+     0.8621,
+     0.8668
+    ],
+    "slope": 0.047,
+    "mono_inc": true,
+    "mono_dec": false
+   },
+   "jaw_fullness": {
+    "values": [
+     0.55,
+     0.65,
+     0.75,
+     0.85,
+     0.95
+    ],
+    "slope": 1.0,
+    "mono_inc": true,
+    "mono_dec": false
+   },
+   "jaw_to_cheek": {
+    "values": [
+     0.55,
+     0.65,
+     0.75,
+     0.85,
+     0.95
+    ],
+    "slope": 1.0,
+    "mono_inc": true,
+    "mono_dec": false
+   }
+  },
+  "G3_midface_F": {
+   "param_values": [
+    0.0,
+    0.25,
+    0.5,
+    0.75,
+    1.0
+   ],
+   "cheek_fullness": {
+    "values": [
+     0.7265,
+     0.792,
+     0.8574,
+     0.9228,
+     0.9882
+    ],
+    "slope": 0.2617,
+    "mono_inc": true,
+    "mono_dec": false
+   },
+   "jaw_fullness": {
+    "values": [
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75
+    ],
+    "slope": 0.0,
+    "mono_inc": true,
+    "mono_dec": true
+   },
+   "jaw_to_cheek": {
+    "values": [
+     0.75,
+     0.75,
+     0.75,
+     0.75,
+     0.75
+    ],
+    "slope": 0.0,
+    "mono_inc": true,
+    "mono_dec": true
+   }
+  }
+ },
+ "verdicts": [
+  "G1 (face height, a.k.a. roundness-as-short-wide): cheek_fullness slope 0.0, jaw_fullness slope 0.0 \u2014 BOTH FLAT: width/width ratios cannot see the height dimension of roundness.",
+  "G2 (jaw width): jaw_fullness monotonic, slope 1.00 (identity=1.0); cheek_fullness slope 0.047 (clean separation)",
+  "G3 (midface fullness): cheek_fullness monotonic, slope 0.262; jaw_fullness slope 0.000 (clean separation)",
+  "bank PY: jaw-soft vs base on cheek_fullness: 12/12 positive, mean \u0394 +0.0143.",
+  "bank PY: jaw-soft vs base on jaw_fullness: 12/12 positive, mean \u0394 +0.0044.",
+  "bank PY: jaw-soft vs base on jaw_to_cheek: 12/12 positive, mean \u0394 +0.0044."
+ ],
+ "bank_controls": {
+  "trios": {
+   "p2a04": {
+    "soft": {
+     "cheek_fullness": 0.8394,
+     "jaw_fullness": 0.7838,
+     "jaw_to_cheek": 0.7852
+    },
+    "base": {
+     "cheek_fullness": 0.8245,
+     "jaw_fullness": 0.7766,
+     "jaw_to_cheek": 0.7777
+    },
+    "sharp": {
+     "cheek_fullness": 0.8315,
+     "jaw_fullness": 0.7883,
+     "jaw_to_cheek": 0.7892
+    }
+   },
+   "p2a05": {
+    "soft": {
+     "cheek_fullness": 0.8785,
+     "jaw_fullness": 0.8022,
+     "jaw_to_cheek": 0.8057
+    },
+    "base": {
+     "cheek_fullness": 0.8534,
+     "jaw_fullness": 0.7885,
+     "jaw_to_cheek": 0.7917
+    },
+    "sharp": {
+     "cheek_fullness": 0.8544,
+     "jaw_fullness": 0.7932,
+     "jaw_to_cheek": 0.7968
+    }
+   },
+   "p2a07": {
+    "soft": {
+     "cheek_fullness": 0.835,
+     "jaw_fullness": 0.7751,
+     "jaw_to_cheek": 0.7755
+    },
+    "base": {
+     "cheek_fullness": 0.814,
+     "jaw_fullness": 0.7727,
+     "jaw_to_cheek": 0.7735
+    },
+    "sharp": {
+     "cheek_fullness": 0.8464,
+     "jaw_fullness": 0.7882,
+     "jaw_to_cheek": 0.7883
+    }
+   },
+   "p2a09": {
+    "soft": {
+     "cheek_fullness": 0.8513,
+     "jaw_fullness": 0.7832,
+     "jaw_to_cheek": 0.7852
+    },
+    "base": {
+     "cheek_fullness": 0.8395,
+     "jaw_fullness": 0.7788,
+     "jaw_to_cheek": 0.7807
+    },
+    "sharp": {
+     "cheek_fullness": 0.8369,
+     "jaw_fullness": 0.7765,
+     "jaw_to_cheek": 0.7782
+    }
+   }
+  },
+  "soft_vs_base": [
+   {
+    "id": "p2a03-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0115,
+     "jaw_fullness": 0.0006,
+     "jaw_to_cheek": 0.0008
+    }
+   },
+   {
+    "id": "p2a04-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0149,
+     "jaw_fullness": 0.0072,
+     "jaw_to_cheek": 0.0075
+    }
+   },
+   {
+    "id": "p2a05-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0251,
+     "jaw_fullness": 0.0137,
+     "jaw_to_cheek": 0.014
+    }
+   },
+   {
+    "id": "p2a06-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0125,
+     "jaw_fullness": 0.0017,
+     "jaw_to_cheek": 0.0016
+    }
+   },
+   {
+    "id": "p2a07-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.021,
+     "jaw_fullness": 0.0024,
+     "jaw_to_cheek": 0.002
+    }
+   },
+   {
+    "id": "p2a08-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0141,
+     "jaw_fullness": 0.0049,
+     "jaw_to_cheek": 0.0044
+    }
+   },
+   {
+    "id": "p2a09-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0118,
+     "jaw_fullness": 0.0044,
+     "jaw_to_cheek": 0.0045
+    }
+   },
+   {
+    "id": "p2a10-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0084,
+     "jaw_fullness": 0.0035,
+     "jaw_to_cheek": 0.0032
+    }
+   },
+   {
+    "id": "p2a11-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0088,
+     "jaw_fullness": 0.0035,
+     "jaw_to_cheek": 0.0035
+    }
+   },
+   {
+    "id": "p2a12-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0188,
+     "jaw_fullness": 0.0015,
+     "jaw_to_cheek": 0.0018
+    }
+   },
+   {
+    "id": "p2a01-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.013,
+     "jaw_fullness": 0.0082,
+     "jaw_to_cheek": 0.008
+    }
+   },
+   {
+    "id": "p2a02-jaw-soft",
+    "d": {
+     "cheek_fullness": 0.0112,
+     "jaw_fullness": 0.0017,
+     "jaw_to_cheek": 0.0012
+    }
+   }
+  ]
+ },
+ "convergent_validity": "pending: rank corr(cheek_fullness_PY, width_height_ratio_JS) over 155 \u2014 computed in JS step"
+}
