@@ -201,10 +201,12 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   // value is always preserved (even Infinity/NaN) and the flag says why it
   // can't be trusted.
   // 'denominator-collapse': |denominator| below a bank-calibrated floor —
-  // floors are 0.5 × the bank minimum as a fraction of cheek_w (n=155 frozen
-  // synthetic neutral faces: eye_h min 0.0627, lower-lip min 0.0626, fissure
-  // min ~0.061 → floor 0.03). Below the floor the ratio is geometrically
-  // unmeasurable: blink, extreme yaw foreshortening, or detector
+  // floors: 0.5 × bank minimum as a fraction of cheek_w (n=155 frozen faces):
+  // narrow features (eye_h, lower-lip, fissure) min ~0.061 → 0.03;
+  // mid-third 0.448 → 0.22; lower-third 0.428 → 0.21; nose length 0.302 → 0.15;
+  // intercanthal 0.237 → 0.12; nose width 0.216 → 0.11; mouth width 0.356 → 0.18;
+  // eye width 0.199 → 0.10. Below the floor the ratio is geometrically
+  // unmeasurable: blink, extreme yaw/pitch foreshortening, or detector
   // hallucination (the 2026-09-14 capture with eye_w_to_h = 23.695).
   // 'non-finite': the arithmetic itself produced Infinity/NaN (safety net).
   // The old `|| 1` fallbacks are gone — they silently fabricated finite values
@@ -213,6 +215,14 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
   const flag = (key, f) => { (metricFlags[key] ||= []).push(f); };
   const gdiv = (key, num, den, floorFrac) => {
     if (!(Math.abs(den) >= floorFrac * cheek_w)) flag(key, 'denominator-collapse');
+    return num / den;
+  };
+  // cheek_w is itself a denominator (jaw:cheek, IPD:cheek, nose:cheek,
+  // mouth:cheek) — it can't be floored against itself, so this variant
+  // floors against face_h (bank min cheek_w/face_h 0.78 → floor 0.39).
+  // Under yaw the cheek landmarks foreshorten/occlude while face_h holds.
+  const gdivF = (key, num, den, floorFrac) => {
+    if (!(Math.abs(den) >= floorFrac * face_h)) flag(key, 'denominator-collapse');
     return num / den;
   };
 
@@ -267,10 +277,10 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
 
   const thirds = [tU / tTot * 100, tM / tTot * 100, tL / tTot * 100];
   const canonThirds = Math.max(...thirds.map(t => Math.abs(t - 100 / 3)));
-  const fifths = cheek_w / eye_w;
-  const noseIC = nose_w / dist(P.eye_inner_L, P.eye_inner_R);
-  const mouthNose = mouth_w / nose_w;
-  const spacing = ipd / eye_w;
+  const fifths = gdiv('fifths', cheek_w, eye_w, 0.10);
+  const noseIC = gdiv('nose_w_to_intercanthal', nose_w, dist(P.eye_inner_L, P.eye_inner_R), 0.12);
+  const mouthNose = gdiv('mouth_to_nose', mouth_w, nose_w, 0.11);
+  const spacing = gdiv('eye_spacing_widths', ipd, eye_w, 0.10);
 
   const m = {
     // _px metrics are plain pixel-space distances (P.* were converted to pixels
@@ -278,26 +288,26 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     face_width_px: dist(P.cheek_L, P.cheek_R),
     face_height_px: dist(P.forehead, P.chin),
     width_height_ratio: r3(cheek_w / face_h),
-    fwhr_proxy: r3(cheek_w / dist(glabella, subnasale)),
-    jaw_to_cheek: r3(jaw_w / cheek_w),
+    fwhr_proxy: r3(gdiv('fwhr_proxy', cheek_w, tM, 0.22)),
+    jaw_to_cheek: r3(gdivF('jaw_to_cheek', jaw_w, cheek_w, 0.39)),
     gonial_angle_L: r3(gonL), gonial_angle_R: r3(gonR), gonial_angle_mean: r3((gonL + gonR) / 2),
     third_upper_pct: r3(thirds[0]), third_mid_pct: r3(thirds[1]), third_lower_pct: r3(thirds[2]),
-    chin_to_lower_third: r3(dist(P.lip_bot, P.chin) / tL),
-    philtrum_to_nose: r3(philtrum / noseLen),
+    chin_to_lower_third: r3(gdiv('chin_to_lower_third', dist(P.lip_bot, P.chin), tL, 0.21)),
+    philtrum_to_nose: r3(gdiv('philtrum_to_nose', philtrum, noseLen, 0.15)),
     ipd_px: dist(eyeCL, eyeCR),
-    ipd_to_cheek: r3(ipd / cheek_w),
+    ipd_to_cheek: r3(gdivF('ipd_to_cheek', ipd, cheek_w, 0.39)),
     eye_spacing_widths: r3(spacing),
     eye_w_to_h: r3(gdiv('eye_w_to_h', eye_w, eye_h, 0.03)),
     canthal_tilt_L: r3(tiltL), canthal_tilt_R: r3(tiltR), canthal_tilt_mean: r3((tiltL + tiltR) / 2),
     fifths: r3(fifths),
     nose_w_px: dist(P.nostril_L, P.nostril_R),
     nose_len_px: dist(nasion, P.nose_tip),
-    nose_to_cheek: r3(nose_w / cheek_w),
+    nose_to_cheek: r3(gdivF('nose_to_cheek', nose_w, cheek_w, 0.39)),
     nose_w_to_intercanthal: r3(noseIC),
     mouth_w_px: dist(P.mouth_L, P.mouth_R),
-    mouth_to_cheek: r3(mouth_w / cheek_w),
+    mouth_to_cheek: r3(gdivF('mouth_to_cheek', mouth_w, cheek_w, 0.39)),
     mouth_to_nose: r3(mouthNose),
-    lip_fullness: r3(lip_h / mouth_w),
+    lip_fullness: r3(gdiv('lip_fullness', lip_h, mouth_w, 0.18)),
     upper_lower_lip: r3(gdiv('upper_lower_lip', dist(P.lip_top, innerTop), dist(innerBot, P.lip_bot), 0.03)),
     brow_eye_dist_pct: r3(browEye),
     brow_arch_L: r3(arch(browL, browOuterL, browInnerL)),
@@ -318,6 +328,14 @@ export function computeTelemetry(lm, w, h, poseMatrix = null) {
     canon_mouth: r3(Math.abs(mouthNose - 1.5) / 1.5 * 100),
     canon_spacing: r3(Math.abs(spacing - 2) / 2 * 100),
   };
+  // brow arch divides by eye_w inside arch(): one collapse check flags all three.
+  if (!(Math.abs(eye_w) >= 0.10 * cheek_w))
+    for (const k of ['brow_arch_L', 'brow_arch_R', 'brow_arch_mean']) flag(k, 'denominator-collapse');
+  // canon metrics inherit their source ratio's flags: a canon built on an
+  // unmeasurable ratio is equally unmeasurable.
+  const canonSrc = { canon_fifths: 'fifths', canon_nose: 'nose_w_to_intercanthal', canon_mouth: 'mouth_to_nose', canon_spacing: 'eye_spacing_widths' };
+  for (const [ck, sk] of Object.entries(canonSrc))
+    for (const f of (metricFlags[sk] || [])) flag(ck, f);
   // safety net: any ratio the guards above didn't anticipate that still blew
   // up gets flagged rather than rendered as a bare Infinity/NaN.
   for (const [k, v] of Object.entries(m))
@@ -356,16 +374,17 @@ function setStatus(t, ready) {
 // ---- full metric vector (v1 + v2 + v3) — the unit the noise runs resample ----
 function computeAllMetrics(lm, w, h, calib, poseMatrix = null) {
   const tel = computeTelemetry(lm, w, h, poseMatrix);
-  return { ...tel.metrics, ...computeV2(lm, w, h, calib), ...computeV3(lm, w, h).metrics };
+  return { ...tel.metrics, ...computeV2(lm, w, h, calib).metrics, ...computeV3(lm, w, h).metrics };
 }
 
 // Merge per-metric flags: denominator/arithmetic flags from V1+V3 plus
 // geometric pose-contamination flags (synthetic slopes, js/robustness.js).
 // Pose flags are a LOWER bound on the doubt — detector breakdown at extreme
 // pose adds unmodeled error on top; the quality gate owns that regime.
-function computeMetricFlags(tel, v3flags) {
+function computeMetricFlags(tel, v2flags, v3flags) {
   const out = {};
   for (const [k, arr] of Object.entries(tel.metricFlags || {})) out[k] = [...arr];
+  for (const [k, arr] of Object.entries(v2flags || {})) out[k] = [...(out[k] || []), ...arr];
   for (const [k, arr] of Object.entries(v3flags || {})) out[k] = [...(out[k] || []), ...arr];
   const { yaw_deg, roll_deg, pitch_deg } = tel.metrics;
   for (const k of Object.keys(POSE_SLOPE)) {
@@ -405,9 +424,10 @@ async function analyzeFile(file) {
   const calib = Number.isFinite(calibRaw) && calibRaw > 0 ? calibRaw : null;
   const bgTag = (($('bgTag') || {}).value || '').trim() || null; // optional background tag, per analysis
   const tel = computeTelemetry(lm, w, h, det.matrix);
+  const v2 = computeV2(lm, w, h, calib);
   const v3 = computeV3(lm, w, h);
-  const metrics = { ...tel.metrics, ...computeV2(lm, w, h, calib), ...v3.metrics };
-  const metricFlags = computeMetricFlags(tel, v3.flags);
+  const metrics = { ...tel.metrics, ...v2.metrics, ...v3.metrics };
+  const metricFlags = computeMetricFlags(tel, v2.flags, v3.flags);
   // Landmark-noise interval: jitter landmarks, resample the full vector. The pose
   // matrix is held fixed across iterations — jitter models landmark noise, not
   // pose-estimation noise. This is NOT a bootstrap and NOT a population CI.
@@ -432,6 +452,8 @@ async function analyzeFile(file) {
   const yawForScale = metrics.yaw_deg; // = 3D yaw, else the 2D proxy
   if (metrics.scale_source === 'iris' && Math.abs(yawForScale) > 15)
     scaleNotes.push(`yaw ${Math.abs(yawForScale).toFixed(0)}° (${tel.poseSource}) foreshortens far iris — mm values carry extra error`);
+  if ((metricFlags.mm_per_px || []).includes('denominator-collapse'))
+    scaleNotes.push('iris anchor collapsed — mm scale unmeasurable, values kept raw');
   const quality = analyzeQuality(img, lm);
   // composite measurement confidence: pose quality × image quality
   const qScore = quality.verdict === 'pass' ? 100 : quality.verdict === 'warn' ? 65 : 25;

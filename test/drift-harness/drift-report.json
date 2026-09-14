@@ -79,26 +79,8 @@
    }
   },
   "brow_apex_angle_L": {
-   "A_newProxy_vs_old": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 2.3770083734235574
-   },
-   "C_newProxy_vs_old_square": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 2.3770083734235574
-   },
+   "A_newProxy_vs_old": null,
+   "C_newProxy_vs_old_square": null,
    "B_new3D_vs_newProxy": {
     "n": 155,
     "meanAbs": 0,
@@ -111,26 +93,8 @@
    }
   },
   "brow_apex_angle_R": {
-   "A_newProxy_vs_old": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 2.4794200751408484
-   },
-   "C_newProxy_vs_old_square": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 2.4794200751408484
-   },
+   "A_newProxy_vs_old": null,
+   "C_newProxy_vs_old_square": null,
    "B_new3D_vs_newProxy": {
     "n": 155,
     "meanAbs": 0,
@@ -143,26 +107,8 @@
    }
   },
   "brow_apex_angle_mean": {
-   "A_newProxy_vs_old": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 2.3591531207178384
-   },
-   "C_newProxy_vs_old_square": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 2.3591531207178384
-   },
+   "A_newProxy_vs_old": null,
+   "C_newProxy_vs_old_square": null,
    "B_new3D_vs_newProxy": {
     "n": 155,
     "meanAbs": 0,
@@ -680,26 +626,8 @@
    "B_new3D_vs_newProxy": null
   },
   "eye_area_asym": {
-   "A_newProxy_vs_old": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 0.017832199710468913
-   },
-   "C_newProxy_vs_old_square": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 0.017832199710468913
-   },
+   "A_newProxy_vs_old": null,
+   "C_newProxy_vs_old_square": null,
    "B_new3D_vs_newProxy": {
     "n": 155,
     "meanAbs": 0,
@@ -1313,26 +1241,8 @@
    "B_new3D_vs_newProxy": null
   },
   "mouth_corner_drop": {
-   "A_newProxy_vs_old": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 0.014176984469824608
-   },
-   "C_newProxy_vs_old_square": {
-    "n": 155,
-    "meanAbs": 0,
-    "maxAbs": 0,
-    "maxFace": "p1-wide-1",
-    "maxSigned": 0,
-    "meanAbsZ": 0,
-    "maxAbsZ": 0,
-    "sd": 0.014176984469824608
-   },
+   "A_newProxy_vs_old": null,
+   "C_newProxy_vs_old_square": null,
    "B_new3D_vs_newProxy": {
     "n": 155,
     "meanAbs": 0,

@@ -93,7 +93,7 @@ export function computeV3(lm, w, h) {
 
   // brow arc length (polyline) ÷ eye width
   const arcLen = (ids) => { let s = 0; for (let i = 1; i < ids.length; i++) s += dist(g(ids[i - 1]), g(ids[i])); return s; };
-  const browLen = (arcLen(BROW_L) + arcLen(BROW_R)) / 2 / eye_w;
+  const browLen = gdiv('brow_len_mean', (arcLen(BROW_L) + arcLen(BROW_R)) / 2, eye_w, 0.10);
 
   // scleral show: iris-center height within the fissure (needs refined 478-pt landmarks)
   // The fissure-height denominators collapse on blink/extreme yaw — the old
@@ -114,8 +114,8 @@ export function computeV3(lm, w, h) {
     brow_len_mean: r3(browLen),
     scleral_show_L: scL,
     scleral_show_R: scR,
-    nose_tip_deviation: r3(Math.abs(g(1).x - x_mid) / (nose_w || 1)),
-    lip_corner_asym: r3(Math.abs(g(61).y - g(291).y) / (mouth_w || 1)),
+    nose_tip_deviation: r3(gdiv('nose_tip_deviation', Math.abs(g(1).x - x_mid), nose_w, 0.11)),
+    lip_corner_asym: r3(gdiv('lip_corner_asym', Math.abs(g(61).y - g(291).y), mouth_w, 0.18)),
   };
   for (const [k, v] of Object.entries(metrics))
     if (typeof v === 'number' && !isFinite(v)) flag(k, 'non-finite');

@@ -45,9 +45,44 @@ the denominator to zero; the old code fabricated a finite value via
   synthetic fixture that reproduces the exact 23.695 geometry and asserts
   the flag fires and the raw value is preserved.
 
-Remaining: the full denominator audit across every ratio (V1 thirds,
-fWHR, canon-derived; V2; V3 brow/lip/asymmetry) and flag propagation into
-derived canon metrics. The scaffolding is in place; the audit is mechanical.
+### 2b. Full denominator audit — completed 2026-09-14 (second wave)
+
+Every ratio in V1/V2/V3 now has a bank-calibrated denominator floor
+(0.5 × bank minimum, n=155):
+
+| metric(s) | denominator | floor (fraction of) |
+|---|---|---|
+| `eye_w_to_h`, `upper_lower_lip`, V3 `scleral_show_*` | eye/lip/fissure height | 0.03 × cheek_w |
+| `fwhr_proxy` | mid-third length | 0.22 × cheek_w |
+| `chin_to_lower_third` | lower-third length | 0.21 × cheek_w |
+| `philtrum_to_nose` | nose length | 0.15 × cheek_w |
+| `nose_w_to_intercanthal` | intercanthal distance | 0.12 × cheek_w |
+| `mouth_to_nose` | nose width | 0.11 × cheek_w |
+| `lip_fullness`, V2 `mouth_corner_drop` | mouth width | 0.18 × cheek_w |
+| `fifths`, `eye_spacing_widths`, `brow_arch_*`, V3 `brow_len_mean` | eye width | 0.10 × cheek_w |
+| `jaw_to_cheek`, `ipd_to_cheek`, `nose_to_cheek`, `mouth_to_cheek` | cheek width | 0.39 × face_h (cheek_w can't floor against itself; yaw collapses cheek_w while face_h holds) |
+| V3 `nose_tip_deviation` | nose width | 0.11 × cheek_w (`\|\| 1` removed) |
+| V3 `lip_corner_asym` | mouth width | 0.18 × cheek_w (`\|\| 1` removed) |
+| V2 `mm_per_px` | iris diameter | 0.15 × eye_w (anatomical — no 478-pt bank faces to calibrate; typical iris/eye_w ≈ 0.39) |
+
+Also fixed in the wave:
+- `computeV2()` now returns `{ metrics, flags }` like V3 (callers updated).
+- V2 `brow_apex_angle`'s `|| 1` replaced: degenerate brow vectors → `null`
+  (rendered '—'), and null poisons the mean (the old `null + 90 = 45`
+  coercion would have fabricated a value).
+- Canon metrics inherit their source ratio's flags (`canon_fifths` ←
+  `fifths`, `canon_nose` ← `nose_w_to_intercanthal`, `canon_mouth` ←
+  `mouth_to_nose`, `canon_spacing` ← `eye_spacing_widths`).
+- Collapsed iris anchor adds a quality-box scale note ("iris anchor
+  collapsed — mm scale unmeasurable, values kept raw").
+- `denom-guard-test.mjs` extended: **35/35 pass**, including a clean-face
+  control asserting zero denominator flags on an unmodified face, and an
+  exact-zero-iris control asserting honest `null` (not a flag) when no
+  anchor exists at all.
+
+Remaining (known, not regressions): robustness ranking still covers the V1
+vector (43 metrics exported); pitch-driven pose flags remain approximate
+warnings per the shape-contamination finding.
 
 ## 3. Pose-contamination flags
 
@@ -104,7 +139,7 @@ vocabulary and one label edit (`fWHR (proxy)` → `cheek : midface height`).
   tilt rows confirm the sign fix (§1).
 - Roundness proof + pitch eval re-run: same conclusions (WHR slope 1.000,
   fWHR blind; pitch still rejected).
-- denom-guard-test.mjs: 9/9 pass.
+- denom-guard-test.mjs: 35/35 pass.
 - Quality snapshot: stands (see §4).
 
 ## 8. Deployment
@@ -112,14 +147,16 @@ vocabulary and one label edit (`fWHR (proxy)` → `cheek : midface height`).
 Scoped push (Telemetry Lab files only) via the API push script, then live
 byte-verification. Files changed/added this pass:
 
-- `js/telemetry.js` — tilt fix, denominator guards, flag plumbing, UI copy
-- `js/telemetry3.js` — `{ metrics, flags }` API, scleral guards
+- `js/telemetry.js` — tilt fix, denominator guards (full audit), flag plumbing, UI copy
+- `js/telemetry2.js` — `{ metrics, flags }` API, mouth_corner_drop + mm_per_px guards, brow-apex null fix
+- `js/telemetry3.js` — `{ metrics, flags }` API, scleral/nose-tip/lip-corner/brow-len guards
 - `js/robustness.js` — NEW: pose-sensitivity slopes
 - `telemetry.html` — A/B hint
 - `telemetry.css` — flag chips
 - `test/drift-harness/` — robustness.mjs, denom-guard-test.mjs (NEW),
-  DRIFT-REPORT.md, ROBUSTNESS-REPORT.md, ROUNDNESS-RENAME-MEMO.md (NEW),
-  QUALITY-GATE-NOTE.md (NEW), HARDENING-REPORT-2026-09-14.md (this file),
+  run.js (V2 caller), DRIFT-REPORT.md, ROBUSTNESS-REPORT.md,
+  ROUNDNESS-RENAME-MEMO.md (NEW), QUALITY-GATE-NOTE.md (NEW),
+  HARDENING-REPORT-2026-09-14.md (this file),
   robustness.json, drift-report.json
 
-Unchanged (not pushed): `js/telemetry2.js`, `js/measure.js`.
+Unchanged (not pushed): `js/measure.js`.

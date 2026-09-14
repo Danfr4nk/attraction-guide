@@ -92,6 +92,17 @@ export function computeV2(lm, w, h, calibIpDmm) {
   const P = {};
   for (const [k, i] of Object.entries(I)) P[k] = PX(lm[i], w, h);
   const ex = {};
+  // flags annotate, never hide (same contract as computeTelemetry's
+  // metricFlags): 'denominator-collapse' when a ratio's denominator falls
+  // below a bank-calibrated floor, 'non-finite' as a safety net.
+  const flags = {};
+  const flag = (key, f) => { (flags[key] ||= []).push(f); };
+  const cheek_w = dist(P.cheek_L, P.cheek_R);
+  const eye_w = (dist(P.eye_outer_L, P.eye_inner_L) + dist(P.eye_outer_R, P.eye_inner_R)) / 2;
+  const gdiv = (key, num, den, floorFrac) => {
+    if (!(Math.abs(den) >= floorFrac * cheek_w)) flag(key, 'denominator-collapse');
+    return num / den;
+  };
   let irisPx = null, irisL = null, irisR = null;
   if (lm.length >= 478) {
     const dia = (axes) => {
@@ -104,7 +115,13 @@ export function computeV2(lm, w, h, calibIpDmm) {
   const eL = mid(P.eye_outer_L, P.eye_inner_L), eR = mid(P.eye_outer_R, P.eye_inner_R);
   let mmpp = null, src = 'none';
   if (calibIpDmm && calibIpDmm > 0) { mmpp = calibIpDmm / dist(eL, eR); src = 'calibrated'; }
-  else if (irisPx) { mmpp = IRIS_MM / irisPx; src = 'iris'; }
+  else if (irisPx) {
+    // iris-anchor floor: no 478-pt bank faces to calibrate from, so this is
+    // anatomical — typical iris/eye-width ≈ 0.39; below 0.15 the anchor has
+    // collapsed (detector hallucination) and the mm scale is unmeasurable.
+    if (eye_w > 0 && irisPx < 0.15 * eye_w) flag('mm_per_px', 'denominator-collapse');
+    mmpp = IRIS_MM / irisPx; src = 'iris';
+  }
   ex.iris_diam_px = irisPx ? r3(irisPx) : null;
   ex.iris_diam_L_px = irisL ? r3(irisL) : null;
   ex.iris_diam_R_px = irisR ? r3(irisR) : null;
@@ -139,20 +156,27 @@ export function computeV2(lm, w, h, calibIpDmm) {
   ex.eye_area_asym = (aL + aR) ? r3(Math.abs(aL - aR) / ((aL + aR) / 2)) : null;
   ex.lip_area_mm2 = k2 ? r3(aLip * k2) : null;
   const mouthW = dist(P.mouth_L, P.mouth_R);
-  ex.mouth_corner_drop = r3(((P.mouth_L[1] + P.mouth_R[1]) / 2 - innerTop[1]) / mouthW);
+  ex.mouth_corner_drop = r3(gdiv('mouth_corner_drop', ((P.mouth_L[1] + P.mouth_R[1]) / 2 - innerTop[1]), mouthW, 0.18));
   const apexAngle = (ids, oI, iI) => {
     const pts = ids.map(i => PX(lm[i], w, h));
     const apex = pts.reduce((a, p) => p[1] < a[1] ? p : a);
     const o = PX(lm[oI], w, h), ii = PX(lm[iI], w, h);
     const v1 = [o[0] - apex[0], o[1] - apex[1]], v2 = [ii[0] - apex[0], ii[1] - apex[1]];
-    const m = Math.hypot(...v1) * Math.hypot(...v2) || 1;
+    const m = Math.hypot(...v1) * Math.hypot(...v2);
+    // was `|| 1`: a zero-length brow vector silently fabricated a 90° angle.
+    // Degenerate geometry is unmeasurable — null, rendered as '—'.
+    if (!(m > 0)) return null;
     return Math.acos(clamp((v1[0] * v2[0] + v1[1] * v2[1]) / m, -1, 1)) * 180 / Math.PI;
   };
   const apL = apexAngle([70, 63, 105, 66, 107], 70, 107);
   const apR = apexAngle([300, 293, 334, 296, 336], 300, 336);
-  ex.brow_apex_angle_L = r3(apL); ex.brow_apex_angle_R = r3(apR);
-  ex.brow_apex_angle_mean = r3((apL + apR) / 2);
-  return ex;
+  ex.brow_apex_angle_L = apL == null ? null : r3(apL);
+  ex.brow_apex_angle_R = apR == null ? null : r3(apR);
+  // null is not 0: a degenerate side poisons the mean, it doesn't average in.
+  ex.brow_apex_angle_mean = (apL == null || apR == null) ? null : r3((apL + apR) / 2);
+  for (const [k, v] of Object.entries(ex))
+    if (typeof v === 'number' && !isFinite(v)) flag(k, 'non-finite');
+  return { metrics: ex, flags };
 }
 
 const mm1 = (v) => v == null ? '—' : v.toFixed(1) + ' mm';
@@ -193,7 +217,7 @@ export const V2_METRIC_DEFS = [
   { key: 'eye_area_asym', group: 'contours', label: 'eye area asymmetry', fmt: (v) => v == null ? '—' : v.toFixed(3) },
   { key: 'lip_area_mm2', group: 'contours', label: 'lip vermilion area', fmt: mm2, hint: '20-pt ring' },
   { key: 'mouth_corner_drop', group: 'shape', label: 'mouth corner drop', fmt: pct, hint: '+ = downturned, ÷ mouth width' },
-  { key: 'brow_apex_angle_L', group: 'shape', label: 'brow apex angle L', fmt: (v) => v.toFixed(1) + '°', hint: 'at brow apex, outer↔inner' },
-  { key: 'brow_apex_angle_R', group: 'shape', label: 'brow apex angle R', fmt: (v) => v.toFixed(1) + '°' },
-  { key: 'brow_apex_angle_mean', group: 'shape', label: 'brow apex angle mean', fmt: (v) => v.toFixed(1) + '°' },
+  { key: 'brow_apex_angle_L', group: 'shape', label: 'brow apex angle L', fmt: (v) => v == null ? '—' : v.toFixed(1) + '°', hint: 'at brow apex, outer↔inner' },
+  { key: 'brow_apex_angle_R', group: 'shape', label: 'brow apex angle R', fmt: (v) => v == null ? '—' : v.toFixed(1) + '°' },
+  { key: 'brow_apex_angle_mean', group: 'shape', label: 'brow apex angle mean', fmt: (v) => v == null ? '—' : v.toFixed(1) + '°' },
 ];

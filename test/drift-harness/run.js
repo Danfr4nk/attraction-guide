@@ -61,8 +61,8 @@ function vec(lm, w, h, matrix, T, T2, T3) {
   return {
     ...t.metrics,
     poseSource: t.poseSource, quality: t.quality,
-    ...T2.computeV2(lm, w, h, null),
-    ...T3.computeV3(lm, w, h),
+    ...T2.computeV2(lm, w, h, null).metrics,
+    ...T3.computeV3(lm, w, h).metrics,
   };
 }
 const fakeImg = (lm, w, h, matrix) => ({ __landmarks: lm, __matrix: matrix, naturalWidth: w, naturalHeight: h });

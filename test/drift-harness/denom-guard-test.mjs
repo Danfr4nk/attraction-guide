@@ -27,6 +27,7 @@ globalThis.window = dom.window; globalThis.document = dom.window.document;
 document.getElementById('overlay').getContext = () => new Proxy({}, { get: (t,p) => (p==='canvas'?document.getElementById('overlay'):(...a)=>{}) });
 
 const T = await import(pathToFileURL(REPO + 'js/telemetry.js').href);
+const T2 = await import(pathToFileURL(REPO + 'js/telemetry2.js').href);
 const T3 = await import(pathToFileURL(REPO + 'js/telemetry3.js').href);
 const M = await import(pathToFileURL(REPO + 'js/measure.js').href);
 const I = M.LANDMARK_IDX;
@@ -101,6 +102,113 @@ check('bank: zero denominator-collapse flags on 155 faces', fp === 0, `(${fp} fa
         `(value=${t.metrics.upper_lower_lip})`);
 }
 
+// ---- 2e. cheek-width collapse (yaw occlusion) flags every cheek-denominated ratio ----
+{
+  const f = faces[5];
+  const lm = f.landmarks.map(p => ({...p}));
+  const mid = { x: (lm[234].x + lm[454].x)/2, y: (lm[234].y + lm[454].y)/2 };
+  lm[234] = {...lm[234], ...mid}; lm[454] = {...lm[454], ...mid};
+  const t = T.computeTelemetry(lm, f.w, f.h, f.matrix || null);
+  for (const k of ['jaw_to_cheek', 'ipd_to_cheek', 'nose_to_cheek', 'mouth_to_cheek'])
+    check(`collapsed cheek_w → ${k} flagged`, hasFlag(t.metricFlags, k, 'denominator-collapse'));
+  // eye_w_to_h is genuinely measurable here — its floor is cheek-relative, and
+  // the eyes are untouched: no flag expected (no false positive by association)
+  check('collapsed cheek_w → eye_w_to_h NOT flagged', !hasFlag(t.metricFlags, 'eye_w_to_h', 'denominator-collapse'));
+}
+
+// ---- 2f. mid-third collapse flags fwhr_proxy ----
+{
+  const f = faces[6];
+  const lm = f.landmarks.map(p => ({...p}));
+  const mid = { x: (lm[2].x + lm[168].x)/2, y: (lm[2].y + lm[168].y)/2 };
+  for (const i of [107, 336]) lm[i] = {...lm[i], ...mid}; // glabella → subnasale
+  lm[2] = {...lm[2], ...mid};
+  const t = T.computeTelemetry(lm, f.w, f.h, f.matrix || null);
+  check('collapsed mid-third → fwhr_proxy flagged', hasFlag(t.metricFlags, 'fwhr_proxy', 'denominator-collapse'));
+}
+
+// ---- 2g. eye-width collapse flags fifths/spacing/brow-arch + canon propagation ----
+{
+  const f = faces[7];
+  const lm = f.landmarks.map(p => ({...p}));
+  for (const [o, i] of [[33, 133], [362, 263]]) {
+    const mid = { x: (lm[o].x + lm[i].x)/2, y: (lm[o].y + lm[i].y)/2 };
+    lm[o] = {...lm[o], ...mid}; lm[i] = {...lm[i], ...mid};
+  }
+  const t = T.computeTelemetry(lm, f.w, f.h, f.matrix || null);
+  for (const k of ['fifths', 'eye_spacing_widths', 'brow_arch_L', 'brow_arch_R', 'brow_arch_mean'])
+    check(`collapsed eye_w → ${k} flagged`, hasFlag(t.metricFlags, k, 'denominator-collapse'));
+  check('canon_fifths inherits fifths flag', hasFlag(t.metricFlags, 'canon_fifths', 'denominator-collapse'));
+  check('canon_spacing inherits eye_spacing_widths flag', hasFlag(t.metricFlags, 'canon_spacing', 'denominator-collapse'));
+}
+
+// ---- 2h. nose/mouth width collapse: V1 + V3 + V2 ----
+{
+  const f = faces[8];
+  const lm = f.landmarks.map(p => ({...p}));
+  const nm = { x: (lm[98].x + lm[327].x)/2, y: (lm[98].y + lm[327].y)/2 };
+  lm[98] = {...lm[98], ...nm}; lm[327] = {...lm[327], ...nm};
+  const mm = { x: (lm[61].x + lm[291].x)/2, y: (lm[61].y + lm[291].y)/2 };
+  lm[61] = {...lm[61], ...mm}; lm[291] = {...lm[291], ...mm};
+  const t = T.computeTelemetry(lm, f.w, f.h, f.matrix || null);
+  check('collapsed nose_w → mouth_to_nose flagged', hasFlag(t.metricFlags, 'mouth_to_nose', 'denominator-collapse'));
+  check('collapsed mouth_w → lip_fullness flagged', hasFlag(t.metricFlags, 'lip_fullness', 'denominator-collapse'));
+  check('canon_mouth inherits mouth_to_nose flag', hasFlag(t.metricFlags, 'canon_mouth', 'denominator-collapse'));
+  const v3 = T3.computeV3(lm, f.w, f.h);
+  check('collapsed nose_w → V3 nose_tip_deviation flagged (no || 1)', hasFlag(v3.flags, 'nose_tip_deviation', 'denominator-collapse'));
+  check('collapsed mouth_w → V3 lip_corner_asym flagged (no || 1)', hasFlag(v3.flags, 'lip_corner_asym', 'denominator-collapse'));
+  const v2 = T2.computeV2(lm, f.w, f.h, null);
+  check('collapsed mouth_w → V2 mouth_corner_drop flagged', hasFlag(v2.flags, 'mouth_corner_drop', 'denominator-collapse'));
+}
+
+// ---- 2i. V2 brow apex degeneracy: null, not fabricated 90° ----
+{
+  const f = faces[9];
+  const lm = f.landmarks.map(p => ({...p}));
+  const bp = { x: lm[70].x, y: lm[70].y, z: 0 };
+  for (const i of [70, 63, 105, 66, 107]) lm[i] = {...bp};
+  const v2 = T2.computeV2(lm, f.w, f.h, null);
+  check('degenerate brow → apex L null (not 90°)', v2.metrics.brow_apex_angle_L === null, `(value=${v2.metrics.brow_apex_angle_L})`);
+  check('degenerate brow → apex mean null (null poisons mean)', v2.metrics.brow_apex_angle_mean === null);
+  check('other brow intact → apex R finite', Number.isFinite(v2.metrics.brow_apex_angle_R));
+}
+
+// ---- 2j. V2 iris-anchor collapse flags mm_per_px ----
+// Near-collapse (tiny but nonzero iris → huge mm_per_px), not exact zero:
+// exact-zero iris means "no usable anchor" and honestly yields mm_per_px=null.
+{
+  const f = faces[10];
+  const lm = f.landmarks.map(p => ({...p}));
+  while (lm.length < 478) lm.push({...lm[1]});
+  const ec = { x: (lm[33].x + lm[133].x)/2, y: (lm[33].y + lm[133].y)/2, z: 0 };
+  const jit = [[0.00001, 0], [-0.00001, 0], [0, 0.00001], [0, -0.00001]];
+  [468,469,470,471,472,473,474,475,476,477].forEach((idx, k) => {
+    const [jx, jy] = jit[k % 4];
+    lm[idx] = { x: ec.x + jx, y: ec.y + jy, z: 0 };
+  });
+  const v2 = T2.computeV2(lm, f.w, f.h, null);
+  check('collapsed iris → mm_per_px denominator-collapse flagged', hasFlag(v2.flags, 'mm_per_px', 'denominator-collapse'));
+  check('collapsed iris → mm_per_px raw value preserved', v2.metrics.mm_per_px > 100, `(value=${v2.metrics.mm_per_px})`);
+  // exact-zero control: no anchor at all → null scale, no flag needed
+  const lm0 = f.landmarks.map(p => ({...p}));
+  while (lm0.length < 478) lm0.push({...lm0[1]});
+  for (const i of [468,469,470,471,472,473,474,475,476,477]) lm0[i] = {...ec};
+  const v20 = T2.computeV2(lm0, f.w, f.h, null);
+  check('zero iris → mm_per_px null (honest absence)', v20.metrics.mm_per_px === null);
+}
+
+// ---- 2k. clean-face control: no denominator flags on an unmodified face ----
+{
+  const f = faces[12];
+  const t = T.computeTelemetry(f.landmarks, f.w, f.h, f.matrix || null);
+  const v2 = T2.computeV2(f.landmarks, f.w, f.h, null);
+  const v3 = T3.computeV3(f.landmarks, f.w, f.h);
+  const allFlags = [t.metricFlags, v2.flags, v3.flags];
+  const denomHits = [];
+  for (const fl of allFlags) for (const [k, arr] of Object.entries(fl))
+    if (arr.includes('denominator-collapse') || arr.includes('non-finite')) denomHits.push(k);
+  check('clean face → zero denominator/non-finite flags', denomHits.length === 0, `(${denomHits.join(',')})`);
+}
 // ---- 2d. V3 scleral fissure collapse ----
 // The frozen bank is 468 points; scleral_show needs the refined 478-pt iris
 // landmarks, so synthesize the 10 iris points (indices 468–477) first.
@@ -124,5 +232,5 @@ check('bank: zero denominator-collapse flags on 155 faces', fp === 0, `(${fp} fa
         !hasFlag(v3b.flags, 'scleral_show_L', 'denominator-collapse') && !hasFlag(v3b.flags, 'scleral_show_R', 'denominator-collapse'));
 }
 
-console.log(`\ndemon-guard: ${pass} passed, ${fail} failed`);
+console.log(`\ndenom-guard: ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);
