@@ -535,50 +535,47 @@ function toggleCompare(id) {
 function activeItem() { return state.items.find(i => i.id === state.activeId) || null; }
 
 // ---- telestrator overlay ----
-function seg(a, b, color, label) {
-  octx.strokeStyle = color; octx.lineWidth = 2;
-  octx.beginPath(); octx.moveTo(a.x, a.y); octx.lineTo(b.x, b.y); octx.stroke();
-  for (const p of [a, b]) { octx.fillStyle = color; octx.beginPath(); octx.arc(p.x, p.y, 4, 0, 7); octx.fill(); }
+function seg(ctx, a, b, color, label) {
+  ctx.strokeStyle = color; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+  for (const p of [a, b]) { ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, 7); ctx.fill(); }
   if (label) {
-    octx.font = '11px ui-monospace, monospace'; octx.fillStyle = color;
-    octx.fillText(label, (a.x + b.x) / 2 + 6, (a.y + b.y) / 2 - 6);
+    ctx.font = '11px ui-monospace, monospace'; ctx.fillStyle = color;
+    ctx.fillText(label, (a.x + b.x) / 2 + 6, (a.y + b.y) / 2 - 6);
   }
 }
 
-function renderViewer() {
-  const it = activeItem();
-  viewerCard.hidden = !it;
-  if (!it) return;
-  $('viewTitle').textContent = it.name;
-  const scale = Math.min(1, 1100 / it.w);
-  overlay.width = Math.round(it.w * scale);
-  overlay.height = Math.round(it.h * scale);
-  octx.drawImage(it.img, 0, 0, overlay.width, overlay.height);
-  const X = (p) => ({ x: p.x * overlay.width, y: p.y * overlay.height });
+function drawOverlay(ctx, W, H, it, withPhoto = true) {
+  // renders the analyzed photo (unless withPhoto=false) + all toggled
+  // overlay layers + HUD frame. W,H are logical (display-space) dimensions;
+  // callers may set a transform on ctx so the same drawing lands at full
+  // image resolution.
+  if (withPhoto) ctx.drawImage(it.img, 0, 0, W, H);
+  const X = (p) => ({ x: p.x * W, y: p.y * H });
   const I = LANDMARK_IDX, lm = it.lm, A = it.anchors;
 
   if ($('layerMesh').checked) {
-    octx.fillStyle = 'rgba(45,212,191,.5)';
-    for (const p of lm) octx.fillRect(p.x * overlay.width - 1, p.y * overlay.height - 1, 2, 2);
+    ctx.fillStyle = 'rgba(45,212,191,.5)';
+    for (const p of lm) ctx.fillRect(p.x * W - 1, p.y * H - 1, 2, 2);
   }
   if ($('layerMetrics').checked) {
-    seg(X(lm[I.cheek_L]), X(lm[I.cheek_R]), '#d8b4fe', 'cheek');
-    seg(X(lm[I.jaw_L]), X(lm[I.jaw_R]), '#86efac', 'jaw');
-    seg(X(A.eyeCL), X(A.eyeCR), '#7dd3fc', 'IPD');
-    seg(X(lm[I.eye_outer_L]), X(lm[I.eye_inner_L]), '#7dd3fc');
-    seg(X(lm[I.eye_inner_R]), X(lm[I.eye_outer_R]), '#7dd3fc');
-    seg(X(lm[I.mouth_L]), X(lm[I.mouth_R]), '#fca5a5', 'mouth');
-    seg(X(lm[I.nostril_L]), X(lm[I.nostril_R]), '#fcd34d', 'nose');
-    seg(X(lm[I.lip_top]), X(lm[I.lip_bot]), '#fca5a5', 'lip');
+    seg(ctx, X(lm[I.cheek_L]), X(lm[I.cheek_R]), '#d8b4fe', 'cheek');
+    seg(ctx, X(lm[I.jaw_L]), X(lm[I.jaw_R]), '#86efac', 'jaw');
+    seg(ctx, X(A.eyeCL), X(A.eyeCR), '#7dd3fc', 'IPD');
+    seg(ctx, X(lm[I.eye_outer_L]), X(lm[I.eye_inner_L]), '#7dd3fc');
+    seg(ctx, X(lm[I.eye_inner_R]), X(lm[I.eye_outer_R]), '#7dd3fc');
+    seg(ctx, X(lm[I.mouth_L]), X(lm[I.mouth_R]), '#fca5a5', 'mouth');
+    seg(ctx, X(lm[I.nostril_L]), X(lm[I.nostril_R]), '#fcd34d', 'nose');
+    seg(ctx, X(lm[I.lip_top]), X(lm[I.lip_bot]), '#fca5a5', 'lip');
     // contour rings (visual check of ring indices)
-    octx.lineWidth = 1.5;
+    ctx.lineWidth = 1.5;
     for (const [ring, color] of [[EYE_RING_L, '#7dd3fc'], [EYE_RING_R, '#7dd3fc'], [LIP_RING, '#fca5a5']]) {
-      octx.strokeStyle = color; octx.beginPath();
+      ctx.strokeStyle = color; ctx.beginPath();
       ring.forEach((idx, j) => {
         const p = X(lm[idx]);
-        j ? octx.lineTo(p.x, p.y) : octx.moveTo(p.x, p.y);
+        j ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y);
       });
-      octx.closePath(); octx.stroke();
+      ctx.closePath(); ctx.stroke();
     }
   }
   if ($('layerThirds').checked) {
@@ -594,69 +591,69 @@ function renderViewer() {
       [X(A.subnasale), '#f472b6', `M ${it.metrics.third_mid_pct.toFixed(1)}%`],
       [X(lm[I.chin]), '#f472b6', `L ${it.metrics.third_lower_pct.toFixed(1)}%`],
     ];
-    octx.font = '11px ui-monospace, monospace';
+    ctx.font = '11px ui-monospace, monospace';
     for (const [a, c, lab] of rows) {
-      octx.strokeStyle = c; octx.lineWidth = 1.5; octx.setLineDash([6, 4]);
-      octx.beginPath();
-      octx.moveTo(a.x - dx * halfSpan, a.y - dy * halfSpan);
-      octx.lineTo(a.x + dx * halfSpan, a.y + dy * halfSpan);
-      octx.stroke();
-      octx.setLineDash([]);
-      if (lab) { octx.fillStyle = c; octx.fillText(lab, a.x + dx * halfSpan + 6, a.y + dy * halfSpan + 4); }
+      ctx.strokeStyle = c; ctx.lineWidth = 1.5; ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.moveTo(a.x - dx * halfSpan, a.y - dy * halfSpan);
+      ctx.lineTo(a.x + dx * halfSpan, a.y + dy * halfSpan);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      if (lab) { ctx.fillStyle = c; ctx.fillText(lab, a.x + dx * halfSpan + 6, a.y + dy * halfSpan + 4); }
     }
   }
 
   // ---- technical overlay suite (visual only — no metric changes) ----
   const rollR = it.metrics.roll_deg * Math.PI / 180;
   const rdx = Math.cos(rollR), rdy = Math.sin(rollR); // facial horizontal (eye axis)
-  octx.font = '10px ui-monospace, monospace';
+  ctx.font = '10px ui-monospace, monospace';
 
   if ($('layerMidline').checked) {
     const f = X(lm[I.forehead]), c = X(lm[I.chin]);
     const ex = (p, q, t) => ({ x: p.x + (q.x - p.x) * t, y: p.y + (q.y - p.y) * t });
     const a = ex(f, c, -0.3), b = ex(f, c, 1.3);
-    octx.strokeStyle = 'rgba(45,212,191,.55)'; octx.lineWidth = 1; octx.setLineDash([4, 4]);
-    octx.beginPath(); octx.moveTo(a.x, a.y); octx.lineTo(b.x, b.y); octx.stroke();
-    octx.setLineDash([]);
-    octx.fillStyle = 'rgba(45,212,191,.85)';
-    octx.fillText('MIDLINE', b.x + 6, b.y + 3);
+    ctx.strokeStyle = 'rgba(45,212,191,.55)'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(45,212,191,.85)';
+    ctx.fillText('MIDLINE', b.x + 6, b.y + 3);
   }
 
   if ($('layerFifths').checked) {
     const cL = X(lm[I.cheek_L]), cR = X(lm[I.cheek_R]);
     const f = X(lm[I.forehead]), ch = X(lm[I.chin]);
     const vlen = Math.hypot(ch.x - f.x, ch.y - f.y) * 0.7;
-    octx.strokeStyle = 'rgba(196,141,255,.4)'; octx.lineWidth = 1; octx.setLineDash([3, 5]);
-    octx.beginPath();
+    ctx.strokeStyle = 'rgba(196,141,255,.4)'; ctx.lineWidth = 1; ctx.setLineDash([3, 5]);
+    ctx.beginPath();
     for (let k = 1; k < 5; k++) {
       const px = cL.x + (cR.x - cL.x) * k / 5, py = cL.y + (cR.y - cL.y) * k / 5;
-      octx.moveTo(px + rdy * vlen, py - rdx * vlen);
-      octx.lineTo(px - rdy * vlen, py + rdx * vlen);
+      ctx.moveTo(px + rdy * vlen, py - rdx * vlen);
+      ctx.lineTo(px - rdy * vlen, py + rdx * vlen);
     }
-    octx.stroke();
-    octx.setLineDash([]);
-    octx.fillStyle = 'rgba(196,141,255,.75)';
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = 'rgba(196,141,255,.75)';
     const top5 = { x: cL.x + (cR.x - cL.x) / 5, y: cL.y + (cR.y - cL.y) / 5 };
-    octx.fillText('FIFTHS', top5.x + rdy * vlen + 4, top5.y - rdx * vlen);
+    ctx.fillText('FIFTHS', top5.x + rdy * vlen + 4, top5.y - rdx * vlen);
   }
 
   if ($('layerIris').checked && it.metrics.iris_diam_px) {
-    const s = overlay.width / it.w;
+    const s = W / it.w;
     const r = Math.max(3, it.metrics.iris_diam_px * s / 2);
-    octx.strokeStyle = 'rgba(125,211,252,.9)'; octx.lineWidth = 1.5;
+    ctx.strokeStyle = 'rgba(125,211,252,.9)'; ctx.lineWidth = 1.5;
     for (const idx of [IRIS.center_L, IRIS.center_R]) {
       const p = X(lm[idx]);
-      octx.beginPath(); octx.arc(p.x, p.y, r, 0, 7); octx.stroke();
-      octx.beginPath();
-      octx.moveTo(p.x - r - 6, p.y); octx.lineTo(p.x - r + 4, p.y);
-      octx.moveTo(p.x + r - 4, p.y); octx.lineTo(p.x + r + 6, p.y);
-      octx.moveTo(p.x, p.y - r - 6); octx.lineTo(p.x, p.y - r + 4);
-      octx.moveTo(p.x, p.y + r - 4); octx.lineTo(p.x, p.y + r + 6);
-      octx.stroke();
+      ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, 7); ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(p.x - r - 6, p.y); ctx.lineTo(p.x - r + 4, p.y);
+      ctx.moveTo(p.x + r - 4, p.y); ctx.lineTo(p.x + r + 6, p.y);
+      ctx.moveTo(p.x, p.y - r - 6); ctx.lineTo(p.x, p.y - r + 4);
+      ctx.moveTo(p.x, p.y + r - 4); ctx.lineTo(p.x, p.y + r + 6);
+      ctx.stroke();
     }
-    octx.fillStyle = 'rgba(125,211,252,.9)';
+    ctx.fillStyle = 'rgba(125,211,252,.9)';
     const pc = X(lm[IRIS.center_R]);
-    octx.fillText(`IRIS Ø${it.metrics.iris_diam_px.toFixed(0)}px`, pc.x + r + 8, pc.y - r - 6);
+    ctx.fillText(`IRIS Ø${it.metrics.iris_diam_px.toFixed(0)}px`, pc.x + r + 8, pc.y - r - 6);
   }
 
   if ($('layerDims').checked) {
@@ -664,19 +661,19 @@ function renderViewer() {
     const ang = Math.atan2(b.y - a.y, b.x - a.x);
     const nx = -Math.sin(ang), ny = Math.cos(ang), off = 30;
     const a2 = { x: a.x + nx * off, y: a.y + ny * off }, b2 = { x: b.x + nx * off, y: b.y + ny * off };
-    octx.strokeStyle = 'rgba(252,211,77,.9)'; octx.lineWidth = 1.5;
-    octx.beginPath();
-    octx.moveTo(a.x + nx * 8, a.y + ny * 8); octx.lineTo(a2.x + nx * 8, a2.y + ny * 8);
-    octx.moveTo(b.x + nx * 8, b.y + ny * 8); octx.lineTo(b2.x + nx * 8, b2.y + ny * 8);
-    octx.moveTo(a2.x, a2.y); octx.lineTo(b2.x, b2.y);
+    ctx.strokeStyle = 'rgba(252,211,77,.9)'; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(a.x + nx * 8, a.y + ny * 8); ctx.lineTo(a2.x + nx * 8, a2.y + ny * 8);
+    ctx.moveTo(b.x + nx * 8, b.y + ny * 8); ctx.lineTo(b2.x + nx * 8, b2.y + ny * 8);
+    ctx.moveTo(a2.x, a2.y); ctx.lineTo(b2.x, b2.y);
     for (const p of [a2, b2]) {
-      octx.moveTo(p.x - nx * 5 - Math.cos(ang) * 5, p.y - ny * 5 - Math.sin(ang) * 5);
-      octx.lineTo(p.x + nx * 5 + Math.cos(ang) * 5, p.y + ny * 5 + Math.sin(ang) * 5);
+      ctx.moveTo(p.x - nx * 5 - Math.cos(ang) * 5, p.y - ny * 5 - Math.sin(ang) * 5);
+      ctx.lineTo(p.x + nx * 5 + Math.cos(ang) * 5, p.y + ny * 5 + Math.sin(ang) * 5);
     }
-    octx.stroke();
-    octx.fillStyle = 'rgba(252,211,77,.95)';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(252,211,77,.95)';
     const ipdTxt = it.metrics.ipd_mm ? `IPD ${it.metrics.ipd_mm.toFixed(1)}mm` : `IPD ${it.metrics.ipd_px.toFixed(0)}px`;
-    octx.fillText(ipdTxt, (a2.x + b2.x) / 2 + 10, (a2.y + b2.y) / 2 - 6);
+    ctx.fillText(ipdTxt, (a2.x + b2.x) / 2 + 10, (a2.y + b2.y) / 2 - 6);
     const tiltArc = (innerLm, outerLm, tiltDeg) => {
       const o = X(outerLm), inn = X(innerLm);
       const s = Math.sign(o.x - inn.x) || 1; // outward, away from the nose
@@ -685,43 +682,43 @@ function renderViewer() {
       let d = aAct - aRef;
       while (d > Math.PI) d -= 2 * Math.PI;
       while (d < -Math.PI) d += 2 * Math.PI;
-      octx.strokeStyle = 'rgba(248,113,113,.9)'; octx.lineWidth = 1.5;
-      octx.beginPath(); octx.arc(o.x, o.y, 17, aRef, aRef + d, d < 0); octx.stroke();
-      octx.setLineDash([2, 3]);
-      octx.beginPath();
-      octx.moveTo(o.x, o.y); octx.lineTo(o.x + Math.cos(aRef) * 28, o.y + Math.sin(aRef) * 28);
-      octx.stroke(); octx.setLineDash([]);
-      octx.fillStyle = 'rgba(248,113,113,.9)';
-      octx.fillText(tiltDeg.toFixed(1) + '°', o.x + Math.cos(aRef) * 32 - 10, o.y + Math.sin(aRef) * 32 + 3);
+      ctx.strokeStyle = 'rgba(248,113,113,.9)'; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(o.x, o.y, 17, aRef, aRef + d, d < 0); ctx.stroke();
+      ctx.setLineDash([2, 3]);
+      ctx.beginPath();
+      ctx.moveTo(o.x, o.y); ctx.lineTo(o.x + Math.cos(aRef) * 28, o.y + Math.sin(aRef) * 28);
+      ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(248,113,113,.9)';
+      ctx.fillText(tiltDeg.toFixed(1) + '°', o.x + Math.cos(aRef) * 32 - 10, o.y + Math.sin(aRef) * 32 + 3);
     };
     tiltArc(lm[I.eye_inner_L], lm[I.eye_outer_L], it.metrics.canthal_tilt_L);
     tiltArc(lm[I.eye_inner_R], lm[I.eye_outer_R], it.metrics.canthal_tilt_R);
   }
 
   if ($('layerGrid').checked) {
-    const W = overlay.width, H = overlay.height, cx = W / 2, cy = H / 2;
+    const cx = W / 2, cy = H / 2;
     const step = 36, diag = Math.hypot(W, H);
-    octx.strokeStyle = 'rgba(148,163,184,.12)'; octx.lineWidth = 1;
-    octx.beginPath();
+    ctx.strokeStyle = 'rgba(148,163,184,.12)'; ctx.lineWidth = 1;
+    ctx.beginPath();
     for (let t = -diag; t <= diag; t += step) {
-      octx.moveTo(cx - rdy * t - rdx * diag, cy + rdx * t - rdy * diag);
-      octx.lineTo(cx - rdy * t + rdx * diag, cy + rdx * t + rdy * diag);
-      octx.moveTo(cx + rdx * t + rdy * diag, cy + rdy * t - rdx * diag);
-      octx.lineTo(cx + rdx * t - rdy * diag, cy + rdy * t + rdx * diag);
+      ctx.moveTo(cx - rdy * t - rdx * diag, cy + rdx * t - rdy * diag);
+      ctx.lineTo(cx - rdy * t + rdx * diag, cy + rdx * t + rdy * diag);
+      ctx.moveTo(cx + rdx * t + rdy * diag, cy + rdy * t - rdx * diag);
+      ctx.lineTo(cx + rdx * t - rdy * diag, cy + rdy * t + rdx * diag);
     }
-    octx.stroke();
+    ctx.stroke();
   }
 
   // ---- HUD frame: corner brackets + data block (always on) ----
   {
-    const W = overlay.width, H = overlay.height, B = 16, L = 42;
-    octx.strokeStyle = 'rgba(45,212,191,.8)'; octx.lineWidth = 2;
-    octx.beginPath();
+    const B = 16, L = 42;
+    ctx.strokeStyle = 'rgba(45,212,191,.8)'; ctx.lineWidth = 2;
+    ctx.beginPath();
     for (const [cx, cy, sx, sy] of [[B, B, 1, 1], [W - B, B, -1, 1], [B, H - B, 1, -1], [W - B, H - B, -1, -1]]) {
-      octx.moveTo(cx + sx * L, cy); octx.lineTo(cx, cy); octx.lineTo(cx, cy + sy * L);
+      ctx.moveTo(cx + sx * L, cy); ctx.lineTo(cx, cy); ctx.lineTo(cx, cy + sy * L);
     }
-    octx.stroke();
-    octx.fillStyle = 'rgba(45,212,191,.9)';
+    ctx.stroke();
+    ctx.fillStyle = 'rgba(45,212,191,.9)';
     const fc = flagCounts(it);
     const hud = [
       `FACELANDMARKER-${it.lm.length} · ${it.w}×${it.h}px · ${it.name.slice(0, 26)}`,
@@ -730,9 +727,21 @@ function renderViewer() {
     ];
     if (fc.unreliable || fc.suspect || fc.denom)
       hud.push(`FLAGS ${fc.unreliable} pose-unreliable · ${fc.suspect} pose-suspect · ${fc.denom} denominator-collapse — values kept, see table`);
-    hud.forEach((t, i) => octx.fillText(t, B + 10, B + 18 + i * 13));
+    hud.forEach((t, i) => ctx.fillText(t, B + 10, B + 18 + i * 13));
   }
 
+}
+
+function renderViewer() {
+  const it = activeItem();
+  viewerCard.hidden = !it;
+  if (!it) return;
+  $('viewTitle').textContent = it.name;
+  const scale = Math.min(1, 1100 / it.w);
+  overlay.width = Math.round(it.w * scale);
+  overlay.height = Math.round(it.h * scale);
+  octx.setTransform(1, 0, 0, 1, 0, 0);
+  drawOverlay(octx, overlay.width, overlay.height, it);
   const q = $('qualityBox');
   const qv = it.qv;
   const fcq = flagCounts(it);
@@ -854,6 +863,43 @@ function renderCompare() {
     tb.appendChild(tr);
   }
 }
+
+// ---- image exports: full-resolution renders of the overlay ----
+// exportPng: analyzed photo + overlay layers + HUD frame.
+// exportWireframe: overlay layers + HUD on a transparent background (no photo).
+function renderExportCanvas(it, withPhoto) {
+  const scale = Math.min(1, 1100 / it.w);
+  const W = Math.round(it.w * scale), H = Math.round(it.h * scale);
+  const c = document.createElement('canvas');
+  c.width = it.w; c.height = it.h;
+  const ctx = c.getContext('2d');
+  // draw in viewer (logical) coordinates; the transform upscales to full res
+  ctx.setTransform(it.w / W, 0, 0, it.h / H, 0, 0);
+  drawOverlay(ctx, W, H, it, withPhoto);
+  return c;
+}
+function downloadCanvas(c, filename) {
+  c.toBlob((blob) => {
+    if (!blob) { setStatus('image export failed', true); return; }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  }, 'image/png');
+}
+function exportPng() {
+  const it = activeItem();
+  if (!it) return;
+  downloadCanvas(renderExportCanvas(it, true), it.name.replace(/\.[^.]+$/, '') + '-telemetry.png');
+}
+function exportWireframe() {
+  const it = activeItem();
+  if (!it) return;
+  downloadCanvas(renderExportCanvas(it, false), it.name.replace(/\.[^.]+$/, '') + '-wireframe.png');
+}
+$('btnPng').addEventListener('click', exportPng);
+$('btnWire').addEventListener('click', exportWireframe);
 
 // ---- export ----
 function download(name, text, type) {
