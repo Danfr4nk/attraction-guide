@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scenario telemetry v6 — preset bouts + isolation</title>
+<title>scenario telemetry v7 — tube-sweep expansion</title>
 <style>
   :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; --vio:#c678dd; }
   * { box-sizing:border-box; }
@@ -70,7 +70,7 @@
 </head>
 <body>
 <header>
-  <span class="brand">scenario telemetry <span style="color:var(--dim)">v6</span></span>
+  <span class="brand">scenario telemetry <span style="color:var(--dim)">v7</span></span>
   <span class="sub">all scenarios presume consenting adults</span>
   <a href="index.html">← instruments</a>
 </header>
@@ -176,7 +176,61 @@ const PRESETS = [
   { id:"p-shewatches", name:"she watches", desc:"girlfriend watches you with another guy",
     vec:{S_sub:1,F_attr:2,P_pur:2,N_x:2,A_auth:2,film:0,E_env:1,novel:2,priv:0,recip:1,M_fam:0,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:1,expl:1,dur:0,atten:0,visib:0,F_part:0,M_enth:1} },
   { id:"p-2019", name:"2019 baseline", desc:"the filmed one — your only data point",
-    vec:{ ...BASE } }
+    vec:{ ...BASE } },
+  /* ---- tube-sweep: 25 new shapes scraped from the categories page (2026-09-15) ----
+     vecs are one reading of each one-liner on the existing 24 metrics.
+     degenerate codings: scenarios with no male pin M_fam=0/M_age=1/M_enth=1/P_pur=0
+     (= BASE) so they don't fake diffs against the 2019 baseline on male axes. */
+  { id:"p-cuckold", name:"classic cuckold", desc:"her friend fucks her in your bed, you in the corner chair", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:2,novel:2,priv:0,recip:0,M_fam:2,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:1,expl:1,dur:1,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-cleanup", name:"cuckold cleanup", desc:"after he's finished she has you lick her clean", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:1,film:0,E_env:2,novel:2,priv:0,recip:0,M_fam:1,intim:1,F_init:2,after:0,turf:0,party:0,M_age:1,inten:1,expl:1,dur:0,atten:1,visib:0,F_part:2,M_enth:0} },
+  { id:"p-watersports", name:"watersports", desc:"she pisses in your mouth while you kneel, then all over your chest", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:1,film:0,E_env:2,novel:2,priv:0,recip:2,M_fam:0,intim:2,F_init:1,after:0,turf:0,party:0,M_age:1,inten:0,expl:1,dur:0,atten:0,visib:0,F_part:2,M_enth:1} },
+  { id:"p-facesit", name:"facesitting", desc:"she rides your face till she's done, your hands pinned under you", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:1,A_auth:1,film:0,E_env:1,novel:1,priv:0,recip:1,M_fam:0,intim:2,F_init:1,after:1,turf:0,party:0,M_age:1,inten:1,expl:0,dur:0,atten:0,visib:0,F_part:2,M_enth:1} },
+  { id:"p-pegging", name:"pegging", desc:"she fucks you with a strap-on in the red-lit bedroom and you take it", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:1,film:0,E_env:2,novel:2,priv:0,recip:2,M_fam:0,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:2,expl:1,dur:0,atten:0,visib:0,F_part:2,M_enth:1} },
+  { id:"p-trans", name:"trans girl", desc:"a passable trans woman with a cock blows you while she watches from the bed", grp:"tube",
+    vec:{S_sub:1,F_attr:2,P_pur:2,N_x:2,A_auth:2,film:0,E_env:1,novel:2,priv:0,recip:2,M_fam:0,intim:0,F_init:0,after:0,turf:0,party:0,M_age:1,inten:1,expl:1,dur:0,atten:0,visib:0,F_part:0,M_enth:2} },
+  { id:"p-ffm", name:"FFM", desc:"you and her bring home another woman — the April 2019 shape", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:2,film:0,E_env:2,novel:1,priv:0,recip:1,M_fam:0,intim:1,F_init:0,after:1,turf:0,party:1,M_age:1,inten:1,expl:1,dur:1,atten:1,visib:0,F_part:2,M_enth:1} },
+  { id:"p-soloher", name:"solo her", desc:"just you watching while she gets herself off — nobody else exists", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:0,A_auth:0,film:0,E_env:0,novel:0,priv:0,recip:0,M_fam:0,intim:2,F_init:1,after:1,turf:0,party:0,M_age:1,inten:0,expl:0,dur:0,atten:1,visib:0,F_part:2,M_enth:1} },
+  { id:"p-voyeur", name:"voyeur", desc:"strange couple going at it across the courtyard, she narrates filthy in your ear", grp:"tube",
+    vec:{S_sub:1,F_attr:1,P_pur:0,N_x:1,A_auth:0,film:0,E_env:0,novel:2,priv:1,recip:0,M_fam:0,intim:1,F_init:0,after:0,turf:1,party:0,M_age:1,inten:1,expl:2,dur:0,atten:1,visib:1,F_part:1,M_enth:1} },
+  { id:"p-public", name:"public play", desc:"she flashes a stranger in the bar bathroom, you're on lookout", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:1,film:0,E_env:0,novel:2,priv:2,recip:0,M_fam:0,intim:1,F_init:2,after:0,turf:1,party:1,M_age:1,inten:0,expl:0,dur:0,atten:1,visib:2,F_part:2,M_enth:1} },
+  { id:"p-massage", name:"wandering massage", desc:"her masseuse's hands wander south — she catches your eye and doesn't stop him", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:0,novel:2,priv:1,recip:0,M_fam:0,intim:0,F_init:1,after:0,turf:1,party:0,M_age:1,inten:0,expl:0,dur:1,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-uniform", name:"role play", desc:"she's the cop, you're cuffed to the chair, her 'partner' takes her on the desk", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:1,novel:2,priv:0,recip:0,M_fam:1,intim:0,F_init:1,after:0,turf:1,party:0,M_age:1,inten:1,expl:2,dur:0,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-feet", name:"feet worship", desc:"you're on the floor worshipping her feet while he fucks her above you", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:1,novel:2,priv:0,recip:0,M_fam:1,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:1,expl:1,dur:1,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-herbound", name:"bound her", desc:"she's tied spread-eagle, two strangers use her, you hold the rope and the camera", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:2,film:2,E_env:2,novel:2,priv:0,recip:0,M_fam:0,intim:0,F_init:0,after:0,turf:0,party:0,M_age:1,inten:2,expl:1,dur:1,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-youbound", name:"bound you", desc:"you're tied to the chair and gagged, watching her take her pick of the room", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:1,novel:2,priv:0,recip:0,M_fam:0,intim:0,F_init:2,after:0,turf:1,party:1,M_age:1,inten:1,expl:0,dur:1,atten:2,visib:0,F_part:2,M_enth:2} },
+  { id:"p-orgy", name:"orgy", desc:"house party, bodies everywhere, you lose track of her for a full hour", grp:"tube",
+    vec:{S_sub:2,F_attr:1,P_pur:1,N_x:2,A_auth:0,film:0,E_env:2,novel:2,priv:1,recip:1,M_fam:0,intim:0,F_init:0,after:0,turf:1,party:2,M_age:1,inten:2,expl:0,dur:1,atten:2,visib:1,F_part:2,M_enth:1} },
+  { id:"p-webcam", name:"webcam show", desc:"she performs for tips while you run the chat and read the filthiest requests aloud", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:1,A_auth:2,film:2,E_env:1,novel:1,priv:1,recip:0,M_fam:0,intim:0,F_init:0,after:1,turf:0,party:0,M_age:1,inten:1,expl:2,dur:1,atten:1,visib:1,F_part:2,M_enth:1} },
+  { id:"p-casting", name:"casting couch", desc:"her 'audition' for a producer who stops being professional — you watch the monitor", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:0,film:2,E_env:1,novel:2,priv:0,recip:0,M_fam:0,intim:0,F_init:2,after:0,turf:1,party:0,M_age:2,inten:1,expl:1,dur:1,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-dp", name:"double", desc:"two guys, her between them, you're on the floor with the camera inches away", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:2,film:2,E_env:2,novel:2,priv:0,recip:0,M_fam:0,intim:0,F_init:0,after:0,turf:0,party:0,M_age:1,inten:2,expl:1,dur:0,atten:2,visib:0,F_part:2,M_enth:2} },
+  { id:"p-creampie", name:"creampie reveal", desc:"she takes his load and shows you after — doesn't clean up, makes you look", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:2,novel:1,priv:0,recip:0,M_fam:1,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:1,expl:1,dur:0,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-spank", name:"spanking", desc:"he bends her over his knee and spanks her red — you count out loud", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:1,A_auth:1,film:0,E_env:0,novel:1,priv:0,recip:0,M_fam:1,intim:1,F_init:1,after:1,turf:0,party:0,M_age:1,inten:2,expl:1,dur:0,atten:1,visib:0,F_part:2,M_enth:1} },
+  { id:"p-mm", name:"just the guys", desc:"you and him alone — no her, no camera, nothing to prove", grp:"tube",
+    vec:{S_sub:0,F_attr:0,P_pur:2,N_x:2,A_auth:0,film:0,E_env:1,novel:2,priv:0,recip:1,M_fam:0,intim:0,F_init:1,after:0,turf:0,party:0,M_age:1,inten:1,expl:1,dur:0,atten:0,visib:0,F_part:0,M_enth:2} },
+  { id:"p-gloryher", name:"gloryhole (her)", desc:"she's on the far side of the wall — you're filming over the top", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:0,N_x:2,A_auth:2,film:2,E_env:1,novel:2,priv:1,recip:0,M_fam:0,intim:0,F_init:0,after:0,turf:1,party:0,M_age:1,inten:1,expl:0,dur:0,atten:2,visib:0,F_part:2,M_enth:1} },
+  { id:"p-joi", name:"JOI", desc:"on screen he fucks her while she tells the camera exactly what to do to yourself", grp:"tube",
+    vec:{S_sub:1,F_attr:2,P_pur:0,N_x:1,A_auth:1,film:2,E_env:0,novel:1,priv:0,recip:0,M_fam:0,intim:0,F_init:1,after:0,turf:0,party:0,M_age:1,inten:1,expl:2,dur:0,atten:0,visib:0,F_part:1,M_enth:1} },
+  { id:"p-gangbang", name:"gangbang", desc:"five strangers run a train on her — you watch from the corner with a drink", grp:"tube",
+    vec:{S_sub:2,F_attr:2,P_pur:1,N_x:2,A_auth:1,film:0,E_env:2,novel:2,priv:1,recip:0,M_fam:0,intim:0,F_init:1,after:0,turf:1,party:1,M_age:1,inten:2,expl:0,dur:1,atten:2,visib:1,F_part:2,M_enth:1} }
 ];
 
 /* backbone gloss: one line from the metrics A and B share.
@@ -380,7 +434,7 @@ function render() {
 function respond(r, rel) {
   if (!cur || trials.length >= TOTAL) return;
   trials.push({ a: cur.a, b: cur.b, resp: r, rel: !!(rel && (r === "A" || r === "B")), phase });
-  try { localStorage.setItem("scen_tel_v6", JSON.stringify({ sel: selectedIds, trials: trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, rel: t.rel, phase: t.phase })) })); } catch (e) {}
+  try { localStorage.setItem("scen_tel_v7", JSON.stringify({ sel: selectedIds, trials: trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, rel: t.rel, phase: t.phase })) })); } catch (e) {}
   render();
 }
 $("pickA").onclick = () => respond("A", false);
@@ -456,34 +510,60 @@ function renderResults() {
     `<p class="conf">n=${trials.length} trials · ${trials.filter(t => t.resp === "V").length} double-vetoes · ${accepts.length} accepts · 2019 baseline: ${baseTxt}.</p>`;
   $("sessLog").textContent =
     trials.map((t, i) => `${i + 1}. [${t.phase === 1 ? "broad" : "iso"}] ${t.a.id} vs ${t.b.id} → ${t.resp === "V" ? "VETO BOTH" : "picked " + t.resp + (t.rel ? " (reluctant)" : "")} · Δ=${diffKeys(t.a, t.b).map(k => MNAME[k]).join(",")}`).join("\n");
-  try { localStorage.setItem("scen_tel_done_v6", "1"); } catch (e) {}
+  try { localStorage.setItem("scen_tel_done_v7", "1"); } catch (e) {}
 }
 $("moreBtn").onclick = () => { TOTAL += 16; render(); };
 $("dlBtn").onclick = () => {
   const blob = new Blob([JSON.stringify({
-    ts: new Date().toISOString(), version: 6, metrics: METRICS, baseline: BASE,
+    ts: new Date().toISOString(), version: 7, metrics: METRICS, baseline: BASE,
     presets: PRESETS, selected: selectedIds,
     trials: trials.map(t => ({ a: t.a.vec, b: t.b.vec, resp: t.resp, reluctant: t.rel, phase: t.phase }))
   }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = "scenario-telemetry-v6.json"; a.click(); URL.revokeObjectURL(u);
+  a.href = u; a.download = "scenario-telemetry-v7.json"; a.click(); URL.revokeObjectURL(u);
 };
-$("restartBtn").onclick = () => { trials = []; scenSeq = 0; bouts = []; selectedIds = []; TOTAL = 0; try { localStorage.removeItem("scen_tel_v6"); } catch (e) {} renderPicker(); render(); };
+$("restartBtn").onclick = () => { trials = []; scenSeq = 0; bouts = []; selectedIds = []; TOTAL = 0; try { localStorage.removeItem("scen_tel_v7"); } catch (e) {} renderPicker(); render(); };
+function estTrials(ids) {
+  const n = ids.length;
+  if (!n) return 0;
+  const hasBase = ids.includes("p-2019");
+  return (hasBase ? n - 1 : 0) + n * (n - 1) / 2 + P2_N;
+}
+function updEst() {
+  const ids = [...document.querySelectorAll("#scenList input:checked")].map(el => el.dataset.pid);
+  const el = $("estLine");
+  if (el) el.textContent = `${ids.length} picked → ~${estTrials(ids)} trials (phase-1 bouts + 16 isolation).`;
+}
 function renderPicker() {
   const box = $("scenList");
   box.innerHTML = "";
-  for (const p of PRESETS) {
-    const lab = document.createElement("label");
-    lab.className = "scen-pick";
-    const cb = document.createElement("input");
-    cb.type = "checkbox"; cb.checked = true; cb.dataset.pid = p.id;
-    const sp = document.createElement("span");
-    const sn = document.createElement("span"); sn.className = "sn"; sn.textContent = p.name;
-    const sd = document.createElement("span"); sd.className = "sd"; sd.textContent = p.desc;
-    sp.appendChild(sn); sp.appendChild(document.createElement("br")); sp.appendChild(sd);
-    lab.appendChild(cb); lab.appendChild(sp);
-    box.appendChild(lab);
-  }
+  const mkSection = (title, list, allLbl, noneLbl) => {
+    const h = document.createElement("h3"); h.className = "sec"; h.textContent = title;
+    box.appendChild(h);
+    const row = document.createElement("div"); row.className = "btnrow"; row.style.margin = "0 0 10px";
+    const all = document.createElement("button"); all.textContent = allLbl;
+    const none = document.createElement("button"); none.textContent = noneLbl;
+    all.onclick = () => { list.forEach(p => { box.querySelector(`input[data-pid="${p.id}"]`).checked = true; }); updEst(); };
+    none.onclick = () => { list.forEach(p => { box.querySelector(`input[data-pid="${p.id}"]`).checked = false; }); updEst(); };
+    row.appendChild(all); row.appendChild(none); box.appendChild(row);
+    for (const p of list) {
+      const lab = document.createElement("label");
+      lab.className = "scen-pick";
+      const cb = document.createElement("input");
+      cb.type = "checkbox"; cb.checked = !p.grp; cb.dataset.pid = p.id;
+      cb.onchange = updEst;
+      const sp = document.createElement("span");
+      const sn = document.createElement("span"); sn.className = "sn"; sn.textContent = p.name;
+      const sd = document.createElement("span"); sd.className = "sd"; sd.textContent = p.desc;
+      sp.appendChild(sn); sp.appendChild(document.createElement("br")); sp.appendChild(sd);
+      lab.appendChild(cb); lab.appendChild(sp);
+      box.appendChild(lab);
+    }
+  };
+  mkSection("the classics", PRESETS.filter(p => !p.grp), "all classics", "no classics");
+  mkSection("tube-sweep — 25 new shapes, scraped from the categories page", PRESETS.filter(p => p.grp === "tube"), "select all 25", "clear new");
+  const est = document.createElement("p"); est.className = "conf"; est.id = "estLine";
+  box.appendChild(est); updEst();
 }
 $("startBtn").onclick = () => {
   const ids = [...document.querySelectorAll("#scenList input:checked")].map(el => el.dataset.pid);
