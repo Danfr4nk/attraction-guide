@@ -30,6 +30,17 @@
   .scale button.on { background:var(--pick); border-color:var(--pick); color:#0b0d10; font-weight:700; }
   .scale button.vetoBtn { border-color:var(--veto); color:var(--veto); min-width:40px; }
   .scale button.vetoBtn.on { background:var(--veto); color:#0b0d10; }
+  .scale button.xBtn { border-color:var(--gold); color:var(--gold); min-width:40px; }
+  .scale button.xBtn.on { background:var(--gold); color:#0b0d10; font-weight:700; }
+  .scale button.noteBtn { min-width:40px; }
+  .scale button.noteBtn.on { border-color:var(--vio); color:var(--vio); font-weight:700; }
+  .rowx { opacity:.45; }
+  .rowx .scale button { pointer-events:none; }
+  .rowx .scale button.xBtn, .rowx .scale button.noteBtn { pointer-events:auto; opacity:1; }
+  .notewrap { margin-top:8px; }
+  .notewrap.hidden { display:none; }
+  .notewrap textarea { width:100%; min-height:56px; box-sizing:border-box; background:#0d0f13; color:var(--txt); border:1px solid var(--line); border-radius:8px; padding:8px; font-size:13.5px; font-family:inherit; resize:vertical; }
+  .notewrap textarea:focus { outline:none; border-color:var(--vio); }
   .btnrow { display:flex; gap:10px; margin:20px 0; flex-wrap:wrap; }
   .btnrow button { padding:10px 16px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--txt); cursor:pointer; font-size:14px; }
   .btnrow button:hover { border-color:var(--pick); }
@@ -58,6 +69,7 @@
     <div class="note">
       <b>Rate each situation 1–10</b> — gut answer. <b>1</b> = not a chance, <b>10</b> = absolutely, <b>✕</b> = hard veto.
       Each modifier changes <b>exactly one thing</b> about the situation above it — score what that one change does.
+      <b>∅</b> vetoes the question entirely (won't count in scoring, for whatever reason). <b>✎</b> adds a private explanation for that line.
     </div>
     <div id="prog"><div></div></div>
     <div id="progText">0 / 0 rated</div>
@@ -292,24 +304,50 @@ const LS_KEY = "scen_rate_v3";
 let ratings = {};   // id -> 0 (veto) | 1..10
 try { ratings = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { ratings = {}; }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(ratings)); } catch (e) {} }
+/* question-vetoes + per-line notes live in their own keys so in-progress v3 ratings are untouched */
+const X_KEY = LS_KEY + "_x", N_KEY = LS_KEY + "_notes";
+let excluded = {}, notes = {};
+try { excluded = JSON.parse(localStorage.getItem(X_KEY) || "{}"); } catch (e) { excluded = {}; }
+try { notes = JSON.parse(localStorage.getItem(N_KEY) || "{}"); } catch (e) { notes = {}; }
+function saveX() { try { localStorage.setItem(X_KEY, JSON.stringify(excluded)); } catch (e) {} }
+function saveNotes() { try { localStorage.setItem(N_KEY, JSON.stringify(notes)); } catch (e) {} }
+const noteOpen = {};   /* ephemeral: which note boxes are expanded this session */
 
 /* ---- ui ---- */
 const $ = (id) => document.getElementById(id);
 function updateProg() {
-  const done = items.filter(it => ratings[it.id] !== undefined).length;
-  $("progText").textContent = `${done} / ${items.length} rated`;
+  const xc = items.filter(it => excluded[it.id]).length;
+  const done = items.filter(it => ratings[it.id] !== undefined || excluded[it.id]).length;
+  $("progText").textContent = `${done} / ${items.length} rated` + (xc ? ` · ${xc} question-vetoed` : "");
   document.querySelector("#prog > div").style.width = (items.length ? done / items.length * 100 : 0) + "%";
 }
 function rate(id, val) {
+  if (excluded[id]) return;   /* vetoed questions can't be scored */
   ratings[id] = val;   /* no toggle-off: tapping the active value keeps it */
   save(); paint(id); updateProg();
+}
+function toggleX(id) {
+  if (excluded[id]) delete excluded[id]; else excluded[id] = true;
+  saveX(); paint(id); updateProg();
 }
 function paint(id) {
   const v = ratings[id];
   document.querySelectorAll(`[data-item="${id}"] button`).forEach(b => {
+    if (b.dataset.v === "x" || b.dataset.v === "note") return;
     const bv = b.dataset.v === "veto" ? 0 : parseInt(b.dataset.v, 10);
     b.classList.toggle("on", v !== undefined && bv === v);
   });
+  const xb = document.querySelector(`[data-item="${id}"] button[data-v="x"]`);
+  if (xb) xb.classList.toggle("on", !!excluded[id]);
+  const open = noteOpen[id] || (notes[id] && notes[id].trim() !== "");
+  const nb = document.querySelector(`[data-item="${id}"] button[data-v="note"]`);
+  if (nb) nb.classList.toggle("on", !!open);
+  const row = document.querySelector(`[data-row="${id}"]`);
+  if (row) {
+    row.classList.toggle("rowx", !!excluded[id]);
+    const nw = row.querySelector(".notewrap");
+    if (nw) nw.classList.toggle("hidden", !open);
+  }
 }
 function render() {
   const box = $("items");
@@ -323,6 +361,7 @@ function render() {
       box.appendChild(gdiv);
     }
     const row = document.createElement("div");
+    row.dataset.row = it.id;
     if (it.kind === "base") {
       row.innerHTML = `<div class="gbase"><span class="gtag">situation</span></div>`;
       row.firstChild.appendChild(document.createTextNode(it.desc));
@@ -344,7 +383,23 @@ function render() {
     vx.textContent = "✕"; vx.dataset.v = "veto"; vx.className = "vetoBtn"; vx.title = "hard veto";
     vx.onclick = () => rate(it.id, 0);
     sc.appendChild(vx);
+    const xo = document.createElement("button");
+    xo.textContent = "∅"; xo.dataset.v = "x"; xo.className = "xBtn"; xo.title = "veto the question — won't count in scoring";
+    xo.onclick = () => toggleX(it.id);
+    sc.appendChild(xo);
+    const nb = document.createElement("button");
+    nb.textContent = "✎"; nb.dataset.v = "note"; nb.className = "noteBtn"; nb.title = "explain this one";
+    nb.onclick = () => { noteOpen[it.id] = !noteOpen[it.id]; paint(it.id); };
+    sc.appendChild(nb);
     row.appendChild(sc);
+    const nw = document.createElement("div");
+    nw.className = "notewrap hidden";
+    const ta = document.createElement("textarea");
+    ta.placeholder = "why? say more… (private, saved with your export)";
+    ta.value = notes[it.id] || "";
+    ta.oninput = () => { const t = ta.value.trim(); if (t) notes[it.id] = ta.value; else delete notes[it.id]; saveNotes(); };
+    nw.appendChild(ta);
+    row.appendChild(nw);
     gdiv.appendChild(row);
     paint(it.id);
   }
@@ -357,7 +412,8 @@ function renderDone() {
   $("rateView").classList.add("hidden");
   $("doneView").classList.remove("hidden");
   const byId = Object.fromEntries(items.map(it => [it.id, it]));
-  const scored = items.filter(it => ratings[it.id] !== undefined);
+  const scored = items.filter(it => ratings[it.id] !== undefined && !excluded[it.id]);
+  const xCount = items.filter(it => excluded[it.id]).length;
   const vetos = scored.filter(it => ratings[it.id] === 0);
   const vals = scored.filter(it => ratings[it.id] > 0).map(it => ratings[it.id]);
   const m = mean(vals);
@@ -369,7 +425,7 @@ function renderDone() {
     for (const it of items) {
       if (it.kind !== "mod" || it.knob !== k) continue;
       const rb = ratings[it.baseId], rm = ratings[it.id];
-      if (!rb || !rm) continue;
+      if (!rb || !rm || excluded[it.baseId] || excluded[it.id]) continue;
       ds.push(it.target === 2 ? rm - rb : rb - rm);
     }
     const md = mean(ds);
@@ -394,12 +450,13 @@ function renderDone() {
   $("verdictBox").innerHTML =
     `<h3>readout</h3>` +
     `<p><b>${scored.length}</b> rated · <b class="${m >= 7 ? "ok" : m >= 4 ? "soft" : "bad"}">${m === null ? "—" : m.toFixed(1)}</b> mean score` +
-    (vetos.length ? ` · <b class="bad">${vetos.length}</b> hard veto${vetos.length === 1 ? "" : "s"}` : "") + `.</p>` +
+    (vetos.length ? ` · <b class="bad">${vetos.length}</b> hard veto${vetos.length === 1 ? "" : "s"}` : "") +
+    (xCount ? ` · <b class="soft">${xCount}</b> question-vetoed (excluded from all stats)` : "") + `.</p>` +
     (vetos.length ? `<p class="conf">vetoed: ${vetos.slice(0, 12).map(it => it.desc).join(" · ")}${vetos.length > 12 ? " …" : ""}</p>` : "") +
-    (scored.length < items.length ? `<p class="conf">${items.length - scored.length} items unrated — excluded from all stats.</p>` : "");
+    (scored.length + xCount < items.length ? `<p class="conf">${items.length - scored.length - xCount} items unrated — excluded from all stats.</p>` : "");
 
   const gstats = BASES.map((b, gi) => {
-    const its = items.filter(it => it.group === gi && ratings[it.id] !== undefined && ratings[it.id] > 0);
+    const its = items.filter(it => it.group === gi && ratings[it.id] !== undefined && ratings[it.id] > 0 && !excluded[it.id]);
     return { d: b.d, n: its.length, m: mean(its.map(it => ratings[it.id])) };
   }).filter(g => g.n > 0).sort((a, b) => (b.m || 0) - (a.m || 0));
   let gh = `<table><tr><th>situation</th><th>n</th><th>mean</th><th></th></tr>`;
@@ -421,7 +478,8 @@ function download() {
     ts: new Date().toISOString(), version: 3, metrics: METRICS,
     items: items.map(it => ({ id: it.id, group: it.gdesc, kind: it.kind, desc: it.desc,
       knob: it.knob || null, knobFrom: it.knobFrom || null, knobTo: it.knobTo || null,
-      vec: it.vec, rating: ratings[it.id] === undefined ? null : ratings[it.id] }))
+      vec: it.vec, rating: ratings[it.id] === undefined ? null : ratings[it.id],
+      excluded: !!excluded[it.id], note: notes[it.id] || null }))
   }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
   a.href = u; a.download = "scenario-ratings-v3.json"; a.click(); URL.revokeObjectURL(u);
@@ -431,7 +489,7 @@ $("dlBtn").onclick = download;
 $("dlBtn2").onclick = download;
 $("backBtn").onclick = () => { $("doneView").classList.add("hidden"); $("rateView").classList.remove("hidden"); };
 function restart() {
-  ratings = {}; save();
+  ratings = {}; excluded = {}; notes = {}; save(); saveX(); saveNotes();
   buildItems(); render();
   $("doneView").classList.add("hidden"); $("rateView").classList.remove("hidden");
   window.scrollTo(0, 0);
