@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>scenario ratings v2 — one knob at a time</title>
+<title>scenario ratings v3 — tube-sweep, 2 knobs</title>
 <style>
   :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; --vio:#c678dd; }
   * { box-sizing:border-box; }
@@ -49,7 +49,7 @@
 </head>
 <body>
 <header>
-  <span class="brand">scenario ratings <span style="color:var(--dim)">v2</span></span>
+  <span class="brand">scenario ratings <span style="color:var(--dim)">v3 — tube-sweep, 2 knobs</span></span>
   <span class="sub">all scenarios presume consenting adults</span>
   <a href="index.html">← instruments</a> · <a href="scenario.html">scenario telemetry</a>
 </header>
@@ -86,8 +86,9 @@
 </main>
 <script>
 "use strict";
-/* v2: single-knob perturbations. Every modifier changes exactly one metric
-   vs its base, so rating deltas isolate the causal effect of that metric. */
+/* v3: single-knob perturbations, 2 per base across a 78-situation tube-sweep.
+   Every modifier changes exactly one metric vs its base, so rating deltas
+   isolate the causal effect of that metric. */
 const METRICS = [
   { k:"S_sub",  name:"arousal substrate",  lv:["no woman","woman peripheral","woman central"] },
   { k:"F_attr", name:"her attractiveness",  lv:["neutral","somewhat","highly"] },
@@ -176,23 +177,76 @@ const BASES = [
 { d:"threesome with your girlfriend and a close friend, you're the focus", v:[2,2,2,2,2,0,1,1,0,0,2,1,0,1,0,1,1,1,1,1,0,1,2,1] },
 { d:"stranger MMF where she's the focus and you're on the sidelines", v:[2,2,0,2,1,0,1,2,0,2,0,1,1,0,1,0,1,1,1,1,2,0,2,1] },
 { d:"you meet her ex alone while she's away", v:[1,2,1,2,0,0,1,2,0,1,1,0,0,0,1,0,1,1,0,0,0,0,0,1] },
-{ d:"she watches you and her ex together", v:[2,2,1,2,1,0,1,2,0,1,1,1,1,0,0,0,1,1,1,0,1,0,0,1] }
+{ d:"she watches you and her ex together", v:[2,2,1,2,1,0,1,2,0,1,1,1,1,0,0,0,1,1,1,0,1,0,0,1] },
+/* ---- tube-sweep: 50 new base situations from 50 tube categories (2026-09-15) ----
+   vec order: S_sub,F_attr,P_pur,N_x,A_auth,film,E_env,novel,priv,recip,M_fam,intim,F_init,after,turf,party,M_age,inten,expl,dur,atten,visib,F_part,M_enth
+   degenerate codings: no-him bases pin M_fam=0/M_age=1/M_enth=1/P_pur=0 (= BASE) */
+{ d:"amateur tape: a real couple's homemade video — she begs you to make one just like it", v:[2,2,0,1,2,2,1,2,0,1,0,2,0,0,0,0,1,1,1,0,1,0,2,1] },
+{ d:"anal: she takes him anal while you watch — first time she's ever done it", v:[2,2,1,2,1,0,2,2,0,1,0,1,1,0,0,0,1,2,1,0,2,0,2,1] },
+{ d:"massage parlor: she gets the happy ending, you're in the next room listening", v:[2,2,0,2,1,0,1,2,1,0,0,0,1,0,1,0,1,1,0,0,2,0,2,1] },
+{ d:"babysitter role play: she's the babysitter, he's the dad, you're filming", v:[2,2,1,2,1,2,1,2,0,1,0,0,1,0,0,0,1,1,2,0,2,0,2,1] },
+{ d:"bbw: her big beautiful friend joins you two, Annie calls the shots", v:[2,2,0,2,1,0,2,2,0,1,0,1,2,0,0,1,1,1,1,0,1,0,2,1] },
+{ d:"porn set visit: she gets pulled into a scene, you watch from video village", v:[2,2,1,2,0,2,1,2,1,1,0,0,0,0,1,1,1,1,0,0,2,1,2,1] },
+{ d:"club: she grinds on a stranger's lap, you watch from the bar", v:[2,2,0,1,1,0,0,2,1,1,0,1,2,0,1,2,1,1,0,0,2,1,2,1] },
+{ d:"big dick: she takes a famously huge stranger, you hold her hand", v:[2,2,0,2,2,0,1,2,0,1,0,1,0,0,1,0,1,2,1,0,1,0,2,1] },
+{ d:"pool party: her busty friend goes topless, things escalate", v:[2,2,0,1,0,0,1,2,1,1,0,1,0,1,0,1,1,1,0,1,1,1,2,1] },
+{ d:"bisexual: he goes down on you while she kisses him over your shoulder", v:[1,2,2,2,1,0,1,2,0,1,0,1,1,0,0,0,1,1,1,0,0,0,1,2] },
+{ d:"blonde weekend: she goes blonde and plays dumb while he has his way", v:[2,2,1,1,1,0,1,1,0,1,0,1,1,0,0,0,1,1,2,0,2,0,2,1] },
+{ d:"backseat: she deepthroats him while you drive", v:[2,2,0,2,1,0,1,2,1,0,0,1,2,0,1,0,1,1,0,0,2,1,2,1] },
+{ d:"rope: she's tied up, two strangers use her, you hold the rope", v:[2,2,1,2,2,0,2,2,0,0,0,0,0,0,0,0,1,2,1,0,2,0,2,1] },
+{ d:"bukkake: she kneels for a lineup of strangers, you're on cleanup", v:[2,2,0,2,1,0,2,2,0,0,0,0,0,2,0,0,1,2,1,0,1,0,2,1] },
+{ d:"casting couch: her 'audition' stops being professional, you watch the monitor", v:[2,2,1,2,0,2,1,2,0,0,0,0,2,0,1,0,2,1,1,0,2,0,2,1] },
+{ d:"backstage: a famous musician recognizes her, invites you both along", v:[2,2,1,2,0,0,1,2,1,1,0,0,0,0,1,2,1,1,0,0,1,2,2,2] },
+{ d:"frat party (18+): she relives her wild side, you play the boyfriend", v:[2,2,0,2,1,0,1,2,1,1,0,1,2,0,1,2,0,1,0,1,2,1,2,1] },
+{ d:"cosplay: she's in costume, he never breaks character", v:[2,2,1,1,1,0,1,2,0,1,0,1,1,0,0,1,1,1,2,0,1,0,2,1] },
+{ d:"creampie: she takes his load and shows you after, doesn't clean up", v:[2,2,1,2,1,0,2,1,0,0,1,1,1,1,0,0,1,1,1,0,2,0,2,1] },
+{ d:"classic cuckold: her friend fucks her in your bed, you in the corner chair", v:[2,2,1,2,1,0,2,2,0,0,2,1,1,1,0,0,1,1,1,1,2,0,2,1] },
+{ d:"facial: he finishes on her face, she holds your gaze while it drips", v:[2,2,1,2,1,2,1,2,0,0,0,1,1,0,0,0,1,1,1,0,2,0,2,1] },
+{ d:"double: two guys, her between them, you film inches away", v:[2,2,1,2,2,2,2,2,0,0,0,0,0,0,0,0,1,2,1,0,2,0,2,2] },
+{ d:"interracial: she picks up a black stranger, you watch from the hotel desk", v:[2,2,0,2,1,0,1,2,1,1,0,0,2,0,2,0,1,1,0,0,2,1,2,1] },
+{ d:"facesitting: she rides your face till she's done, hands pinned", v:[2,2,0,1,1,0,1,1,0,1,0,2,1,1,0,0,1,1,0,0,0,0,2,1] },
+{ d:"feet worship: you're on the floor at her feet while he fucks her above you", v:[2,2,1,2,1,0,1,2,0,0,1,1,1,1,0,0,1,1,1,1,2,0,2,1] },
+{ d:"her orgasm: you watch her come harder than she ever has with you", v:[2,2,0,2,1,0,1,2,0,1,0,2,1,0,0,0,1,1,0,0,2,0,2,1] },
+{ d:"FFM: you and her bring home another woman", v:[2,2,0,2,2,0,2,1,0,1,0,1,0,1,0,1,1,1,1,1,1,0,2,1] },
+{ d:"fisting: she takes his whole hand, you watch her face", v:[2,2,1,2,1,0,2,2,0,1,0,1,1,0,0,0,1,2,1,0,2,0,2,1] },
+{ d:"gangbang: five strangers run a train on her, you watch from the corner", v:[2,2,1,2,1,0,2,2,1,0,0,0,1,0,1,1,1,2,0,1,2,1,2,1] },
+{ d:"gloryhole: she's on the far side of the wall, you film over the top", v:[2,2,0,2,2,2,1,2,1,0,0,0,0,0,1,0,1,1,0,0,2,0,2,1] },
+{ d:"under the table: she jerks him off at dinner with friends", v:[2,2,0,2,1,0,0,2,1,0,1,1,2,0,1,1,1,0,0,0,1,2,2,1] },
+{ d:"JOI: on screen he fucks her while she tells the camera what to do to yourself", v:[1,2,0,1,1,2,0,1,0,0,0,0,1,0,0,0,1,1,2,0,0,0,1,1] },
+{ d:"wandering hands: his massage goes south, she catches your eye and lets him", v:[2,2,1,2,1,0,0,2,1,0,0,0,1,0,1,0,1,0,0,1,2,0,2,1] },
+{ d:"older woman: an experienced older woman teaches her while you watch", v:[2,2,0,2,1,0,1,2,0,1,0,1,2,0,0,0,1,1,1,0,2,0,2,1] },
+{ d:"age gap: a much older man takes her, you watch him work", v:[2,2,0,2,1,0,1,2,0,1,0,0,1,0,1,0,2,1,1,0,2,0,2,1] },
+{ d:"orgy: bodies everywhere, you lose track of her for an hour", v:[2,1,1,2,0,0,2,2,1,1,0,0,0,0,1,2,1,2,0,1,2,1,2,1] },
+{ d:"watersports: she pisses in your mouth while you kneel", v:[2,2,0,2,1,0,2,2,0,2,0,2,1,0,0,0,1,0,1,0,0,0,2,1] },
+{ d:"POV: you wear the camera — everything from your eyes as he takes her", v:[2,2,1,2,2,2,1,2,0,1,0,1,1,0,0,0,1,1,1,0,2,0,2,1] },
+{ d:"bar bathroom: she flashes a stranger, you're on lookout", v:[2,2,0,2,1,0,0,2,2,0,0,1,2,0,1,1,1,0,0,0,1,2,2,1] },
+{ d:"cop: she's the cop, you're cuffed, her 'partner' takes her on the desk", v:[2,2,1,2,1,0,1,2,0,0,1,0,1,0,1,0,1,1,2,0,2,0,2,1] },
+{ d:"rough: he takes her hard against the wall, hand on her throat", v:[2,2,1,2,1,0,1,2,0,1,0,0,1,0,1,0,1,2,1,0,2,0,2,1] },
+{ d:"solo her: just you watching while she gets herself off", v:[2,2,0,0,0,0,0,0,0,0,0,2,1,1,0,0,1,0,0,0,1,0,2,1] },
+{ d:"solo him: you watch a stranger jerk off, she dares you to join", v:[1,2,2,1,1,0,1,2,1,1,0,1,2,0,1,1,1,1,2,0,0,1,1,1] },
+{ d:"spanking: he bends her over his knee, spanks her red, you count", v:[2,2,1,1,1,0,0,1,0,0,1,1,1,1,0,0,1,2,1,0,1,0,2,1] },
+{ d:"squirt: he makes her squirt across the sheets, you watch", v:[2,2,1,2,1,0,2,2,0,1,0,1,1,0,0,0,1,2,1,0,2,0,2,1] },
+{ d:"step fantasy: 'stepbro' catches you two and joins in", v:[2,2,1,2,0,0,1,2,0,1,0,0,0,0,0,1,0,1,2,0,1,1,2,1] },
+{ d:"wand: he works her with a vibrator while you hold her gently", v:[2,2,1,2,2,0,1,2,0,1,0,1,0,0,0,0,1,1,1,0,1,0,2,1] },
+{ d:"trans girl: a passable trans woman with a cock blows you while she watches", v:[1,2,2,2,2,0,1,2,0,2,0,0,0,0,0,0,1,1,1,0,0,0,0,2] },
+{ d:"voyeur: strange couple across the courtyard, she narrates filthy in your ear", v:[1,1,0,1,0,0,0,2,1,0,0,1,0,0,1,0,1,1,2,0,1,1,1,1] },
+{ d:"webcam: she performs for tips, you run the chat", v:[2,2,0,1,2,2,1,1,1,0,0,0,0,1,0,0,1,1,2,1,1,1,2,1] }
 ];
 /* nonsensical combos: no-woman bases (12, 23) skip her-metrics */
 const EXCLUDE = { 12:["F_attr","F_part"], 23:["F_attr","F_part"] };
 
-/* deterministic rotation: 6 knobs per base, each metric perturbed ~7x across the bank */
+/* deterministic rotation: 2 knobs per base, each metric perturbed ~6x across the bank */
 function assignKnobs() {
   const counts = Object.fromEntries(MKEYS.map(k => [k, 0]));
   const perBase = [];
   for (let gi = 0; gi < BASES.length; gi++) {
     const excl = new Set(EXCLUDE[gi] || []);
     const picks = [];
-    for (let j = 0; j < MKEYS.length && picks.length < 6; j++) {
-      const k = MKEYS[(gi * 6 + j) % MKEYS.length];
+    for (let j = 0; j < MKEYS.length && picks.length < 2; j++) {
+      const k = MKEYS[(gi * 2 + j) % MKEYS.length];
       if (!excl.has(k) && !picks.includes(k)) picks.push(k);
     }
-    while (picks.length < 6) {
+    while (picks.length < 2) {
       const c = MKEYS.filter(k => !excl.has(k) && !picks.includes(k)).sort((a, b) => counts[a] - counts[b])[0];
       picks.push(c);
     }
@@ -234,7 +288,7 @@ function buildItems() {
 }
 
 /* ---- state ---- */
-const LS_KEY = "scen_rate_v2";
+const LS_KEY = "scen_rate_v3";
 let ratings = {};   // id -> 0 (veto) | 1..10
 try { ratings = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { ratings = {}; }
 function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(ratings)); } catch (e) {} }
@@ -364,13 +418,13 @@ function renderDone() {
 }
 function download() {
   const blob = new Blob([JSON.stringify({
-    ts: new Date().toISOString(), version: 2, metrics: METRICS,
+    ts: new Date().toISOString(), version: 3, metrics: METRICS,
     items: items.map(it => ({ id: it.id, group: it.gdesc, kind: it.kind, desc: it.desc,
       knob: it.knob || null, knobFrom: it.knobFrom || null, knobTo: it.knobTo || null,
       vec: it.vec, rating: ratings[it.id] === undefined ? null : ratings[it.id] }))
   }, null, 1)], { type: "application/json" });
   const u = URL.createObjectURL(blob), a = document.createElement("a");
-  a.href = u; a.download = "scenario-ratings-v2.json"; a.click(); URL.revokeObjectURL(u);
+  a.href = u; a.download = "scenario-ratings-v3.json"; a.click(); URL.revokeObjectURL(u);
 }
 $("finishBtn").onclick = renderDone;
 $("dlBtn").onclick = download;
