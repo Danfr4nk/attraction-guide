@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>scenario ratings v2 — one knob at a time</title>
+<style>
+  :root { --bg:#101216; --panel:#181b21; --line:#2a2e37; --txt:#e8eaf0; --dim:#9aa0ad; --acc:#7fd08c; --veto:#e06c75; --pick:#61afef; --gold:#e5c07b; --vio:#c678dd; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:15px/1.55 -apple-system,system-ui,sans-serif; }
+  header { padding:14px 18px; border-bottom:1px solid var(--line); display:flex; gap:14px; align-items:baseline; flex-wrap:wrap; position:sticky; top:0; background:var(--bg); z-index:5; }
+  header .brand { font-weight:700; letter-spacing:.5px; }
+  header .sub { color:var(--dim); font-size:13px; }
+  header a { color:var(--pick); font-size:13px; margin-left:auto; }
+  main { max-width:700px; margin:0 auto; padding:18px; }
+  .note { background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:14px 16px; color:var(--dim); font-size:13.5px; margin-bottom:16px; }
+  .note b { color:var(--txt); }
+  #prog { height:6px; background:#22262e; border-radius:3px; overflow:hidden; margin:6px 0 6px; }
+  #prog > div { height:100%; width:0; background:var(--acc); transition:width .25s; }
+  #progText { color:var(--dim); font-size:13px; margin-bottom:16px; }
+  .group { background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:14px 16px; margin-bottom:14px; }
+  .gbase { font-weight:700; font-size:15.5px; margin-bottom:10px; }
+  .gbase .gtag { color:var(--vio); font-size:11.5px; font-weight:600; display:block; margin-bottom:2px; }
+  .mod { border-top:1px solid var(--line); padding:10px 0 10px 14px; margin-top:6px; border-left:3px solid var(--vio); }
+  .mod .mtag { color:var(--dim); font-size:11.5px; display:block; margin-bottom:2px; }
+  .mdesc { font-size:14.5px; margin-bottom:8px; }
+  .scale { display:flex; gap:4px; flex-wrap:wrap; align-items:center; }
+  .scale button { min-width:34px; height:34px; border-radius:8px; border:1px solid var(--line); background:transparent; color:var(--dim); font-size:13.5px; cursor:pointer; padding:0 6px; }
+  .scale button:hover { border-color:var(--pick); color:var(--pick); }
+  .scale button.on { background:var(--pick); border-color:var(--pick); color:#0b0d10; font-weight:700; }
+  .scale button.vetoBtn { border-color:var(--veto); color:var(--veto); min-width:40px; }
+  .scale button.vetoBtn.on { background:var(--veto); color:#0b0d10; }
+  .btnrow { display:flex; gap:10px; margin:20px 0; flex-wrap:wrap; }
+  .btnrow button { padding:10px 16px; border-radius:8px; border:1px solid var(--line); background:var(--panel); color:var(--txt); cursor:pointer; font-size:14px; }
+  .btnrow button:hover { border-color:var(--pick); }
+  .btnrow button.primary { border-color:var(--acc); color:var(--acc); font-weight:700; }
+  .hidden { display:none; }
+  .conf { font-size:12px; color:var(--dim); }
+  h3.sec { margin:26px 0 4px; }
+  table { width:100%; border-collapse:collapse; margin:14px 0; font-size:13.5px; }
+  th, td { text-align:left; padding:8px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
+  th { color:var(--dim); font-weight:600; }
+  .bar { display:inline-block; height:8px; border-radius:4px; background:var(--pick); vertical-align:middle; }
+  .bar.neg { background:var(--veto); }
+  .verdict { background:var(--panel); border:1px solid var(--line); border-left:4px solid var(--vio); border-radius:10px; padding:16px 18px; margin:18px 0; }
+  .verdict h3 { margin:0 0 8px; }
+  .ok { color:var(--acc); } .bad { color:var(--veto); } .mid { color:var(--dim); } .soft { color:var(--gold); }
+</style>
+</head>
+<body>
+<header>
+  <span class="brand">scenario ratings <span style="color:var(--dim)">v2</span></span>
+  <span class="sub">all scenarios presume consenting adults</span>
+  <a href="index.html">← instruments</a> · <a href="scenario.html">scenario telemetry</a>
+</header>
+<main>
+  <div id="rateView">
+    <div class="note">
+      <b>Rate each situation 1–10</b> — gut answer. <b>1</b> = not a chance, <b>10</b> = absolutely, <b>✕</b> = hard veto.
+      Each modifier changes <b>exactly one thing</b> about the situation above it — score what that one change does.
+    </div>
+    <div id="prog"><div></div></div>
+    <div id="progText">0 / 0 rated</div>
+    <div id="items"></div>
+    <div class="btnrow">
+      <button id="finishBtn" class="primary">finish &amp; see readout →</button>
+      <button id="dlBtn">download JSON</button>
+      <button id="restartBtn">restart</button>
+    </div>
+  </div>
+
+  <div id="doneView" class="hidden">
+    <div class="verdict" id="verdictBox"></div>
+    <h3 class="sec">knob effects <span class="conf">— mean rating change when this one thing changes, base held fixed</span></h3>
+    <div id="deltaBox"></div>
+    <h3 class="sec">groups <span class="conf">— mean rating per base situation</span></h3>
+    <div id="groupBox"></div>
+    <h3 class="sec">extremes</h3>
+    <div id="extremeBox"></div>
+    <div class="btnrow">
+      <button id="backBtn">← back to rating</button>
+      <button id="dlBtn2">download JSON</button>
+      <button id="restartBtn2">restart</button>
+    </div>
+  </div>
+</main>
+<script>
+"use strict";
+/* v2: single-knob perturbations. Every modifier changes exactly one metric
+   vs its base, so rating deltas isolate the causal effect of that metric. */
+const METRICS = [
+  { k:"S_sub",  name:"arousal substrate",  lv:["no woman","woman peripheral","woman central"] },
+  { k:"F_attr", name:"her attractiveness",  lv:["neutral","somewhat","highly"] },
+  { k:"P_pur",  name:"pursuit direction",   lv:["he experiments","mild interest","he pursues you"] },
+  { k:"N_x",    name:"taboo charge",        lv:["routine","you cross alone","mutual crossing"] },
+  { k:"A_auth", name:"authorship",          lv:["spontaneous","she directs","you direct"] },
+  { k:"film",   name:"recorded",            lv:["not recorded","ambiguous","filmed"] },
+  { k:"E_env",  name:"contact envelope",    lv:["touch only","includes oral","open-ended"] },
+  { k:"novel",  name:"novelty",             lv:["routine","familiar","first-time"] },
+  { k:"priv",   name:"privacy",             lv:["private","semi-private","exposure risk"] },
+  { k:"recip",  name:"reciprocity",         lv:["you give","mutual","you receive"] },
+  { k:"M_fam",  name:"his familiarity",     lv:["stranger","acquaintance","friend"] },
+  { k:"intim",  name:"emotional tone",      lv:["detached","playful","intimate"] },
+  { k:"F_init", name:"who proposed",        lv:["you did","mutual","she did"] },
+  { k:"after",  name:"aftermath",           lv:["never spoken of","friendly","ongoing dynamic"] },
+  { k:"turf",   name:"turf",                lv:["yours","neutral","hers"] },
+  { k:"party",  name:"party context",       lv:["sober","drinking","full party"] },
+  { k:"M_age",  name:"his age vs you",      lv:["younger","similar","older"] },
+  { k:"inten",  name:"physical intensity",  lv:["gentle","moderate","intense"] },
+  { k:"expl",   name:"explicitness",        lv:["unspoken","negotiated","explicit talk"] },
+  { k:"dur",    name:"duration",            lv:["brief scene","an evening","ongoing"] },
+  { k:"atten",  name:"your spotlight",      lv:["you're the focus","shared","you're peripheral"] },
+  { k:"visib",  name:"visibility",          lv:["fully private","circle knows","could get out"] },
+  { k:"F_part", name:"her participation",   lv:["watches","partial","full"] },
+  { k:"M_enth", name:"his enthusiasm",      lv:["reluctant","willing","eager"] }
+];
+const MKEYS = METRICS.map(m => m.k);
+const MNAME = Object.fromEntries(METRICS.map(m => [m.k, m.name]));
+const MLV = Object.fromEntries(METRICS.map(m => [m.k, m.lv]));
+
+/* one-knob perturbation phrases. hi = target level 2, lo = target level 0.
+   d1 = direction taken when the base sits at level 1. */
+const KNOB = {
+  S_sub:  { hi:"She's central to it", lo:"No woman involved at all", d1:2 },
+  F_attr: { hi:"She's exceptionally hot", lo:"She's average-looking, not your type", d1:0 },
+  P_pur:  { hi:"He's actively pursuing you", lo:"He's just experimenting", d1:2 },
+  N_x:    { hi:"You're both crossing a line together", lo:"Routine, no taboo charge", d1:2 },
+  A_auth: { hi:"You direct the whole thing", lo:"Spontaneous, nobody directs", d1:2 },
+  film:   { hi:"You film it", lo:"No filming, phones away", d1:2 },
+  E_env:  { hi:"Open-ended, anything goes", lo:"Touch only, nothing more", d1:2 },
+  novel:  { hi:"First time for any of this", lo:"You've done this exact thing before", d1:2 },
+  priv:   { hi:"Real exposure risk", lo:"Fully private, locked door", d1:2 },
+  recip:  { hi:"It's all about your pleasure", lo:"You're doing all the giving", d1:2 },
+  M_fam:  { hi:"He's a close friend", lo:"He's a total stranger", d1:2 },
+  intim:  { hi:"Intimate, emotionally charged", lo:"Detached, purely physical", d1:0 },
+  F_init: { hi:"She proposed it", lo:"You proposed it", d1:0 },
+  after:  { hi:"It becomes an ongoing thing", lo:"Never spoken of after", d1:2 },
+  turf:   { hi:"At her place", lo:"At your place", d1:0 },
+  party:  { hi:"Full party energy, drinking", lo:"Sober, just the people involved", d1:2 },
+  M_age:  { hi:"He's older, experienced", lo:"He's younger than you", d1:2 },
+  inten:  { hi:"Rough and intense", lo:"Slow and gentle", d1:2 },
+  expl:   { hi:"Everything talked through explicitly", lo:"Nobody says a word about it", d1:2 },
+  dur:    { hi:"It becomes a regular arrangement", lo:"One brief scene, then done", d1:2 },
+  atten:  { hi:"You're mostly watching from the sidelines", lo:"You're the focus of it", d1:0 },
+  visib:  { hi:"Word could get out", lo:"Nobody will ever know", d1:2 },
+  F_part: { hi:"She's fully involved", lo:"She only watches", d1:2 },
+  M_enth: { hi:"He's eager, really into it", lo:"He's reluctant, hesitant", d1:2 }
+};
+
+/* vec order: S_sub,F_attr,P_pur,N_x,A_auth,film,E_env,novel,priv,recip,M_fam,intim,F_init,after,turf,party,M_age,inten,expl,dur,atten,visib,F_part,M_enth */
+const BASES = [
+{ d:"watching your girlfriend fuck her ex", v:[2,2,0,2,1,0,1,2,0,1,0,2,1,0,1,0,1,1,1,0,2,0,2,1] },
+{ d:"threesome with your girlfriend and a stranger she picked", v:[2,2,1,2,1,0,1,2,0,1,0,1,2,0,1,1,1,1,1,1,1,0,2,1] },
+{ d:"foursome with a male-male couple", v:[2,2,1,2,1,0,1,2,0,1,0,1,1,1,1,1,1,1,1,1,1,0,2,1] },
+{ d:"she watches you with another guy", v:[1,2,2,2,2,0,1,2,0,1,0,1,1,1,0,0,1,1,1,0,0,0,0,1] },
+{ d:"filmed MMF: her, you, and a stranger into you — the 2019 shape", v:[2,2,0,2,2,2,1,2,0,1,0,1,1,2,0,0,1,1,1,1,1,0,2,1] },
+{ d:"you watch her with a stranger while you stay dressed", v:[2,2,0,2,1,0,0,2,0,1,0,1,1,0,1,0,1,0,1,0,2,0,2,1] },
+{ d:"she watches you get a blowjob from another guy", v:[1,2,2,2,2,0,1,2,0,0,0,1,1,0,0,0,1,1,1,0,0,0,0,1] },
+{ d:"you and him focused on her, mutual effort", v:[2,2,1,2,2,0,1,2,0,1,0,1,1,1,0,1,1,1,1,1,1,0,2,1] },
+{ d:"you hook up with a guy from a male couple while she watches", v:[1,2,2,2,2,0,1,2,0,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1] },
+{ d:"house party: you, her, and two guys, open room", v:[2,2,1,2,0,0,2,2,1,1,0,1,1,0,1,2,1,2,0,1,1,1,2,1] },
+{ d:"her ex proposes a threesome with both of you", v:[2,2,1,2,1,0,1,2,0,1,1,2,2,0,1,0,1,1,1,0,1,0,2,1] },
+{ d:"your friend asks to join you and her", v:[2,2,1,2,0,0,1,2,0,1,2,1,0,0,0,1,1,1,1,0,1,1,2,1] },
+{ d:"you with another guy, no woman involved", v:[0,0,2,2,2,0,1,2,0,1,0,1,0,0,1,1,1,1,1,0,0,0,0,1] },
+{ d:"she is with her ex while you listen on the phone", v:[2,2,0,2,1,0,0,2,0,1,0,2,1,0,2,0,1,0,1,0,2,0,2,1] },
+{ d:"threesome where she is the focus and you are peripheral", v:[2,2,0,2,1,0,1,2,0,2,0,1,1,1,1,0,1,1,1,1,2,0,2,1] },
+{ d:"filmed scene: you and a guy, she directs from behind the camera", v:[1,2,2,2,1,2,1,2,0,1,0,1,2,1,0,0,1,1,1,0,0,0,0,1] },
+{ d:"full swap with another couple", v:[2,2,1,2,1,0,2,2,0,1,0,1,1,0,1,1,1,1,1,0,1,0,2,1] },
+{ d:"you watch her get picked up at a bar and follow to a hotel", v:[2,2,0,2,1,0,1,2,1,1,0,0,2,0,2,2,1,1,0,0,2,1,2,1] },
+{ d:"she sets you up with a guy as a gift", v:[1,2,2,2,1,0,1,2,0,1,0,1,2,1,0,0,1,1,1,0,0,0,0,1] },
+{ d:"MMF with her ex, and he is into you too", v:[2,2,2,2,1,0,1,2,0,1,0,2,1,0,1,0,1,1,1,1,1,0,2,1] },
+{ d:"semi-private booth at a party, exposure risk", v:[2,2,1,2,0,0,0,2,2,1,0,1,1,0,1,2,1,1,0,0,1,2,2,1] },
+{ d:"a regular third you both like, ongoing dynamic", v:[2,2,1,2,2,0,1,1,0,1,2,1,1,2,0,1,1,1,1,2,1,0,2,1] },
+{ d:"she pegs you while another guy watches", v:[1,2,0,2,1,0,0,2,0,2,0,1,2,0,0,0,1,1,1,0,0,0,0,0] },
+{ d:"watching a male couple without participating", v:[0,0,0,1,0,0,0,2,1,1,0,0,1,0,1,1,1,0,0,0,2,1,0,0] },
+{ d:"threesome with your girlfriend and a close friend, you're the focus", v:[2,2,2,2,2,0,1,1,0,0,2,1,0,1,0,1,1,1,1,1,0,1,2,1] },
+{ d:"stranger MMF where she's the focus and you're on the sidelines", v:[2,2,0,2,1,0,1,2,0,2,0,1,1,0,1,0,1,1,1,1,2,0,2,1] },
+{ d:"you meet her ex alone while she's away", v:[1,2,1,2,0,0,1,2,0,1,1,0,0,0,1,0,1,1,0,0,0,0,0,1] },
+{ d:"she watches you and her ex together", v:[2,2,1,2,1,0,1,2,0,1,1,1,1,0,0,0,1,1,1,0,1,0,0,1] }
+];
+/* nonsensical combos: no-woman bases (12, 23) skip her-metrics */
+const EXCLUDE = { 12:["F_attr","F_part"], 23:["F_attr","F_part"] };
+
+/* deterministic rotation: 6 knobs per base, each metric perturbed ~7x across the bank */
+function assignKnobs() {
+  const counts = Object.fromEntries(MKEYS.map(k => [k, 0]));
+  const perBase = [];
+  for (let gi = 0; gi < BASES.length; gi++) {
+    const excl = new Set(EXCLUDE[gi] || []);
+    const picks = [];
+    for (let j = 0; j < MKEYS.length && picks.length < 6; j++) {
+      const k = MKEYS[(gi * 6 + j) % MKEYS.length];
+      if (!excl.has(k) && !picks.includes(k)) picks.push(k);
+    }
+    while (picks.length < 6) {
+      const c = MKEYS.filter(k => !excl.has(k) && !picks.includes(k)).sort((a, b) => counts[a] - counts[b])[0];
+      picks.push(c);
+    }
+    picks.forEach(k => counts[k]++);
+    perBase.push(picks);
+  }
+  return { perBase, counts };
+}
+function knobTarget(baseVec, k) {
+  const b = baseVec[k];
+  if (b === 0) return 2;
+  if (b === 2) return 0;
+  return KNOB[k].d1;
+}
+
+/* ---- item bank ---- */
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+let items = [];
+function buildItems() {
+  items = [];
+  const { perBase } = assignKnobs();
+  const order = shuffle(BASES.map((_, i) => i));
+  for (const gi of order) {
+    const b = BASES[gi];
+    const baseVec = {};
+    MKEYS.forEach((k, i) => baseVec[k] = b.v[i]);
+    const baseId = "g" + gi;
+    items.push({ id: baseId, group: gi, gdesc: b.d, kind: "base", desc: b.d, vec: baseVec });
+    const knobIdx = shuffle(perBase[gi].map((_, i) => i));
+    for (const ki of knobIdx) {
+      const k = perBase[gi][ki];
+      const target = knobTarget(baseVec, k);
+      const vec = { ...baseVec, [k]: target };
+      const desc = target === 2 ? KNOB[k].hi : KNOB[k].lo;
+      items.push({ id: baseId + k, group: gi, gdesc: b.d, kind: "mod", knob: k, target,
+                   baseId, desc, vec, knobFrom: MLV[k][baseVec[k]], knobTo: MLV[k][target] });
+    }
+  }
+}
+
+/* ---- state ---- */
+const LS_KEY = "scen_rate_v2";
+let ratings = {};   // id -> 0 (veto) | 1..10
+try { ratings = JSON.parse(localStorage.getItem(LS_KEY) || "{}"); } catch (e) { ratings = {}; }
+function save() { try { localStorage.setItem(LS_KEY, JSON.stringify(ratings)); } catch (e) {} }
+
+/* ---- ui ---- */
+const $ = (id) => document.getElementById(id);
+function updateProg() {
+  const done = items.filter(it => ratings[it.id] !== undefined).length;
+  $("progText").textContent = `${done} / ${items.length} rated`;
+  document.querySelector("#prog > div").style.width = (items.length ? done / items.length * 100 : 0) + "%";
+}
+function rate(id, val) {
+  ratings[id] = val;   /* no toggle-off: tapping the active value keeps it */
+  save(); paint(id); updateProg();
+}
+function paint(id) {
+  const v = ratings[id];
+  document.querySelectorAll(`[data-item="${id}"] button`).forEach(b => {
+    const bv = b.dataset.v === "veto" ? 0 : parseInt(b.dataset.v, 10);
+    b.classList.toggle("on", v !== undefined && bv === v);
+  });
+}
+function render() {
+  const box = $("items");
+  box.innerHTML = "";
+  let curGroup = -1, gdiv = null;
+  for (const it of items) {
+    if (it.group !== curGroup) {
+      curGroup = it.group;
+      gdiv = document.createElement("div");
+      gdiv.className = "group";
+      box.appendChild(gdiv);
+    }
+    const row = document.createElement("div");
+    if (it.kind === "base") {
+      row.innerHTML = `<div class="gbase"><span class="gtag">situation</span></div>`;
+      row.firstChild.appendChild(document.createTextNode(it.desc));
+    } else {
+      row.className = "mod";
+      row.innerHTML = `<span class="mtag">one change: ${it.knobFrom} → ${it.knobTo}</span><div class="mdesc"></div>`;
+      row.querySelector(".mdesc").textContent = it.desc;
+    }
+    const sc = document.createElement("div");
+    sc.className = "scale";
+    sc.dataset.item = it.id;
+    for (let s = 1; s <= 10; s++) {
+      const b = document.createElement("button");
+      b.textContent = s; b.dataset.v = s;
+      b.onclick = () => rate(it.id, s);
+      sc.appendChild(b);
+    }
+    const vx = document.createElement("button");
+    vx.textContent = "✕"; vx.dataset.v = "veto"; vx.className = "vetoBtn"; vx.title = "hard veto";
+    vx.onclick = () => rate(it.id, 0);
+    sc.appendChild(vx);
+    row.appendChild(sc);
+    gdiv.appendChild(row);
+    paint(it.id);
+  }
+  updateProg();
+}
+
+/* ---- readout ---- */
+function mean(a) { return a.length ? a.reduce((x, y) => x + y, 0) / a.length : null; }
+function renderDone() {
+  $("rateView").classList.add("hidden");
+  $("doneView").classList.remove("hidden");
+  const byId = Object.fromEntries(items.map(it => [it.id, it]));
+  const scored = items.filter(it => ratings[it.id] !== undefined);
+  const vetos = scored.filter(it => ratings[it.id] === 0);
+  const vals = scored.filter(it => ratings[it.id] > 0).map(it => ratings[it.id]);
+  const m = mean(vals);
+
+  /* knob effects: normalized delta = rating(high) - rating(low), base held fixed.
+     pairs need 1..10 on both sides; vetoes and skips are excluded. */
+  const knobStats = MKEYS.map(k => {
+    const ds = [];
+    for (const it of items) {
+      if (it.kind !== "mod" || it.knob !== k) continue;
+      const rb = ratings[it.baseId], rm = ratings[it.id];
+      if (!rb || !rm) continue;
+      ds.push(it.target === 2 ? rm - rb : rb - rm);
+    }
+    const md = mean(ds);
+    const pos = ds.filter(d => d > 0).length;
+    return { k, n: ds.length, md, posRate: ds.length ? pos / ds.length : null };
+  }).filter(s => s.n > 0).sort((a, b) => Math.abs(b.md || 0) - Math.abs(a.md || 0));
+
+  let dh = `<table><tr><th>turning this up…</th><th>n</th><th>mean Δ</th><th></th></tr>`;
+  for (const s of knobStats) {
+    const w = Math.min(120, Math.abs(s.md || 0) * 24);
+    const cls = (s.md || 0) >= 0 ? "" : "neg";
+    const dir = (s.md || 0) >= 0 ? "raises" : "lowers";
+    dh += `<tr><td>toward <b>${MLV[s.k][2]}</b> <span class="conf">(${MNAME[s.k]})</span></td>` +
+      `<td class="conf">${s.n}</td>` +
+      `<td><span class="bar ${cls}" style="width:${Math.round(w)}px"></span> ${(s.md >= 0 ? "+" : "") + (s.md || 0).toFixed(1)}</td>` +
+      `<td class="conf">${dir} score</td></tr>`;
+  }
+  $("deltaBox").innerHTML = dh + "</table>" +
+    `<p class="conf">Δ = rating with the knob turned up minus rating with it down, same situation. ` +
+    `Pairs where either side was vetoed or skipped are excluded.</p>`;
+
+  $("verdictBox").innerHTML =
+    `<h3>readout</h3>` +
+    `<p><b>${scored.length}</b> rated · <b class="${m >= 7 ? "ok" : m >= 4 ? "soft" : "bad"}">${m === null ? "—" : m.toFixed(1)}</b> mean score` +
+    (vetos.length ? ` · <b class="bad">${vetos.length}</b> hard veto${vetos.length === 1 ? "" : "s"}` : "") + `.</p>` +
+    (vetos.length ? `<p class="conf">vetoed: ${vetos.slice(0, 12).map(it => it.desc).join(" · ")}${vetos.length > 12 ? " …" : ""}</p>` : "") +
+    (scored.length < items.length ? `<p class="conf">${items.length - scored.length} items unrated — excluded from all stats.</p>` : "");
+
+  const gstats = BASES.map((b, gi) => {
+    const its = items.filter(it => it.group === gi && ratings[it.id] !== undefined && ratings[it.id] > 0);
+    return { d: b.d, n: its.length, m: mean(its.map(it => ratings[it.id])) };
+  }).filter(g => g.n > 0).sort((a, b) => (b.m || 0) - (a.m || 0));
+  let gh = `<table><tr><th>situation</th><th>n</th><th>mean</th><th></th></tr>`;
+  for (const g of gstats) {
+    gh += `<tr><td>${g.d}</td><td class="conf">${g.n}</td><td><span class="bar" style="width:${Math.round((g.m || 0) * 14)}px"></span> ${(g.m || 0).toFixed(1)}</td><td class="conf">${g.m >= 7 ? "hot" : g.m >= 4 ? "warm" : "cold"}</td></tr>`;
+  }
+  $("groupBox").innerHTML = gh + "</table>";
+
+  const ranked = scored.filter(it => ratings[it.id] > 0).sort((a, b) => ratings[b.id] - ratings[a.id]);
+  const top = ranked.slice(0, 10), bot = ranked.slice(-10).reverse();
+  const li = (it) => `<tr><td><b class="${ratings[it.id] >= 7 ? "ok" : ratings[it.id] <= 3 ? "bad" : "soft"}">${ratings[it.id]}</b></td><td>${it.kind === "mod" ? `<span class="conf">${it.gdesc} →</span> ` : ""}${it.desc}</td></tr>`;
+  $("extremeBox").innerHTML =
+    `<table><tr><th>score</th><th>top 10</th></tr>${top.map(li).join("")}</table>` +
+    (bot.length ? `<table><tr><th>score</th><th>bottom 10</th></tr>${bot.map(li).join("")}</table>` : "");
+  window.scrollTo(0, 0);
+}
+function download() {
+  const blob = new Blob([JSON.stringify({
+    ts: new Date().toISOString(), version: 2, metrics: METRICS,
+    items: items.map(it => ({ id: it.id, group: it.gdesc, kind: it.kind, desc: it.desc,
+      knob: it.knob || null, knobFrom: it.knobFrom || null, knobTo: it.knobTo || null,
+      vec: it.vec, rating: ratings[it.id] === undefined ? null : ratings[it.id] }))
+  }, null, 1)], { type: "application/json" });
+  const u = URL.createObjectURL(blob), a = document.createElement("a");
+  a.href = u; a.download = "scenario-ratings-v2.json"; a.click(); URL.revokeObjectURL(u);
+}
+$("finishBtn").onclick = renderDone;
+$("dlBtn").onclick = download;
+$("dlBtn2").onclick = download;
+$("backBtn").onclick = () => { $("doneView").classList.add("hidden"); $("rateView").classList.remove("hidden"); };
+function restart() {
+  ratings = {}; save();
+  buildItems(); render();
+  $("doneView").classList.add("hidden"); $("rateView").classList.remove("hidden");
+  window.scrollTo(0, 0);
+}
+$("restartBtn").onclick = restart;
+$("restartBtn2").onclick = restart;
+buildItems();
+render();
+</script>
+</body>
+</html>

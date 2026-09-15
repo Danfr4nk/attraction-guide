@@ -33,17 +33,22 @@
   .statline .ok{color:var(--acc)}
   /* instrument list */
   .idx{margin:26px 0 8px;font-size:12px;letter-spacing:.2em;color:var(--dim)}
-  a.inst{display:grid;grid-template-columns:64px 1fr auto;gap:4px 18px;align-items:baseline;
+  .inst{display:grid;grid-template-columns:64px 1fr auto;gap:4px 18px;align-items:baseline;
     border:1px solid var(--line);background:var(--panel);padding:15px 18px;margin-bottom:10px;
     text-decoration:none;color:inherit;position:relative;transition:border-color .12s}
-  a.inst:hover{border-color:var(--acc);background:#0c141c}
-  a.inst:hover .go{color:var(--acc)}
+  a.inst:hover,.inst:hover{border-color:var(--acc);background:#0c141c}
+  a.inst:hover .go,.inst:hover .go{color:var(--acc)}
   .inst .no{color:var(--dim);font-size:12px}
   .inst .nm{font-size:16px;font-weight:700;color:#fff;letter-spacing:.02em}
   .inst .nm .go{color:var(--dim);font-weight:400;font-size:13px;margin-left:8px}
+  .inst .nm a{color:inherit;text-decoration:none}
+  .inst .nm a:hover{color:var(--acc)}
   .inst .ds{grid-column:2;color:var(--dim);font-size:13px;margin-top:2px}
   .inst .ds b{color:var(--txt);font-weight:400}
   .inst .meta{grid-column:2;font-size:11.5px;color:var(--dim);opacity:.85;margin-top:4px}
+  .inst .ver{grid-column:2;font-size:11.5px;color:var(--dim);opacity:.85;margin-top:4px}
+  .inst .ver a{color:var(--dim);text-decoration:underline dotted;text-underline-offset:2px}
+  .inst .ver a:hover{color:var(--acc)}
   .inst .bdg{grid-row:1;grid-column:3;font-size:10.5px;letter-spacing:.14em;color:var(--acc);
     border:1px solid var(--acc);padding:3px 10px;border-radius:2px;white-space:nowrap}
   .inst .bdg.w{color:var(--warn);border-color:var(--warn)}
@@ -51,7 +56,7 @@
   footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
     font-size:11.5px;color:var(--dim);display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
   footer a{color:var(--dim)}
-  @media(max-width:640px){a.inst{grid-template-columns:1fr}.inst .bdg{grid-column:1;justify-self:start;margin-top:8px}.inst .ds,.inst .meta{grid-column:1}}
+  @media(max-width:640px){.inst{grid-template-columns:1fr}.inst .bdg{grid-column:1;justify-self:start;margin-top:8px}.inst .ds,.inst .meta,.inst .ver{grid-column:1}}
 </style>
 </head>
 <body>
@@ -104,21 +109,23 @@
     <span class="meta">bring your own vision api key · estimates welcome, hedging isn't</span>
   </a>
 
-  <a class="inst" href="scenario-rate.html">
+  <div class="inst">
     <span class="no">05</span>
-    <span class="nm">SCENARIO RATINGS <span class="go">→</span></span>
-    <span class="bdg v">v2</span>
-    <span class="ds"><b>196 rated situations: 28 bases × single-knob modifiers.</b> Each modifier changes exactly one thing, so the readout is causal — what that one change does to your 1–10.</span>
-    <span class="meta">export: scenario-ratings-v2.json</span>
-  </a>
+    <span class="nm"><a href="scenario-rate.html">SCENARIO RATINGS <span class="go">→</span></a></span>
+    <span class="bdg v">v3</span>
+    <span class="ds"><b>234 rated situations: 78 bases × 2 single-knob modifiers.</b> Each modifier changes exactly one thing, so the readout is causal — what that one change does to your 1–10. ∅ vetoes a question out of scoring entirely; ✎ adds a private note per line.</span>
+    <span class="meta">export: scenario-ratings-v3.json</span>
+    <span class="ver">older: <a href="scenario-rate-v2.html">v2</a> · <a href="scenario-rate-v1.html">v1</a></span>
+  </div>
 
-  <a class="inst" href="scenario.html">
+  <div class="inst">
     <span class="no">06</span>
-    <span class="nm">SCENARIO TELEMETRY <span class="go">→</span></span>
+    <span class="nm"><a href="scenario.html">SCENARIO TELEMETRY <span class="go">→</span></a></span>
     <span class="bdg v">v6</span>
     <span class="ds"><b>Named-preset scenario bouts, then metric isolation.</b> Run the bout (foursome, her ex, she watches…), then every trial shows only what's different between A and B. Veto both, reluctant, or pick a side.</span>
     <span class="meta">all scenarios presume consenting adults</span>
-  </a>
+    <span class="ver">older: <a href="scenario-v5.html">v5</a> · <a href="scenario-v4.html">v4</a> · <a href="scenario-v3.html">v3</a> · <a href="scenario-v2.html">v2</a> · <a href="scenario-v1.html">v1</a></span>
+  </div>
 
   <a class="inst" href="face-book.html">
     <span class="no">07</span>
